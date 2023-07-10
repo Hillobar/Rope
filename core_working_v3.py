@@ -3,9 +3,9 @@ import os
 import queue
 import time
 
-import roop.GUI as GUI
-import roop.VideoManager as VM
-import roop.GFPGANFaceAugment as GFA
+import rope.GUI as GUI
+import rope.VideoManager as VM
+import rope.GFPGANFaceAugment as GFA
 
 import insightface
 import onnxruntime
@@ -33,9 +33,10 @@ def coordinator():
     if vm.get_requested_frame_length() > 0:
         r_frame.append(vm.get_requested_frame())    
     if len(r_frame) > 0:
+        # print ("1:", time.time())
         gui.set_image(r_frame[0], True)
         gui.display_image_in_video_frame()
-        r_frame.pop(0)
+        r_frame=[]
  ####################   
     if len(action) > 0:
         # From GUI
@@ -119,14 +120,22 @@ def coordinator():
         elif action [0][0] == "fake_diff_blend":
             vm.fake_diff_blend = action[0][1]
             action.pop(0)           
-            
-            
+        elif action [0][0] == "create_video":
+            vm.create_video = True
+            action.pop(0)           
+        elif action [0][0] == "num_threads":
+            vm.num_threads = action[0][1]
+            action.pop(0)         
+        elif action [0][0] == "face_thresh":
+            vm.face_thresh = action[0][1]
+            action.pop(0)   
             
             
         # From VM    
         elif action[0][0] == "set_slider_length":
             gui.set_video_slider_length(action[0][1])
             action.pop(0)
+            
         else:
             print("Action not found: "+action[0][0]+" "+str(action[0][1]))
             action.pop(0)

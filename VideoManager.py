@@ -8,6 +8,7 @@ import numpy as np
 from numpy.linalg import norm as l2norm
 from skimage import transform as trans
 import insightface
+import subprocess
 
 lock=threading.Lock()
 
@@ -57,7 +58,14 @@ class VideoManager():
         self.GFPGAN_state = False
         self.fake_diff_state = False
         self.GFPGAN_blend = 100
-        
+        self.create_video = False
+        self.output_video = []
+        self.num_threads = []
+        self.target_video = []
+        self.write_threads = []
+        self.write_threads_tracker = []
+        self.face_thresh = []
+  
     def load_target_video( self, file ):
         # If we already have a video loaded, release it
         if self.capture:
@@ -70,8 +78,9 @@ class VideoManager():
             print("Cannot open file: ", file)
             exit()
         else:
+            self.target_video = file
             self.is_video_loaded = True
-            self.video_frame_total = self.capture.get(cv2.CAP_PROP_FRAME_COUNT)
+            self.video_frame_total = int(self.capture.get(cv2.CAP_PROP_FRAME_COUNT)-1)
             self.play = False 
             self.current_frame = 0
          
@@ -88,14 +97,12 @@ class VideoManager():
 
             self.add_action("set_slider_length",self.video_frame_total)
 
-
         success, image = self.capture.read()
         if success:
             crop = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
             temp = [crop, 0]
             self.r_frame_q.append(temp) 
- 
- 
+
     ## Action queue
     def add_action(self, action, param):
         temp = [action, param]
@@ -141,8 +148,8 @@ class VideoManager():
     def get_video_frame(self, frame):    
         if self.is_video_loaded == True:
             self.current_frame = int(frame)
-            self.capture.set(cv2.CAP_PROP_POS_FRAMES, min(self.video_frame_total, self.current_frame))
-            success, image = self.capture.read()
+            image = self.capture.set(cv2.CAP_PROP_POS_FRAMES, min(self.video_frame_total, self.current_frame))
+            #success, image = self.capture.read()
             if success:
                 target_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
                 if not self.swap:   
@@ -155,6 +162,7 @@ class VideoManager():
 
     def get_requested_video_frame(self, frame):    
         if self.is_video_loaded == True:
+            self.play_video(False)
             self.current_frame = int(frame)
             self.capture.set(cv2.CAP_PROP_POS_FRAMES, min(self.video_frame_total, self.current_frame))
             success, image = self.capture.read()
@@ -166,48 +174,113 @@ class VideoManager():
             
                 else:  
                     temp = [self.swap_video(target_image), self.current_frame]
-                    self.r_frame_q.append(temp) 
-    
+                    self.r_frame_q.append(temp)     
                 
     def play_video(self, is_play):            
         self.play = is_play
         if self.play == True:
-            self.play_frame_tracker = self.current_frame+1
-
-            
+            self.play_frame_tracker = self.current_frame+1            
             
     def process(self):
+        global output
+
         # Queue frame processing threads
-        if self.play == True and self.is_video_loaded == True:
-            
-            if len(self.frame_q2) < 10 and len(self.set_read_threads) < 10:
+        
+        if self.play == True and self.is_video_loaded == True and self.current_frame <= self.video_frame_total-1:
+              
+            if len(self.frame_q2) < self.num_threads and len(self.set_read_threads) < self.num_threads:
                 self.current_frame += 1
                 # Set track start to first played frame
 
                 temp = threading.Thread(target=self.thread_video_read, args = [self.current_frame]).start()
                 self.set_read_threads.append(temp)
+        else:
+            self.play == False
 
-        time_diff = time.time() - self.frame_timer
-        if len(self.frame_q2) > 0 and time_diff >= 0.033333:
-            
-            temp_found_next_frame = False
-            for i in range(len(self.frame_q2)):
-                if self.frame_q2[i][1] == self.play_frame_tracker:
-                    # print( time_diff)
-                    self.frame_q.append(self.frame_q2[i])
-                    self.frame_q2.pop(i)
-                    self.play_frame_tracker += 1
-                    self.set_read_threads.pop(i)
-                    self.frame_timer = time.time()
-                    break
-    
+        if self.create_video == False:
+            time_diff = time.time() - self.frame_timer
+            if len(self.frame_q2) > 0 and time_diff >= 0.033333:
+                for i in range(len(self.frame_q2)):
+                    if self.frame_q2[i][1] == self.play_frame_tracker:
+                        # print( time_diff)
+                        self.frame_q.append(self.frame_q2[i])
+                        self.frame_q2.pop(i)
+                        self.play_frame_tracker += 1
+                        self.set_read_threads.pop(i)
+                        self.frame_timer = time.time()
+                        break
+        else:
+
+            if not self.output_video:
+                frame_width = int(self.capture.get(3))
+                frame_height = int(self.capture.get(4))
+                frame_size = (frame_width,frame_height)
+                fps = self.capture.get(cv2.CAP_PROP_FPS)
+                
+                self.current_frame = -1
+                self.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                self.play_frame_tracker = 0
+                self.play = True
+                # output = os.path.basename(self.target_video)
+                # output = output[:20]+"_"+str(time.time())[:10]
+                output = str(time.time())[:10]
+                self.output_video = cv2.VideoWriter(output+".mp4", cv2.VideoWriter_fourcc(*'avc1'), fps, frame_size)
+               
+            elif len(self.frame_q2) > 0 and self.output_video:
+                for i in range(len(self.frame_q2)):
+                    if self.frame_q2[i][1] == self.play_frame_tracker:
+                        # print( time_diff)
+                        self.frame_q.append(self.frame_q2[i])
+                        image = cv2.cvtColor(self.frame_q2[i][0], cv2.COLOR_BGR2RGB)
+                        self.frame_q2.pop(i)
+                        self.play_frame_tracker += 1
+                        self.set_read_threads.pop(i)
+                        
+                        self.output_video.write(image)
+                        
+
+                        break
+            if self.play_frame_tracker == self.video_frame_total+1 and len(self.frame_q2) == 0:
+                self.output_video.release() 
+                self.output_video = []
+                
+                roped_file = output+'.mp4'
+                orig_file = self.target_video
+                final_file = output+'_a.mp4'
+  
+                # os.system(f'ffmpeg -i '+roped_file+' -i '+orig_file+' -c copy -map 0:v:0 -map 1:a:0 -shortest '+final_file)
+                
+                args = ["ffmpeg",
+                        "-i",  roped_file,
+                        "-i",  orig_file,
+                        "-c",  "copy",
+                        "-map", "0:v:0", "-map", "1:a:0?",
+                        "-shortest",
+                        final_file]
+                
+                four = subprocess.run(args)
+                
+                final_file_small = output+'_a_s.mp4'
+                
+                args = ["ffmpeg",
+                "-i", final_file,
+                "-vcodec", "libx265",
+                "-crf", "28",
+                final_file_small]
+                
+                four = subprocess.run(args)
+                
+                os.remove(roped_file)
+                os.remove(final_file)
+
+                self.create_video = False
+                self.play == False
+
     def thread_video_read(self, frame_number):   
-        
-        frame_timer = time.time()
+        #frame_timer = time.time()
         
         lock.acquire()
         success, image = self.capture.read()
-
         lock.release()
         if success:
             target_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
@@ -217,18 +290,10 @@ class VideoManager():
             else:
                 temp = [self.swap_video(target_image), frame_number]
                 self.frame_q2.append(temp)
-        
-        time_diff = time.time() - frame_timer
-        #print( time_diff)
-    
+       
+        #time_diff = time.time() - frame_timer
+        #print( time_diff) 
 
-        
-        
-
-        
-        
-        
- 
     def load_source_embeddings(self, source_embeddings):
         self.source_embedding = []
         for i in range(len(source_embeddings)):
@@ -262,14 +327,11 @@ class VideoManager():
         [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366],
          [41.5493, 92.3655], [70.7299, 92.2041]],
         dtype=np.float32)    
-
-
         
     def set_faceapp_model(self, faceapp):
         self.faceapp_model = faceapp
 
-    def swap_video(self, target_image):
-        
+    def swap_video(self, target_image):        
         # Find faces, returns all faces
         ret = self.faceapp_model.get(target_image, max_num=10)
         if ret:
@@ -280,16 +342,11 @@ class VideoManager():
             for i in range(len(target_face)):
                 for j in range(len(self.found_faces_assignments)):
                     sim = self.findCosineDistance(target_face[i].embedding, self.found_faces_assignments[j][0])
-                    # if the face[i] in the frame matches afound face[j] AND the found face is active (not -1)    
-                    if sim<0.85 and self.found_faces_assignments[j][1] != -1:
-                        
+                    # if the face[i] in the frame matches afound face[j] AND the found face is active (not -1) 
+                    if sim<float(self.face_thresh) and self.found_faces_assignments[j][1] != -1:                        
                         s_e =  self.source_embedding[self.found_faces_assignments[j][1]]
-                        img = self.swap_core(img, target_face[i].kps, s_e)
-
-
-            
+                        img = self.swap_core(img, target_face[i].kps, s_e)            
             return img
-
         else:
             return target_image
             
@@ -314,7 +371,6 @@ class VideoManager():
         paste_back = True
        
         aimg, _ = insightface.utils.face_align.norm_crop2(img, kps, self.input_size[0])
-
         blob = cv2.dnn.blobFromImage(aimg, 1.0 / 255.0, self.input_size, (0.0, 0.0, 0.0), swapRB=True)
        
        #Select source embedding
@@ -348,7 +404,6 @@ class VideoManager():
             
             img_white = np.full((bgr_fake_upscaled.shape[0],bgr_fake_upscaled.shape[1]), 255, dtype=np.float32)
             img_black = np.full((bgr_fake_upscaled.shape[0],bgr_fake_upscaled.shape[1]), 0, dtype=np.float32)
-
   
             img_white[img_white>20] = 255
             img_mask = img_black
@@ -357,7 +412,6 @@ class VideoManager():
                                     (256 - mask_border-int(self.mask_right), 256-mask_border-int(self.mask_bottom)), (255, 255, 255), -1)    
             img_mask = cv2.GaussianBlur(img_mask, (self.mask_blur*2+1,self.mask_blur*2+1), 0)    
             img_mask /= 255
-
 
             if not self.fake_diff_state:
                 img_mask_0 = np.reshape(img_mask, [img_mask.shape[0],img_mask.shape[1],1])
@@ -401,9 +455,7 @@ class VideoManager():
             fake_merged = fake_merged + (1-img_mask) * target_img.astype(np.float32)
             fake_merged = fake_merged.astype(np.uint8)   
             # cv2.imwrite("test.jpg", fake_merged)
-        return fake_merged   
-     
-
+        return fake_merged    
         
     def set_GFPGAN_model(self, model):
         self.GFPGAN_model = model
@@ -413,3 +465,4 @@ class VideoManager():
         
     def toggle_fake_diff(self, state):
         self.fake_diff_state = state
+        

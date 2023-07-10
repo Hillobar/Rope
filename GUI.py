@@ -13,8 +13,7 @@ class GUI(tk.Tk):
         super().__init__()
         # Adding a title to the self
         self.title("Test Application")
-        
-        
+
         self.source_faces = []
         self.found_faces = []
         self.target_videos = []
@@ -56,7 +55,7 @@ class GUI(tk.Tk):
         self.video_play = tk.Button( self.video_button_canvas, bg='grey50', text="Play", command=lambda: self.toggle_play_video())
         self.video_play.place(x=5, y=5, width = 33, height = 33)    
      
-        # Video Stop
+        # Video Swap
         self.video_stop = tk.Button( self.video_button_canvas, bg='grey50', text="Swap", command=lambda: self.toggle_swapper())
         self.video_stop.place(x=40, y=5, width = 33, height = 33)   
                
@@ -84,7 +83,7 @@ class GUI(tk.Tk):
         self.found_faces_buttons_canvas.grid( row = 0, column = 0, sticky='NEWS')
         
         # Faces Load
-        self.found_faces_load_button = tk.Button(self.found_faces_buttons_canvas, bg='grey75', text="Find Faces in current frame", command=lambda: self.add_action("find_faces", "current"))
+        self.found_faces_load_button = tk.Button(self.found_faces_buttons_canvas, bg='grey75', text="Find faces", command=lambda: self.add_action("find_faces", "current"))
         self.found_faces_load_button.place(x=5, y=5, width = 120, height = 20)        
         
         # Faces Clear
@@ -128,9 +127,7 @@ class GUI(tk.Tk):
         self.source_faces_scrollbar = tk.Scrollbar( self.source_faces_frame, orient="horizontal", command = self.source_faces_canvas.xview )
         self.source_faces_scrollbar.grid( row = 1, column = 0, columnspan = 2, sticky='NEWS')
         self.source_faces_canvas.configure( xscrollcommand = self.source_faces_scrollbar.set )
-        
-        
-        
+
         # Target Video frame [3,0]
         self.target_videos_frame = tk.Frame( self, bg='grey20')
         self.target_videos_frame.grid( row = 3, column = 0, sticky='NEWS', pady = 2 )
@@ -158,11 +155,7 @@ class GUI(tk.Tk):
         self.target_video_scrollbar = tk.Scrollbar( self.target_videos_frame, orient="horizontal", command = self.target_video_canvas.xview )
         self.target_video_scrollbar.grid( row = 1, column = 0, columnspan = 2, sticky='NEWS')
         self.target_video_canvas.configure( xscrollcommand = self.target_video_scrollbar.set )
-        
-        
-        
 
-        
         # Options [4,0]
         self.options_frame = tk.Frame( self, bg='grey20', height = 128)
         self.options_frame.grid( row = 4, column = 0, sticky='NEWS', pady = 5 )
@@ -177,68 +170,74 @@ class GUI(tk.Tk):
         self.options_frame_canvas1.grid( row = 0, column = 0, sticky='NEWS', pady = 5 )
         
         # Label Frame 1
-        self.label_frame1 = tk.LabelFrame( self.options_frame_canvas1, height = 100, width = 200, bg='grey50' )
+        self.label_frame1 = tk.LabelFrame( self.options_frame_canvas1, height = 100, width = 165, bg='grey50' )
         self.label_frame1.place(x=5, y=5)
         
-        self.gfpgan_checkbox = tk.Checkbutton(self.label_frame1, text='GFPGAN',variable=self.GFPGAN_int, bg='grey75', onvalue=True, offvalue=False, command=lambda: self.send_action_and_update_frame("gfpgan_checkbox", self.GFPGAN_int.get()))
+        self.gfpgan_checkbox = tk.Checkbutton(self.label_frame1, text='GFPGAN',variable=self.GFPGAN_int, bg='grey75', onvalue=True, offvalue=False, command=lambda: self.add_action_and_update_frame("gfpgan_checkbox", self.GFPGAN_int.get()))
         self.gfpgan_checkbox.place(x=5, y=5)
-        
-        
-        self.GFPGAN_blend = tk.Spinbox( self.label_frame1, from_=0, to=100, increment = 5, width = 5 ,bd = 4, command=lambda :self.send_action_and_update_frame("GFPGAN_blend",self.GFPGAN_blend.get()  ))
+
+        self.GFPGAN_blend = tk.Spinbox( self.label_frame1, from_=0, to=100, increment = 5, width = 5 ,bd = 4, command=lambda :self.add_action_and_update_frame("GFPGAN_blend",self.GFPGAN_blend.get()  ))
         self.GFPGAN_blend.place(x=100, y=5)
-        self.GFPGAN_blend.insert(0,10)
+        self.GFPGAN_blend.insert(0,5)
         
-        self.fake_diff_checkbox = tk.Checkbutton(self.label_frame1, text='Diffing',variable=self.fake_diff_int, bg='grey75', onvalue=True, offvalue=False, command=lambda: self.send_action_and_update_frame("fake_diff_checkbox", self.fake_diff_int.get()))
+        self.fake_diff_checkbox = tk.Checkbutton(self.label_frame1, text='Diffing',variable=self.fake_diff_int, bg='grey75', onvalue=True, offvalue=False, command=lambda: self.add_action_and_update_frame("fake_diff_checkbox", self.fake_diff_int.get()))
         self.fake_diff_checkbox.place(x=5, y=40)
         
-        self.fake_diff_blend = tk.Spinbox( self.label_frame1, from_=0, to=255, increment = 1, width = 5 ,bd = 4, command=lambda :self.send_action_and_update_frame("fake_diff_blend",self.fake_diff_blend.get()  ))
+        self.fake_diff_blend = tk.Spinbox( self.label_frame1, from_=0, to=255, increment = 1, width = 5 ,bd = 4, command=lambda :self.add_action_and_update_frame("fake_diff_blend",self.fake_diff_blend.get()  ))
         self.fake_diff_blend.place(x=100, y=40)
         # self.fake_diff_blend.set(255)
-        
-        self.blur_scrollbar = tk.Scale( self.label_frame1, orient="horizontal", showvalue=0, length = 175, command=lambda i: self.send_action_and_update_frame("blur",int(i)) )
-        self.blur_scrollbar.place(x=5, y=70)
-        # # blends
-        # self.blends_label_frame = tk.LabelFrame( self.options_frame_canvas1, text="blending", height = 100, width = 100, bg='grey50')
-        # self.blends_label_frame.place(x=100, y=5)
-        
 
+        self.label_frame2 = tk.LabelFrame( self.options_frame_canvas1, height = 100, width = 155, bg='grey50' )
+        self.label_frame2.place(x=170, y=5)
         
-        # self.options_scrollbar = tk.Scale( self.blends_label_frame, orient="horizontal", showvalue=0, bg='grey50' ,command=lambda i :self.send_var() )
-        # self.options_scrollbar.place(x=5, y=5)
-        
-        self.label_frame2 = tk.LabelFrame( self.options_frame_canvas1, height = 100, width = 125, bg='grey50' )
-        self.label_frame2.place(x=205, y=5)
-      
-
-        
-        self.top_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4,  command=lambda : self.send_action_and_update_frame("top_blend", self.top_blend_scrollbar.get()) )
+        var = tk.IntVar(value=8)
+        self.top_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda : self.add_action_and_update_frame("top_blend", self.top_blend_scrollbar.get()) )
         self.top_blend_scrollbar.place(x=30, y=5)
         
-        self.bottom_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4,  command=lambda : self.send_action_and_update_frame("bottom_blend",self.bottom_blend_scrollbar.get() ))
+        var = tk.IntVar(value=8)
+        self.bottom_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var,  command=lambda : self.add_action_and_update_frame("bottom_blend",self.bottom_blend_scrollbar.get() ))
         self.bottom_blend_scrollbar.place(x=30, y=65)
         
-        self.left_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4,  command=lambda : self.send_action_and_update_frame("left_blend",self.left_blend_scrollbar.get() ))
+        var = tk.IntVar(value=8)
+        self.left_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var,  command=lambda : self.add_action_and_update_frame("left_blend",self.left_blend_scrollbar.get() ))
         self.left_blend_scrollbar.place(x=5, y=35)
         
-        self.right_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4,  command=lambda : self.send_action_and_update_frame("right_blend",self.right_blend_scrollbar.get() ))
+        var = tk.IntVar(value=8)
+        self.right_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var,  command=lambda : self.add_action_and_update_frame("right_blend",self.right_blend_scrollbar.get() ))
         self.right_blend_scrollbar.place(x=60, y=35)
-       
+        
+        var = tk.IntVar(value=20)
+        self.blur_scrollbar = tk.Scale( self.label_frame2, orient="vertical", showvalue=0, length = 80, command=lambda i: self.add_action_and_update_frame("blur",int(i)) )
+        self.blur_scrollbar.place(x=120, y=5)
+        self.blur_scrollbar.set(20)
+        
+        self.label_frame3 = tk.LabelFrame( self.options_frame_canvas1, height = 100, width = 155, bg='grey50' )
+        self.label_frame3.place(x=325, y=5)
+        
+        var = tk.IntVar(value=10)
+        self.num_threads = tk.Spinbox( self.label_frame3, from_=0, to=20, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action("num_threads",int(self.num_threads.get())))
+        self.num_threads.place(x=5, y=5)
+ 
+        var = tk.DoubleVar(value=0.85)
+        self.face_thresh = tk.Spinbox( self.label_frame3, from_=0, to=1, increment = 0.01, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action_and_update_frame("face_thresh",float(self.face_thresh.get())))
+        self.face_thresh.place(x=5, y=30)
+
        # Right Canvas
         self.options_frame_canvas2 = tk.Canvas( self.options_frame, height = 40, bg='grey50' )
         self.options_frame_canvas2.grid( row = 0, column = 1, sticky='NEWS', pady = 5 )
         
-
-
         # Source Videos Filepath
         self.video_filepath_button = tk.Button(self.options_frame_canvas2, bg='grey75', text="Set Video path", command=lambda: self.select_video_path())
         self.video_filepath_button.place(x=5, y=5, width = 120, height = 20)   
         
         # Source Faces Filepath
         self.faces_filepath_button = tk.Button(self.options_frame_canvas2, bg='grey75', text="Set Faces path", command=lambda: self.select_faces_path())
-        self.faces_filepath_button.place(x=5, y=40, width = 120, height = 20)       
-        
-        
-        
+        self.faces_filepath_button.place(x=5, y=40, width = 120, height = 20)     
+
+        # Create Video
+        self.create_video_button = tk.Button(self.options_frame_canvas2, bg='grey75', text="Create video", command=lambda: self.add_action("create_video", None))
+        self.create_video_button.place(x=5, y=75, width = 120, height = 20)         
+
     def initialize_gui( self ):
         self.geometry("800x800")
         self.title("roop")
@@ -251,7 +250,15 @@ class GUI(tk.Tk):
         self.grid_rowconfigure(1, weight = 0)  
         self.grid_rowconfigure(2, weight = 0)  
         self.grid_rowconfigure(3, weight = 0)
-        self.grid_rowconfigure(4, weight = 0)       
+        self.grid_rowconfigure(4, weight = 0)     
+
+        self.add_action("num_threads", int(self.num_threads.get()))
+        self.add_action("face_thresh", float(self.face_thresh.get()))
+        self.add_action("top_blend", self.top_blend_scrollbar.get())
+        self.add_action("bottom_blend",self.bottom_blend_scrollbar.get() )
+        self.add_action("left_blend",self.left_blend_scrollbar.get() )
+        self.add_action("right_blend",self.right_blend_scrollbar.get() )
+        self.add_action("blur",self.blur_scrollbar.get())
 
         try:
             self.save_file = open("data.json", "r")
@@ -264,10 +271,6 @@ class GUI(tk.Tk):
                 json_object = json.load(openfile)
             self.json_dict["source videos"] = json_object["source videos"]
             self.json_dict["source faces"] = json_object["source faces"]
-            
-   
-        
-
 
     def select_video_path(self):
          
@@ -284,6 +287,10 @@ class GUI(tk.Tk):
             json.dump(self.json_dict, outfile)
             
     def populate_faces_canvas(self):
+        self.source_faces_buttons = []
+        self.source_faces = []    
+        self.source_faces_canvas.delete("all")
+
         directory = self.json_dict["source faces"]
 
         if directory == None:
@@ -404,8 +411,7 @@ class GUI(tk.Tk):
                 self.found_faces_canvas.create_window((prev_len+i)*100,0, window = self.found_faces_buttons[prev_len+i][0],anchor=tk.SW)            
 
             self.found_faces_canvas.configure(scrollregion = self.found_faces_canvas.bbox("all")) 
-
-            
+         
     def clear_faces(self):
         self.found_faces_buttons = []
         self.found_faces = []    
@@ -433,10 +439,8 @@ class GUI(tk.Tk):
             self.found_faces_buttons[button][0].config(compound = tk.NONE)
             
         #send over assignments
-        self.add_action("found_assignments", self.found_faces_assignments)
-        self.add_action("set_video_position", self.video_slider.get())
+        self.add_action_and_update_frame("found_assignments", self.found_faces_assignments)
 
-   
     def toggle_source_faces_buttons_state(self, button):  
         self.source_faces_buttons[button][1] = not self.source_faces_buttons[button][1]
         if self.source_faces_buttons[button][1] == True:
@@ -451,16 +455,14 @@ class GUI(tk.Tk):
                 self.source_faces_buttons[i][0].config(compound = tk.NONE)
             else:
                 self.source_faces_buttons[button][0].config(compound = tk.BOTTOM) 
-        
     
-            
-            
-            
-            
-        
     def populate_target_videos(self):
+        self.target_videos_buttons = []
+        self.target_videos = []    
+        self.target_video_canvas.delete("all")
+
         directory =  self.json_dict["source videos"]
-        
+
         filenames = os.listdir(directory)
         
         videos = []
@@ -471,6 +473,7 @@ class GUI(tk.Tk):
         for name in filenames: #should check if is an image
             video_file = os.path.join(directory, name)
             vidcap = cv2.VideoCapture(video_file)
+            vidcap.set(cv2.CAP_PROP_POS_FRAMES, 100)
             success, image = vidcap.read()
             if success:
                 crop = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)            
@@ -489,13 +492,6 @@ class GUI(tk.Tk):
             self.target_video_canvas.create_window(i*100,0, window = self.target_videos_buttons[i],anchor=tk.SW)
             
         self.target_video_canvas.configure(scrollregion = self.target_video_canvas.bbox("all"))
-         
-
-  
-
-
-        
-            
 
     def set_image(self, image, requested):
         self.video_image = image[0]
@@ -530,17 +526,11 @@ class GUI(tk.Tk):
             padding = int(padding)
             image = cv2.copyMakeBorder( image, 0, 0, padding, padding, cv2.BORDER_CONSTANT) 
 
-        
         #image = cv2.resize(image, (int(x1), int(y1)))
         image = Image.fromarray(image)  
         image = ImageTk.PhotoImage(image)
         self.video.configure(image=image)
         self.video.image = image
-        
-
-        
-
-        
 
     def check_for_video_resize(self):
         if self.x1 != self.video.winfo_width() or self.y1 != self.video.winfo_height():
@@ -548,11 +538,7 @@ class GUI(tk.Tk):
             self.y1 = self.video.winfo_height()
             if np.any(self.video_image):
                 self.display_image_in_video_frame()
-        
-
-        
-
-        
+   
     def get_action(self):
         action = self.action_q[0]
         self.action_q.pop(0)
@@ -560,21 +546,17 @@ class GUI(tk.Tk):
         
     def get_action_length(self):
         return len(self.action_q)
-    
-   
-            
+      
     def add_action(self, action, param):
         temp = [action, param]
         self.action_q.append(temp)
         
     def set_video_slider_length(self, video_length):
         self.video_slider.configure(to=video_length)
-        
- 
+
     def set_slider_position(self, position):
         self.video_slider.set(position)
-
-        
+   
     def findCosineDistance(self, vector1, vector2):
 
         vec1 = vector1.flatten()
@@ -604,11 +586,13 @@ class GUI(tk.Tk):
     def toggle_play_video(self):
         self.play_video = not self.play_video
         self.add_action("play_video", self.play_video)
-    
+
     def toggle_swapper(self):
         self.swap = not self.swap
-        self.add_action("swap", self.swap)
-        self.add_action("set_video_position", self.video_slider.get())
+        if not self.play_video:
+            self.add_action_and_update_frame("swap", self.swap)
+        else:
+            self.add_action("swap", self.swap)
         
     def set_faceapp_model(self, faceapp):
         self.faceapp_model = faceapp
@@ -617,7 +601,11 @@ class GUI(tk.Tk):
         self.add_action("variable", self.options_scrollbar.get())
         self.add_action("set_video_position", self.video_slider.get())
         
-    def send_action_and_update_frame(self, action, parameter):
+    def add_action_and_update_frame(self, action, parameter):
         self.add_action(action, parameter)
-        self.add_action("set_video_position", self.video_slider.get())    
+        self.add_action("set_video_position", self.video_slider.get())   
+
+
+
+        
         
