@@ -1,0 +1,18 @@
+--extra-index-url https://download.pytorch.org/whl/cu117
+
+numpy==1.23.5
+opencv-python==4.7.0.72
+onnx==1.14.0
+insightface==0.7.3
+psutil==5.9.5
+tk==0.1.0
+pillow==9.5.0
+onnxruntime==1.15.0; sys_platform == 'darwin'
+onnxruntime-gpu==1.15.0; sys_platform != 'darwin'
+tensorflow==2.13.0rc1; sys_platform == 'darwin'
+tensorflow==2.12.0; sys_platform != 'darwin'
+protobuf==4.23.2
+torch==2.0.1+cu117
+termcolor
+
+
