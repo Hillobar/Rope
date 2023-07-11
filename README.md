@@ -44,4 +44,16 @@ To use:
 * Select a targeted Found Face
   * Found Face will show assignment number to Source Face number
   * Toggle the targeted Found Face to unselect
-*  
+* Continue to select other Source Faces and assign them to Found Faces
+* Toggle Swap (loads the model the first time)
+* Toggle GFPGAN
+* Modify the boundaries and boundary blending (affects all faces)
+* Change # threads to match your GPU memory (24GB ~9 threads with GFPGAN on, more threads w/o GFPGAN)
+ * Start with the lowest you think will run and watch your GPU memory.
+ * Once you allocate memory by increasing # threads, you can't un-allocate it by reducing # threads. You will need to restart Rope.
+* Create Videos with the curent settings. Wait for the audio to be added and the final video to be re-encoded
+* Reduce Face matching if you see some of your assignments switching to other faces. (finicky)
+* In general, always stop the video before changing anything. Otherwise, it will likely bork.
+* If it does bork, reload the video (reclick on it). If that doesn't work you'll need to restart
+* 
+  
