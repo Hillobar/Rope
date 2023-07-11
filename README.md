@@ -19,6 +19,16 @@ Rope is a personal project that I'm making available to the community as a thank
 * Create videos with current settings
 * Created videos add audio and compress file size
 
+### Install: ###
+Note: It's only configured for CUDA (Nvidia)
+* Set up a local venv
+* Place GFPGANv1.4.onnx and inswapper_128.onnx in the root directory
+* If you're already set up for roop, you probably don't need to do the next steps:
+  * Install CUDA Toolkit 11.8
+  * Install dependencies:
+  * pip uninstall onnxruntime onnxruntime-gpu
+  * pip install onnxruntime-gpu==1.15.1
+
 ### GUI: ###
 ![Rope](https://github.com/Hillobar/Rope/assets/63615199/d4120e5d-6fd4-4c01-88ac-e236d0379832)
 
@@ -47,8 +57,8 @@ Rope is a personal project that I'm making available to the community as a thank
 * Toggle GFPGAN
 * Modify the boundaries and boundary blending (affects all faces)
 * Change # threads to match your GPU memory (24GB ~9 threads with GFPGAN on, more threads w/o GFPGAN)
- * Start with the lowest you think will run and watch your GPU memory.
- * Once you allocate memory by increasing # threads, you can't un-allocate it by reducing # threads. You will need to restart Rope.
+  * Start with the lowest you think will run and watch your GPU memory.
+  * Once you allocate memory by increasing # threads, you can't un-allocate it by reducing # threads. You will need to restart Rope.
 * Create Videos with the curent settings. Wait for the audio to be added and the final video to be re-encoded
 * Reduce Face matching if you see some of your assignments switching to other faces. (finicky)
 * In general, always stop the video before changing anything. Otherwise, it will likely bork.
