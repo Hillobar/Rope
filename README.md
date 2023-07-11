@@ -22,6 +22,7 @@ Rope is a personal project that I'm making available to the community as a thank
 ### Install: ###
 Note: It's only configured for CUDA (Nvidia)
 * Set up a local venv
+* Install requirements
 * Place GFPGANv1.4.onnx and inswapper_128.onnx in the root directory
 * If you're already set up for roop, you probably don't need to do the next steps:
   * Install CUDA Toolkit 11.8
