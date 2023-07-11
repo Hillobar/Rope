@@ -31,7 +31,8 @@ Note: It's only configured for CUDA (Nvidia)
   * pip install onnxruntime-gpu==1.15.1
 
 ### GUI: ###
-![Rope](https://github.com/Hillobar/Rope/assets/63615199/d4120e5d-6fd4-4c01-88ac-e236d0379832)
+![Rope](https://github.com/Hillobar/Rope/assets/63615199/bbb60010-0e36-40f3-9069-638d45a07515)
+
 
 ### To use: ###
 * Create your Video and Faces folders, add stuff, and Set them
