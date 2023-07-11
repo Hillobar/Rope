@@ -35,6 +35,7 @@ Note: It's only configured for CUDA (Nvidia)
 
 
 ### To use: ###
+* Run Rope_v3.bat
 * Create your Video and Faces folders, add stuff, and Set them
   * Only places videos or images in the respective folders. Other files my bork it
   * Rope creates a JSON file to remember your last set paths
