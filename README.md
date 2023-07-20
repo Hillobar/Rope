@@ -22,6 +22,12 @@ Rope is a personal project that I'm making available to the community as a thank
 * Create videos with current settings
 * Created videos add audio and compress file size
 
+### Upcoming changes: ###
+* Modified inswapper.onnx file to be faster (13 ms -> 9 ms per swap on my 3090)
+* Added txt2mask to specify masked and unmasked areas on and around the face
+* Updated GUI
+* Updated the video creation logic to fix a bug 
+
 ### Install: ###
 Note: It's only configured for CUDA (Nvidia)
 * Set up a local venv
