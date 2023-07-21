@@ -4,7 +4,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 ### Discord link: ###
 [Discord](https://discord.gg/HAKNAxZT)
 
-### Upcoming changes: ###
+### Upcoming changes (Will release 7/22): ###
 * Modified inswapper.onnx file to be faster (13 ms -> 9 ms per swap on my 3090)
 * Added txt2mask to specify masked and unmasked areas on and around the face
 * Record button - press record and anything that you play is recorded to a video file (good for just capturing segments)
