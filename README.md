@@ -20,7 +20,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 ![Screenshot 2023-07-21 145531](https://github.com/Hillobar/Rope/assets/63615199/fe9f88cf-4d29-4b24-adc1-e2e2a4b876a2)
 
 ### Disclaimer: ###
-Rope is a personal project that I'm making available to the community as a thank you for all of the ocntributors ahead of me. I don't have time to troubleshoot or add requested features, so it is provided as-is. Don't look at this code for example of good coding practices. I am primarily focused on performance and my specific use cases. There are plenty of ways to bork the workflow. Please see how to use below.
+Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me. I don't have time to troubleshoot or add requested features, so it is provided as-is. Don't look at this code for example of good coding practices. I am primarily focused on performance and my specific use cases. There are plenty of ways to bork the workflow. Please see how to use below.
 
 ### Features: ###
 * Real-time video player
