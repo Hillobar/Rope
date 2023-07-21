@@ -10,6 +10,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Record button - press record and anything that you play is recorded to a video file (good for just capturing segments)
 * Updated GUI
 * Updated the video creation logic to fix a bug
+* Bug: fixed bad colors in skin and GFPGAN 
   
 ### Disclaimer: ###
 Rope is a personal project that I'm making available to the community as a thank you for all of the ocntributors ahead of me. I don't have time to troubleshoot or add requested features, so it is provided as-is. Don't look at this code for example of good coding practices. I am primarily focused on performance and my specific use cases. There are plenty of ways to bork the workflow. Please see how to use below.
