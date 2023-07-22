@@ -5,6 +5,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 [Discord](https://discord.gg/HAKNAxZT)
 
 ### Changes: ###
+I suggest a fresh reinstall, since some of the filenames have changed. I updated the installation instructions below...
 * Modified inswapper.onnx file to be faster (13 ms -> 9 ms per swap on my 3090)
 * Added CLIP (txt2mask) to specify masked and unmasked areas on and around the face
 * Record button - press record and anything that you play is recorded to a video file (good for just capturing segments)
@@ -45,7 +46,7 @@ Note: It's only configured for CUDA (Nvidia)
   * .\venv\Scripts\activate
 * Install requirements
   * .\venv\Scripts\pip.exe install -r .\requirements.txt
-* Place [GFPGANv1.4.onnx](https://github.com/Hillobar/Rope/releases/download/Model_files/GFPGANv1.4.onnx)  and [inswapper_128_fp16.onnx]() in the root directory
+* Place [GFPGANv1.4.onnx](https://github.com/Hillobar/Rope/releases/download/v1.0/GFPGANv1.4.onnx)  and [inswapper_128_fp16.onnx](https://github.com/Hillobar/Rope/releases/download/v1.0/inswapper_128.fp16.onnx) in the root directory
 * Do this if you've never installed roop or Rope (or any other onnx runtimes):
   * Install CUDA Toolkit 11.8
   * Install dependencies:
