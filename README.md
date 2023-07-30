@@ -2,7 +2,7 @@
 Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### Discord link: ###
-[Discord](https://discord.gg/HAKNAxZT)
+[Discord](https://discord.gg/5CxhgRKBdN)
 
 ### Changes: ###
 I suggest a fresh reinstall, since some of the filenames have changed. I updated the installation instructions below. Please note that there is a new onnx file...
