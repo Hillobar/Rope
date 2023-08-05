@@ -1,24 +1,22 @@
+![Screenshot 2023-08-04 212706](https://github.com/Hillobar/Rope/assets/63615199/114b4073-9a25-42cc-844d-1afc3625907b)
+
 # Rope
 Rope implements the insightface inswapper_128 model with a helpful GUI.
-
 ### Discord link: ###
 [Discord](https://discord.gg/5CxhgRKBdN)
 
-### Changes: ###
-I suggest a fresh reinstall, since some of the filenames have changed. I updated the installation instructions below. Please note that there is a new onnx file...
-* Modified inswapper.onnx file to be faster (13 ms -> 9 ms per swap on my 3090)
-* Added CLIP (txt2mask) to specify masked and unmasked areas on and around the face
-* Record button - press record and anything that you play is recorded to a video file (good for just capturing segments)
-* Specify the output video directory
-* Updated GUI
-* Updated the video creation logic to fix a bug
-* Fixed bad colors in skin and GFPGAN
+### Upcoming changes for Rope - Space Worm: ###
+* Updated recording to use Target Video parameters (audio/video, keep the same quality as the original file)
+* Mousewheel scroll on the time bar to control frame position
+* Added an occluder model (experimental, very fast)
+* Greatly increased performance for larger videos/multiple faces
+* CLIP crashing fixed. Add as many words as you like!
+* Detachable video preview
+* Fixed most bugs related to changing options while playing. Adjust setting on the fly!
+* GFPGAN now renders up to 512x512
 
 ### Preview: ###
-![Screenshot 2023-07-22 143839](https://github.com/Hillobar/Rope/assets/63615199/5a987ed6-66fd-441f-b6c1-4c6e1f12f34b)
-
-### New CLIP feature: ###
-![Screenshot 2023-07-21 145531](https://github.com/Hillobar/Rope/assets/63615199/fe9f88cf-4d29-4b24-adc1-e2e2a4b876a2)
+in-progress
 
 ### Disclaimer: ###
 Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me. I don't have time to troubleshoot or add requested features, so it is provided as-is. Don't look at this code for example of good coding practices. I am primarily focused on performance and my specific use cases. There are plenty of ways to bork the workflow. Please see how to use below.
