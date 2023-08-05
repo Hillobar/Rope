@@ -5,8 +5,14 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 ### Discord link: ###
 [Discord](https://discord.gg/5CxhgRKBdN)
 
-### Upcoming changes for Rope - Space Worm: ###
-* Updated recording to use Target Video parameters (audio/video, keep the same quality as the original file)
+### Features: ###
+* Ugly GUI, but incredible features and fast workflow
+* Fastest face swapper available
+* Real-time video player
+* Occlusion functions
+
+### Changes for Rope - Space Worm: ###
+* Updated video rendering to use Target Video parameters
 * Mousewheel scroll on the time bar to control frame position
 * Added an occluder model (experimental, very fast)
 * Greatly increased performance for larger videos/multiple faces
@@ -14,28 +20,21 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Detachable video preview
 * Fixed most bugs related to changing options while playing. Adjust setting on the fly!
 * GFPGAN now renders up to 512x512
+* Status bar (still adding features to this)
+
+### Known bugs: ### 
+* Stop video playback before loading a new video, or bork
 
 ### Preview: ###
-in-progress
+![Screenshot 2023-08-05 154156](https://github.com/Hillobar/Rope/assets/63615199/921698ab-af0e-43ca-b669-a2b2537d5c0f)
+### Getting Started: ###
+![Screenshot 2023-08-05 152851](https://github.com/Hillobar/Rope/assets/63615199/68b4ec4e-615f-4fd6-9215-f5a2ae8314b4)
+### Features: ###
+![Screenshot 2023-08-05 152835](https://github.com/Hillobar/Rope/assets/63615199/4e64237e-7d0f-4a83-a738-64b0df206766)
 
 ### Disclaimer: ###
 Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me. I don't have time to troubleshoot or add requested features, so it is provided as-is. Don't look at this code for example of good coding practices. I am primarily focused on performance and my specific use cases. There are plenty of ways to bork the workflow. Please see how to use below.
 
-### Features: ###
-* Real-time video player
-* Optimized model paths (runs >30fps with GFPGAN on 3090Ti)
-* Resizeable window
-* Load, view, and select Source Videos and Source Faces from specified folders
-* Identify Target Faces from current frame
-* Map multiple Source Faces to mutiple Target Faces
-* GFPGAN with blending
-* Diffing with blending
-* Adjust Face boudaries to match Source and Target Faces, with blending
-* Set threads
-* Set face matching threshhold
-* Create videos with current settings
-* Created videos add audio and compress file size
-  
 ### Install: ###
 Note: It's only configured for CUDA (Nvidia)
 * Set up a local venv
@@ -44,7 +43,7 @@ Note: It's only configured for CUDA (Nvidia)
   * .\venv\Scripts\activate
 * Install requirements
   * .\venv\Scripts\pip.exe install -r .\requirements.txt
-* Place [GFPGANv1.4.onnx](https://github.com/Hillobar/Rope/releases/download/v1.0/GFPGANv1.4.onnx)  and [inswapper_128_fp16.onnx](https://github.com/Hillobar/Rope/releases/download/v1.0/inswapper_128.fp16.onnx) in the root directory
+* Place [GFPGANv1.4.onnx](https://github.com/Hillobar/Rope/releases/download/Space_Worm/GFPGANv1.4.onnx), [inswapper_128_fp16.onnx](https://github.com/Hillobar/Rope/releases/download/Space_Worm/inswapper_128.fp16.onnx), and [occluder.ckpt](https://github.com/Hillobar/Rope/releases/download/Space_Worm/occluder.ckpt) in the root directory
 * Do this if you've never installed roop or Rope (or any other onnx runtimes):
   * Install CUDA Toolkit 11.8
   * Install dependencies:
@@ -76,9 +75,9 @@ Note: It's only configured for CUDA (Nvidia)
   * Click PLAY to start recording using the current settings
   * Click PLAY again to stop recording, otherwise it will record to the end of the Target Video
 * Toggle GFPGAN, adjust blending amount
-* Toggle Diffing, adjust blending maount
+* Toggle Diffing, adjust blending amount
 * Lower the threshhold if you have multiple Source Faces assigned and they are jumping around. You can also try Clearing and Finding new Target Faces (disable SWAP first)
-* Modify the Masking boudaries
+* Modify the Masking boundaries
 * Use CLIP to identify objects to swap or not swap (e.g Pos: face, head; Neg: hair, hand), adjust the gain of the words, and set the blur amount around the items
 * Change # threads to match your GPU memory (24GB ~9 threads with GFPGAN on, more threads w/o GFPGAN)
   * Start with the lowest you think will run and watch your GPU memory.
