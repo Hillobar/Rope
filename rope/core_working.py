@@ -5,12 +5,16 @@ import time
 import rope.GUI as GUI
 import rope.VideoManager as VM
 
-import insightface
+from insightface.app import FaceAnalysis
 import onnxruntime
 import onnx
 
 import torch
 from models.clipseg import CLIPDensePredT
+
+import segmentation_models_pytorch as smp
+from collections import OrderedDict
+from torchvision import transforms
 
 
 
@@ -42,7 +46,7 @@ def coordinator():
     if len(action) > 0:
         if action[0][0] == "load_target_video":
             vm.load_target_video(action[0][1])
-            gui.set_slider_position(0)
+            #gui.set_slider_position(0)
             action.pop(0)
         elif action[0][0] == "play_video":
             vm.play_video(action[0][1])
@@ -82,10 +86,8 @@ def coordinator():
             action.pop(0)
         elif action[0][0] == "left_blend":
             vm.mask_left = action[0][1]
-            action.pop(0)
-        elif action[0][0] == "right_blend":
             vm.mask_right = action[0][1]
-            action.pop(0)  
+            action.pop(0)
         elif action[0][0] == "blur":
             vm.mask_blur = int(action[0][1])
             action.pop(0)    
@@ -95,9 +97,6 @@ def coordinator():
         elif action [0][0] == "fake_diff_blend":
             vm.fake_diff_blend = action[0][1]
             action.pop(0)           
-        # elif action [0][0] == "create_video":
-            # vm.create_video = True
-            # action.pop(0)           
         elif action [0][0] == "num_threads":
             vm.num_threads = action[0][1]
             action.pop(0)         
@@ -121,19 +120,38 @@ def coordinator():
             action.pop(0) 
         elif action [0][0] == "CLIP_blur":
             vm.CLIP_blur = int(action[0][1])
-            action.pop(0)           
+            action.pop(0)   
+        elif action [0][0] == "toggle_occluder":
+            vm.occluder = int(action[0][1])
+            action.pop(0) 
+        elif action [0][0] == "occluder_blur":
+            vm.occluder_blur = int(action[0][1])
+            action.pop(0) 
+        elif action [0][0] == "occluder_limit":
+            vm.occluder_limit = int(action[0][1])
+            action.pop(0)  
+        
           
         elif action [0][0] == "load_models":
+            gui.set_status("loading GFPGAN...")
             GFPGAN_session = load_GFPGAN_model()
             vm.set_GFPGAN_model(GFPGAN_session)
+            gui.set_status("loading Swapper...")
             swapper, emap = load_swapper_model()
             vm.set_swapper_model(swapper, emap)
+            gui.set_status("loading Faceapp...")
             faceapp = load_faceapp_model() 
             gui.set_faceapp_model(faceapp)
             vm.set_faceapp_model(faceapp)  
+            gui.set_status("loading txt2CLIP...")
             vm.clip_session, vm.cuda_device = load_clip_model()
+            gui.set_status("loading Occuluder...")
+            vm.occluder_model, vm.occluder_tensor = load_occluder_model()
+            gui.set_status("loading Target Videos...")
             gui.populate_target_videos()
+            gui.set_status("loading Source Faces...")
             gui.populate_faces_canvas()
+            gui.set_status("Done...")
             action.pop(0)    
 
             
@@ -145,6 +163,10 @@ def coordinator():
         elif action[0][0] == "set_slider_length":
             gui.set_video_slider_length(action[0][1])
             action.pop(0)
+  
+        elif action[0][0] == "send_msg":    
+            gui.set_status(action[0][1])
+            action.pop(0) 
             
         else:
             print("Action not found: "+action[0][0]+" "+str(action[0][1]))
@@ -154,14 +176,12 @@ def coordinator():
   
 
     gui.check_for_video_resize()
-###########################    
     vm.process()
-###########################    
-    # gui.process()
     gui.after(1, coordinator)
-    # print(time.time() - start)     
+    # print(time.time() - start)    
+    
 def load_faceapp_model():
-    app = insightface.app.FaceAnalysis(name='buffalo_l')
+    app = FaceAnalysis(name='buffalo_l')
     app.prepare(ctx_id=0, det_size=(640, 640))
     return app
 
@@ -190,6 +210,21 @@ def load_GFPGAN_model():
     global GFPGAN_session
     GFPGAN_session = onnxruntime.InferenceSession( "./GFPGANv1.4.onnx", providers=["CUDAExecutionProvider"])
     return GFPGAN_session
+    
+def load_occluder_model():            
+    to_tensor = transforms.ToTensor()
+    model = smp.Unet(encoder_name='resnet18', encoder_weights='imagenet', classes=1, activation=None)
+
+    weights = torch.load('./occluder.ckpt')
+    new_weights = OrderedDict()
+    for key in weights.keys():
+        new_key = '.'.join(key.split('.')[1:])
+        new_weights[new_key] = weights[key]
+
+    model.load_state_dict(new_weights)
+    model.to('cuda')
+    model.eval()
+    return model, to_tensor
     
 def run():
     global gui, vm, faceapp, action, frame, swapper, r_frame, GFPGAN_session, clip_session

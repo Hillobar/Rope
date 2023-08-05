@@ -32,6 +32,9 @@ class GUI(tk.Tk):
         self.fake_diff_int = tk.IntVar()
         self.CLIP_int = tk.IntVar()
         self.video_loaded = False
+        self.occluder_int = tk.IntVar()
+        self.dock = True
+        self.undock = []
 
         self.save_file = []
         self.json_dict = {"source videos":None, "source faces":None, "saved videos":None}
@@ -50,27 +53,34 @@ class GUI(tk.Tk):
         self.video.grid( row = 0, column = 0, columnspan = 3, sticky='NEWS', pady = 2 )
         
         # Video button canvas
-        self.video_button_canvas = tk.Canvas( self.video_frame, width = 110, height = 10, bg='grey50' )
+        self.video_button_canvas = tk.Canvas( self.video_frame, width = 125, height = 10, bg='grey50' )
         self.video_button_canvas.grid( row = 1, column = 0, sticky='NEWS', pady = 5)
+        
+        # Dock
+        self.video_dock = tk.Button( self.video_button_canvas, bg='grey50', text="^^", wraplength=1, command=lambda: self.toggle_dock())
+        self.video_dock.place(x=5, y=5, width = 15, height = 33)   
         
         # Video Swap
         self.video_swap = tk.Button( self.video_button_canvas, bg='grey50', text="SWP", command=lambda: self.toggle_swapper())
-        self.video_swap.place(x=5, y=5, width = 33, height = 33)   
+        self.video_swap.place(x=22, y=5, width = 33, height = 33)   
         
         # Video Play
         self.video_play = tk.Button( self.video_button_canvas, bg='grey50', text="PLY", command=lambda: self.toggle_play_video())
-        self.video_play.place(x=40, y=5, width = 33, height = 33)    
+        self.video_play.place(x=57, y=5, width = 33, height = 33)    
      
         # Video Record
         self.video_record = tk.Button( self.video_button_canvas, bg='grey50', text="REC", command=lambda: self.toggle_rec_video())
-        self.video_record.place(x=75, y=5, width = 33, height = 33)   
+        self.video_record.place(x=92, y=5, width = 33, height = 33)   
                
         # Video Slider
         self.video_slider = tk.Scale( self.video_frame, orient='horizontal', bg='grey50')
         self.video_slider.bind("<B1-Motion>", lambda event:self.add_action("set_video_position", self.video_slider.get()))
         self.video_slider.bind("<ButtonPress-1>", lambda event:self.add_action("set_video_position", self.video_slider.get()))
         self.video_slider.bind("<ButtonRelease-1>", lambda event:self.add_action("set_video_position", self.video_slider.get()))
+        self.video_slider.bind("<MouseWheel>", self.mouse_wheel)
         self.video_slider.grid( row = 1, column = 1, sticky='NEWS', pady = 5 )
+
+        
 
  ######## Found Faces           
         # Found Faces frame [1,0]
@@ -190,15 +200,16 @@ class GUI(tk.Tk):
         self.gfpgan_checkbox = tk.Checkbutton(self.label_frame1, anchor="w", text='GFPGAN',variable=self.GFPGAN_int, bg='grey75', height=1, onvalue=True, offvalue=False, command=lambda: self.add_action_and_update_frame("gfpgan_checkbox", self.GFPGAN_int.get()))
         self.gfpgan_checkbox.place(x=5, y=8, width=80, height=17)
 
-        self.GFPGAN_blend = tk.Spinbox( self.label_frame1, from_=0, to=100, increment = 5, width = 5 ,bd = 4, command=lambda :self.add_action_and_update_frame("GFPGAN_blend",self.GFPGAN_blend.get()  ))
+        var = tk.IntVar(value=100)
+        self.GFPGAN_blend = tk.Spinbox( self.label_frame1, from_=0, to=100, increment = 5, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action_and_update_frame("GFPGAN_blend",self.GFPGAN_blend.get()  ))
         self.GFPGAN_blend.place(x=100, y=5)
-        self.GFPGAN_blend.insert(0,5)
         
         # Fake_diff
         self.fake_diff_checkbox = tk.Checkbutton(self.label_frame1, anchor="w", text='Diffing',variable=self.fake_diff_int, bg='grey75', onvalue=True, offvalue=False, command=lambda: self.add_action_and_update_frame("fake_diff_checkbox", self.fake_diff_int.get()))
         self.fake_diff_checkbox.place(x=5, y=38, width=80, height=17)
         
-        self.fake_diff_blend = tk.Spinbox( self.label_frame1, from_=0, to=255, increment = 1, width = 5 ,bd = 4, command=lambda :self.add_action_and_update_frame("fake_diff_blend",self.fake_diff_blend.get()  ))
+        var = tk.IntVar(value=4)
+        self.fake_diff_blend = tk.Spinbox( self.label_frame1, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action_and_update_frame("fake_diff_blend",self.fake_diff_blend.get()  ))
         self.fake_diff_blend.place(x=100, y=35)
         
         # Face Threshhold
@@ -216,29 +227,21 @@ class GUI(tk.Tk):
         self.top_blend_id = tk.Label(self.label_frame2, anchor="w", bg='grey75', text="Mask top:")
         self.top_blend_id.place(x=5, y=8, width=60, height=17)
         
-        var = tk.IntVar(value=10)
+        var = tk.IntVar(value=20)
         self.top_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda : self.add_action_and_update_frame("top_blend", self.top_blend_scrollbar.get()) )
         self.top_blend_scrollbar.place(x=70, y=5)
-        
-        # var = tk.IntVar(value=10)
-        # self.bottom_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var,  command=lambda : self.add_action_and_update_frame("bottom_blend",self.bottom_blend_scrollbar.get() ))
-        # self.bottom_blend_scrollbar.place(x=30, y=65)
-        
+             
         self.left_blend_id = tk.Label(self.label_frame2, anchor="w", bg='grey75', text="Mask side:")
         self.left_blend_id.place(x=5, y=38, width=60, height=17)
         
-        var = tk.IntVar(value=10)
+        var = tk.IntVar(value=50)
         self.left_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var,  command=lambda : self.add_action_and_update_frame("left_blend",self.left_blend_scrollbar.get() ))
         self.left_blend_scrollbar.place(x=70, y=35)
-        
-        # var = tk.IntVar(value=8)
-        # self.right_blend_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var,  command=lambda : self.add_action_and_update_frame("right_blend",self.right_blend_scrollbar.get() ))
-        # self.right_blend_scrollbar.place(x=60, y=35)
-        
+         
         self.mask_blur_id = tk.Label(self.label_frame2, anchor="w", bg='grey75', text="Mask blur:")
         self.mask_blur_id.place(x=5, y=68, width=60, height=17)
         
-        var = tk.IntVar(value=10)
+        var = tk.IntVar(value=25)
         self.mask_blur_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=128, increment = 1, width = 5 ,bd = 4, textvariable=var,  command=lambda : self.add_action_and_update_frame("blur",self.mask_blur_scrollbar.get() ))
         self.mask_blur_scrollbar.place(x=70, y=65)
         
@@ -287,39 +290,55 @@ class GUI(tk.Tk):
         var = tk.DoubleVar(value=0.5)
         self.neg_thresh = tk.Spinbox( self.label_frame3, from_=0, to=1, increment = 0.01, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action_and_update_frame("neg_thresh",float(self.neg_thresh.get())))
         self.neg_thresh.place(x=195, y=65)
-        
 
-
-
-       
         # Label Frame 4
-        self.label_frame4 = tk.LabelFrame( self.options_frame_canvas1, height = 100, width = 210, bg='grey50' )
-        self.label_frame4.place(x=585, y=5)
+        self.label_frame4 = tk.LabelFrame( self.options_frame_canvas1, height = 100, width = 235, bg='grey50' )
+        self.label_frame4.place(x=560, y=5)
         
         # Load all
         self.create_video_button = tk.Button(self.label_frame4, bg='gold', text="Load Models", command=lambda: self.load_all())
-        self.create_video_button.place(x=5, y=5, width = 195, height = 25) 
+        self.create_video_button.place(x=5, y=5, width = 90, height = 25) 
  
         # Save Videos Filepath
-        self.save_video_filepath_button = tk.Button(self.label_frame4, bg='gold', text="Set save videos folder", wraplength=115, command=lambda: self.select_save_video_path())
-        self.save_video_filepath_button.place(x=5, y=35, width = 195, height = 25)    
+        self.save_video_filepath_button = tk.Button(self.label_frame4, bg='gold', text="Set save videos folder", wraplength=85, command=lambda: self.select_save_video_path())
+        self.save_video_filepath_button.place(x=5, y=35, width = 90, height = 60)    
 
         # Threads
         var = tk.IntVar(value=5)
         self.num_threads = tk.Spinbox( self.label_frame4, from_=0, to=20, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action("num_threads",int(self.num_threads.get())))
-        self.num_threads.place(x=75, y=65)
+        self.num_threads.place(x=155, y=5)
         
-        self.num_threads_id = tk.Label(self.label_frame4, anchor="w", bg='grey75', text="# Threads:")
-        self.num_threads_id.place(x=5, y=68, width = 65, height=17)
+        self.num_threads_id = tk.Label(self.label_frame4, anchor="w", bg='grey75', text="Threads:")
+        self.num_threads_id.place(x=100, y=8, width = 50, height=17)
 
+        self.occluder_checkbox = tk.Checkbutton(self.label_frame4, anchor="w", text='Occluder',variable=self.occluder_int, bg='grey75', onvalue=True, offvalue=False, command=lambda: self.add_action_and_update_frame("toggle_occluder", self.occluder_int.get()))
+        self.occluder_checkbox.place(x=100, y=38, height=17 )           
+
+        var = tk.IntVar(value=25)
+        self.occluder_blur = tk.Spinbox( self.label_frame4, from_=0, to=128, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action_and_update_frame("occluder_blur",int(self.occluder_blur.get())))
+        self.occluder_blur.place(x=100, y=65)
         
-       
+        var = tk.IntVar(value=5)
+        self.occluder_limit = tk.Spinbox( self.label_frame4, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action_and_update_frame("occluder_limit",int(self.occluder_limit.get())))
+        self.occluder_limit.place(x=155, y=65)
+        
+        # Status
+        self.status_frame = tk.Frame( self, bg='grey20', height = 15)
+        self.status_frame.grid( row = 5, column = 0, sticky='NEWS', pady = 2 )
+        
+        self.status_label = tk.Label(self.status_frame, fg="white", bg='grey20')
+        self.status_label.pack()
+        # self.status_label_text = tk.Label(self.status_frame, anchor="w", bg='grey75', text="Threads:")
+        # self.status_label_text.place(x=100, y=8, width = 50, height=17)    
+    
 
     def initialize_gui( self ):
-        self.geometry("800x800")
-        self.title("Rope")
+
+        self.title("Rope - Space Worm")
         self.configure(bg='grey10')
-        self.resizable(width=True, height=True)        
+        self.resizable(width=True, height=True) 
+
+        self.geometry('%dx%d+%d+%d' % (800, 1020, self.winfo_screenwidth()/2-400, self.winfo_screenheight()/2-510))
 
         self.grid_columnconfigure(0, weight = 1)  
 
@@ -327,23 +346,30 @@ class GUI(tk.Tk):
         self.grid_rowconfigure(1, weight = 0)  
         self.grid_rowconfigure(2, weight = 0)  
         self.grid_rowconfigure(3, weight = 0)
-        self.grid_rowconfigure(4, weight = 0)     
+        self.grid_rowconfigure(4, weight = 0)    
+        self.grid_rowconfigure(5, weight = 0)  
 
+
+        self.add_action("fake_diff_blend",self.fake_diff_blend.get())
         self.add_action("num_threads", int(self.num_threads.get()))
         self.add_action("face_thresh", float(self.face_thresh.get()))
         self.add_action("top_blend", self.top_blend_scrollbar.get())
         self.add_action("bottom_blend",10 )
         self.add_action("left_blend",self.left_blend_scrollbar.get() )
-        self.add_action("right_blend",self.left_blend_scrollbar.get() )
-        # self.add_action("blur",self.blur_scrollbar.get())
-        self.add_action_and_update_frame("blur",self.mask_blur_scrollbar.get() )
-        self.add_action_and_update_frame("CLIP_blur",float(self.CLIP_blur.get()))
+        self.add_action("blur",self.mask_blur_scrollbar.get() )
+        self.add_action("CLIP_blur",float(self.CLIP_blur.get()))
         
         self.add_action("CLIP_checkbox", self.CLIP_int.get())
         self.add_action("GFPGAN_blend",self.GFPGAN_blend.get())
         
         self.add_action("pos_thresh",float(self.neg_thresh.get()))
         self.add_action("neg_thresh",float(self.neg_thresh.get()))
+        self.add_action("toggle_occluder", float(self.occluder_int.get()))
+        
+        self.add_action("occluder_blur",int(self.occluder_blur.get()))
+        
+        self.add_action("occluder_limit",int(self.occluder_limit.get()))
+        
 
         try:
             self.save_file = open("data.json", "r")
@@ -381,7 +407,7 @@ class GUI(tk.Tk):
         
     def select_video_path(self):
          
-        self.json_dict["source videos"] = filedialog.askdirectory(title="Select a target")
+        self.json_dict["source videos"] = filedialog.askdirectory(title="Select Target Videos Folder")
          
         self.video_filepath_button.configure(bg='grey75', text=self.json_dict["source videos"]) 
         
@@ -390,7 +416,7 @@ class GUI(tk.Tk):
             
             
     def select_save_video_path(self):
-        self.json_dict["saved videos"] = filedialog.askdirectory(title="Select a target")
+        self.json_dict["saved videos"] = filedialog.askdirectory(title="Select Save Video Folder")
          
         self.save_video_filepath_button.configure(bg='grey75', text=self.json_dict["saved videos"]) 
         
@@ -401,7 +427,7 @@ class GUI(tk.Tk):
 
     def select_faces_path(self):
 
-        self.json_dict["source faces"] = filedialog.askdirectory(title="Select a target")
+        self.json_dict["source faces"] = filedialog.askdirectory(title="Select Source Faces Folder")
         
         self.faces_filepath_button.configure(bg='grey75', text=self.json_dict["source faces"])
          
@@ -632,6 +658,8 @@ class GUI(tk.Tk):
         
         if self.swap == True:
             self.toggle_swapper()
+        if self.play_video == True:
+            self.toggle_play_video()
         
         self.clear_faces()
             
@@ -640,7 +668,7 @@ class GUI(tk.Tk):
         self.video_image = image[0]
         if not requested:
             self.set_slider_position(image[1])
-
+    # @profile
     def display_image_in_video_frame(self):
 
         image = self.video_image
@@ -790,11 +818,35 @@ class GUI(tk.Tk):
         
     def add_action_and_update_frame(self, action, parameter):
         self.add_action(action, parameter)
-        self.add_action("set_video_position", self.video_slider.get())   
+        if not self.play_video:
+            self.add_action("set_video_position", self.video_slider.get())   
 
     def apply_CLIPs(self):
         temp = [self.CLIP_pos_text.get(1.0, "end-1c"), self.CLIP_neg_text.get(1.0, "end-1c")]
         self.add_action_and_update_frame("apply_CLIPs", temp)
+        
+    def toggle_dock(self):
+        self.dock = False
+        if not self.dock:
+            # self.video_frame.winfo_width()
+            self.grid_rowconfigure(0, weight = 0)
+            # self.geometry('%dx%d+%d+%d' % (800, 800, self.winfo_screenwidth()/2-400, self.winfo_screenheight()/2-400))            
+            self.geometry('%dx%d' % (self.winfo_width(), 515))         
+            self.resizable(width=True, height=False) 
 
+            
+            self.undock = self.wm_manage(self.video_frame) 
+
+            self.video_frame.config(width=1024, height=768)
+            self.video_frame.grid_propagate(0)
+    def set_status(self, msg):
+        self.status_label.configure(text=str(msg))
+        self.status_label.pack()
         
-        
+    def mouse_wheel(self, event):    
+        if event.delta > 0: 
+            self.video_slider.set(self.video_slider.get()+1)
+            self.add_action("set_video_position", self.video_slider.get())
+        else:
+            self.video_slider.set(self.video_slider.get()-1)
+            self.add_action("set_video_position", self.video_slider.get())
