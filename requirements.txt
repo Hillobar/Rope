@@ -16,4 +16,4 @@ ftfy
 torch 
 torchvision 
 torchaudio 
-
+segmentation_models_pytorch
