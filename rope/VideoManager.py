@@ -74,6 +74,8 @@ class VideoManager():
         self.write_threads_tracker = []
         self.face_thresh = []
         self.fps = 1.0
+        self.temp_file = []
+        self.file_name = []
         
         self.i_image = []
         self.io_binding = True
@@ -223,39 +225,58 @@ class VideoManager():
             
             self.play = True
             
-            self.output = os.path.join(self.saved_video_path, str(time.time())[:10])
-            
+            self.file_name = os.path.splitext(os.path.basename(self.target_video))
+
+
+             
+            base_filename =  self.file_name[0]+"_"+str(time.time())[:8]
+            self.output = os.path.join(self.saved_video_path, base_filename)
+
+            self.temp_file = self.output+"_temp"+self.file_name[1]  
             
             data = subprocess.run(['ffprobe', '-loglevel', 'error', '-show_streams', '-of', 'json', f'{self.target_video}'], capture_output=True).stdout
             d = json.loads(data)
 
    
-            final_file = self.output+".mp4"
-            if d['streams'][0]['codec_name'] =='vp9':
-                            args = ["ffmpeg", 
-                "-an",            
-                "-r", str(self.fps),
-                "-i", "pipe:",
-                "-vf", "format="+d['streams'][0]['pix_fmt'],
-                "-vcodec", d['streams'][0]['codec_name'],
-                "-r", str(self.fps),
-                "-s", str(frame_width)+"x"+str(frame_height),
-                final_file] 
+           
+
+            # if d['streams'][0]['codec_name'] =='vp9':
+                            # args = ["ffmpeg", 
+                # "-an",            
+                # "-r", str(self.fps),
+                # "-i", "pipe:",
+                # "-vf", "format="+d['streams'][0]['pix_fmt'],
+                # "-vcodec", d['streams'][0]['codec_name'],
+                # "-r", str(self.fps),
+                # "-s", str(frame_width)+"x"+str(frame_height),
+                # final_file] 
+            try:
+                rate = d['streams'][0]['bit_rate']
+                
+            except:   
+                args = ["ffmpeg", 
+                    "-an",       
+                    "-r", str(self.fps),
+                    "-i", "pipe:",
+                    "-vf", "format=yuvj420p",
+                    "-vcodec", d['streams'][0]['codec_name'],
+                    "-r", str(self.fps),
+                    "-s", str(frame_width)+"x"+str(frame_height),
+                    self.temp_file]  
             else:
                 args = ["ffmpeg", 
                     "-an",       
                     "-r", str(self.fps),
                     "-i", "pipe:",
-                    "-vf", "format="+d['streams'][0]['pix_fmt'],
+                    "-vf", "format=yuvj420p",
                     "-b:v", d['streams'][0]['bit_rate'],
                     "-vcodec", d['streams'][0]['codec_name'],
                     "-r", str(self.fps),
                     "-s", str(frame_width)+"x"+str(frame_height),
-                    final_file]  
+                    self.temp_file]  
 
 
-            self.sp = subprocess.Popen(args, stdin=subprocess.PIPE)#['ffmpeg', '-y', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-r', '24', '-i', '-', '-vcodec', 'mpeg4', '-qscale', '5', '-r', '24', 'video.avi']
-            
+            self.sp = subprocess.Popen(args, stdin=subprocess.PIPE)
 
 
 
@@ -326,12 +347,12 @@ class VideoManager():
                 self.sp.stdin.close()
                 self.sp.wait()
                 
-                roped_file = self.output+'.mp4'
+
                 orig_file = self.target_video
-                final_file = self.output+'_a.mp4'
+                final_file = self.output+self.file_name[1]
                 self.add_action("send_msg", "adding audio...")    
                 args = ["ffmpeg",
-                        "-i", roped_file,
+                        "-i", self.temp_file,
                         "-ss", str(self.start_time), "-to", str(stop_time), "-i",  orig_file,
                         "-c",  "copy", # may be c:v
                         "-map", "0:v:0", "-map", "1:a:0?",
@@ -340,7 +361,7 @@ class VideoManager():
                 
                 four = subprocess.run(args)
 
-                os.remove(roped_file)
+                os.remove(self.temp_file)
 
                 
                 self.record = False
@@ -717,3 +738,7 @@ class VideoManager():
         self.fake_diff_state = state
      
  
+#updated video playback, uses target video paramaters, mouse scroll, occluder, performance for larger videos/multiple faces,fast render option, fixed CLIP error, pop-out video player, fixed most bugs related to playing and doing stuff, GFPGAN at 512, mousewheel scroll, status bar
+# update blending mesages
+
+# average embeddings?
