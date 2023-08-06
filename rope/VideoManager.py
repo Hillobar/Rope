@@ -226,8 +226,8 @@ class VideoManager():
 
             
             self.play_frame_tracker = self.current_frame 
-            self.start_time = self.capture.get(cv2.CAP_PROP_POS_MSEC)/1000.0
-            
+            # self.start_time = self.capture.get(cv2.CAP_PROP_POS_MSEC)/1000.0
+            self.start_time = float(self.capture.get(cv2.CAP_PROP_POS_FRAMES) / float(self.fps))
             
             
             self.file_name = os.path.splitext(os.path.basename(self.target_video))
@@ -334,7 +334,7 @@ class VideoManager():
             
             # Close video and process
             elif self.play == False and len(self.frame_q2) == 0:
-                stop_time = self.capture.get(cv2.CAP_PROP_POS_MSEC)/1000.0
+                stop_time = float(self.capture.get(cv2.CAP_PROP_POS_FRAMES) / float(self.fps))
                 if stop_time == 0:
                     stop_time = float(self.video_frame_total) / float(self.fps)
                 
