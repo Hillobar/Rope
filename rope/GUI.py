@@ -241,7 +241,7 @@ class GUI(tk.Tk):
         self.mask_blur_id = tk.Label(self.label_frame2, anchor="w", bg='grey75', text="Mask blur:")
         self.mask_blur_id.place(x=5, y=68, width=60, height=17)
         
-        var = tk.IntVar(value=25)
+        var = tk.IntVar(value=40)
         self.mask_blur_scrollbar = tk.Spinbox( self.label_frame2, from_=0, to=128, increment = 1, width = 5 ,bd = 4, textvariable=var,  command=lambda : self.add_action_and_update_frame("blur",self.mask_blur_scrollbar.get() ))
         self.mask_blur_scrollbar.place(x=70, y=65)
         
@@ -304,23 +304,28 @@ class GUI(tk.Tk):
         self.save_video_filepath_button.place(x=5, y=35, width = 90, height = 60)    
 
         # Threads
-        var = tk.IntVar(value=5)
-        self.num_threads = tk.Spinbox( self.label_frame4, from_=0, to=20, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action("num_threads",int(self.num_threads.get())))
-        self.num_threads.place(x=155, y=5)
+
         
         self.num_threads_id = tk.Label(self.label_frame4, anchor="w", bg='grey75', text="Threads:")
         self.num_threads_id.place(x=100, y=8, width = 50, height=17)
+        
+        var = tk.IntVar(value=5)
+        self.num_threads = tk.Spinbox( self.label_frame4, from_=0, to=20, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action("num_threads",int(self.num_threads.get())))
+        self.num_threads.place(x=170, y=5)
 
-        self.occluder_checkbox = tk.Checkbutton(self.label_frame4, anchor="w", text='Occluder',variable=self.occluder_int, bg='grey75', onvalue=True, offvalue=False, command=lambda: self.add_action_and_update_frame("toggle_occluder", self.occluder_int.get()))
+        self.occluder_checkbox = tk.Checkbutton(self.label_frame4, anchor="w", text='Occl:',variable=self.occluder_int, bg='grey75', onvalue=True, offvalue=False, command=lambda: self.add_action_and_update_frame("toggle_occluder", self.occluder_int.get()))
         self.occluder_checkbox.place(x=100, y=38, height=17 )           
 
         var = tk.IntVar(value=25)
         self.occluder_blur = tk.Spinbox( self.label_frame4, from_=0, to=128, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action_and_update_frame("occluder_blur",int(self.occluder_blur.get())))
-        self.occluder_blur.place(x=100, y=65)
+        self.occluder_blur.place(x=170, y=35)
         
-        var = tk.IntVar(value=5)
-        self.occluder_limit = tk.Spinbox( self.label_frame4, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action_and_update_frame("occluder_limit",int(self.occluder_limit.get())))
-        self.occluder_limit.place(x=155, y=65)
+        self.vid_qual_id = tk.Label(self.label_frame4, anchor="w", bg='grey75', text="Vid Qual:")
+        self.vid_qual_id.place(x=100, y=68, width = 50, height=17)
+        
+        var = tk.IntVar(value=18)
+        self.vid_qual = tk.Spinbox( self.label_frame4, from_=0, to=255, increment = 1, width = 5 ,bd = 4, textvariable=var, command=lambda :self.add_action("vid_qual",int(self.vid_qual.get())))
+        self.vid_qual.place(x=170, y=65)
         
         # Status
         self.status_frame = tk.Frame( self, bg='grey20', height = 15)
@@ -354,7 +359,7 @@ class GUI(tk.Tk):
         self.add_action("num_threads", int(self.num_threads.get()))
         self.add_action("face_thresh", float(self.face_thresh.get()))
         self.add_action("top_blend", self.top_blend_scrollbar.get())
-        self.add_action("bottom_blend",10 )
+        self.add_action("bottom_blend",20 )
         self.add_action("left_blend",self.left_blend_scrollbar.get() )
         self.add_action("blur",self.mask_blur_scrollbar.get() )
         self.add_action("CLIP_blur",float(self.CLIP_blur.get()))
@@ -368,7 +373,9 @@ class GUI(tk.Tk):
         
         self.add_action("occluder_blur",int(self.occluder_blur.get()))
         
-        self.add_action("occluder_limit",int(self.occluder_limit.get()))
+        self.add_action("vid_qual",int(self.vid_qual.get()))
+        
+
         
 
         try:

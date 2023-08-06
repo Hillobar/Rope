@@ -97,7 +97,8 @@ class VideoManager():
         self.occluder_tensor = []
         self.occluder = []
         self.occluder_blur = []
-        self.occluder_limit = []
+        self.vid_qual = []
+
 
 
   
@@ -136,11 +137,13 @@ class VideoManager():
             self.add_action("set_slider_length",self.video_frame_total-1)
 
         self.capture.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
+        
         success, image = self.capture.read()        
         if success:
             crop = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
             temp = [crop, 0]
-            self.frame_q.append(temp) 
+            self.frame_q.append(temp)
+            self.capture.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
 
     ## Action queue
     def add_action(self, action, param):
@@ -194,6 +197,7 @@ class VideoManager():
             self.current_frame = int(frame)
             self.capture.set(cv2.CAP_PROP_POS_FRAMES, min(self.video_frame_total, self.current_frame))
             success, target_image = self.capture.read()
+            self.capture.set(cv2.CAP_PROP_POS_FRAMES, min(self.video_frame_total, self.current_frame))
             if success:
                 # target_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
                 if not self.swap:   
@@ -207,12 +211,13 @@ class VideoManager():
         if command == "play":
             self.play = True
             self.play_frame_tracker = self.current_frame          
-            self.capture.set(cv2.CAP_PROP_POS_FRAMES, min(self.video_frame_total, self.current_frame))     
+            # self.capture.set(cv2.CAP_PROP_POS_FRAMES, min(self.video_frame_total, self.current_frame))     
 
         if command == "stop":
             self.play = False
         if command == "record":
             self.record = True
+            self.play = True
             # Initialize
             self.timer = time.time()
             frame_width = int(self.capture.get(3))
@@ -223,13 +228,14 @@ class VideoManager():
             self.play_frame_tracker = self.current_frame 
             self.start_time = self.capture.get(cv2.CAP_PROP_POS_MSEC)/1000.0
             
-            self.play = True
+            
             
             self.file_name = os.path.splitext(os.path.basename(self.target_video))
 
 
              
-            base_filename =  self.file_name[0]+"_"+str(time.time())[:8]
+            base_filename =  self.file_name[0]+"_"+str(time.time())[:10]
+
             self.output = os.path.join(self.saved_video_path, base_filename)
 
             self.temp_file = self.output+"_temp"+self.file_name[1]  
@@ -250,30 +256,18 @@ class VideoManager():
                 # "-r", str(self.fps),
                 # "-s", str(frame_width)+"x"+str(frame_height),
                 # final_file] 
-            try:
-                rate = d['streams'][0]['bit_rate']
-                
-            except:   
-                args = ["ffmpeg", 
-                    "-an",       
-                    "-r", str(self.fps),
-                    "-i", "pipe:",
-                    "-vf", "format=yuvj420p",
-                    "-vcodec", d['streams'][0]['codec_name'],
-                    "-r", str(self.fps),
-                    "-s", str(frame_width)+"x"+str(frame_height),
-                    self.temp_file]  
-            else:
-                args = ["ffmpeg", 
-                    "-an",       
-                    "-r", str(self.fps),
-                    "-i", "pipe:",
-                    "-vf", "format=yuvj420p",
-                    "-b:v", d['streams'][0]['bit_rate'],
-                    "-vcodec", d['streams'][0]['codec_name'],
-                    "-r", str(self.fps),
-                    "-s", str(frame_width)+"x"+str(frame_height),
-                    self.temp_file]  
+
+            args = ["ffmpeg", 
+                "-an",       
+                "-r", str(self.fps),
+                "-i", "pipe:",
+                "-vf", "format=yuvj420p",
+                "-c:v", "libx264",
+                "-crf", str(self.vid_qual),
+                "-r", str(self.fps),
+                "-s", str(frame_width)+"x"+str(frame_height),
+                self.temp_file]  
+
 
 
             self.sp = subprocess.Popen(args, stdin=subprocess.PIPE)
@@ -289,9 +283,9 @@ class VideoManager():
 
             if len(self.set_read_threads) < self.num_threads:
                 temp = threading.Thread(target=self.thread_video_read, args = [self.current_frame])
-                self.current_frame += 1
-                temp.start()
+                temp.start()                
                 self.set_read_threads.append(temp)
+                self.current_frame += 1
                 
         else:
             self.play == False
@@ -371,7 +365,7 @@ class VideoManager():
 
     def thread_video_read(self, frame_number):   
         # frame_timer = time.time()
-        
+
         with lock:
             success, target_image = self.capture.read()
 
@@ -474,7 +468,7 @@ class VideoManager():
 
     #@profile    
     def swap_core(self, img, kps,  s_e, bbox):
-        cv2.imwrite("./4.jpg", img)
+
         aimg, _ = norm_crop2(img, kps, self.input_size[0])
         blob = cv2.dnn.blobFromImage(aimg, 1.0 / 255.0, self.input_size, (0.0, 0.0, 0.0), swapRB=True)
 
@@ -555,7 +549,7 @@ class VideoManager():
 
             occlude_mask = occlude_mask.squeeze().cpu().numpy()*1.0
 
-            occlude_mask = cv2.rectangle(occlude_mask, (0, 0), (256, int(self.occluder_limit)), (1,1,1), -1) 
+
 
             occlude_mask = cv2.GaussianBlur(occlude_mask*255, (self.occluder_blur*2+1,self.occluder_blur*2+1), 0)
             
@@ -704,7 +698,6 @@ class VideoManager():
         
         img_mask = np.reshape(img_mask, [img_mask.shape[0],img_mask.shape[1],1])    
         fake_merged = cv2.warpAffine(fake_merged, IM, (target_img.shape[1], target_img.shape[0]), borderValue=0.0) 
-        
        
         diff_hor = (bbox[2]-bbox[0])*0.3
         diff_vert = (bbox[3]-bbox[1])*0.3
@@ -748,7 +741,3 @@ class VideoManager():
         self.fake_diff_state = state
      
  
-#updated video playback, uses target video paramaters, mouse scroll, occluder, performance for larger videos/multiple faces,fast render option, fixed CLIP error, pop-out video player, fixed most bugs related to playing and doing stuff, GFPGAN at 512, mousewheel scroll, status bar
-# update blending mesages
-
-# average embeddings?

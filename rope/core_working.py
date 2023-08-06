@@ -127,9 +127,9 @@ def coordinator():
         elif action [0][0] == "occluder_blur":
             vm.occluder_blur = int(action[0][1])
             action.pop(0) 
-        elif action [0][0] == "occluder_limit":
-            vm.occluder_limit = int(action[0][1])
-            action.pop(0)  
+        elif action [0][0] == "vid_qual":
+            vm.vid_qual = int(action[0][1])
+            action.pop(0) 
         
           
         elif action [0][0] == "load_models":
