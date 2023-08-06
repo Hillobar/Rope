@@ -14,7 +14,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 ### Changes for Rope - Space Worm: ###
 * Updated video rendering to use Target Video parameters
 * Mousewheel scroll on the time bar to control frame position
-* Added an occluder model (experimental, very fast)
+* Added an occluder model (experimental, very fast, make sure you download the new model-link below)
 * Greatly increased performance for larger videos/multiple faces
 * CLIP crashing fixed. Add as many words as you like!
 * Detachable video preview
