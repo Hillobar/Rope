@@ -474,7 +474,7 @@ class VideoManager():
 
     #@profile    
     def swap_core(self, img, kps,  s_e, bbox):
-
+        cv2.imwrite("./4.jpg", img)
         aimg, _ = norm_crop2(img, kps, self.input_size[0])
         blob = cv2.dnn.blobFromImage(aimg, 1.0 / 255.0, self.input_size, (0.0, 0.0, 0.0), swapRB=True)
 
@@ -514,6 +514,16 @@ class VideoManager():
         tform.estimate(kps, dst)
         M1 = tform.params[0:2, :]
         IM = cv2.invertAffineTransform(M1)
+        
+        ratio = 2.0
+        diff_x = 8.0*ratio
+
+        dst = self.arcface_dst * ratio
+        dst[:,0] += diff_x
+        tform = trans.SimilarityTransform()
+        tform.estimate(kps, dst)
+        M2 = tform.params[0:2, :]
+
 
         bgr_fake_upscaled = cv2.resize(bgr_fake, (512,512))
         
@@ -532,24 +542,24 @@ class VideoManager():
         # Occluder
         if self.occluder:
 
-            input_image = cv2.warpAffine(target_img, M1, (512, 512), borderValue=0.0)
+            input_image = cv2.warpAffine(target_img, M2, (256, 256), borderValue=0.0)
+
             data = self.occluder_tensor(input_image).unsqueeze(0)
 
             data = data.to('cuda')
-            lock.acquire()
-            with torch.no_grad():
-                pred = self.occluder_model(data)
-            lock.release()
+            with lock:
+                with torch.no_grad():
+                    pred = self.occluder_model(data)
+
             occlude_mask = (pred > 0).type(torch.int8)
 
             occlude_mask = occlude_mask.squeeze().cpu().numpy()*1.0
 
-            occlude_mask = cv2.rectangle(occlude_mask, (0, 0), 
-                        (512, int(self.occluder_limit)), (1,1,1), -1) 
+            occlude_mask = cv2.rectangle(occlude_mask, (0, 0), (256, int(self.occluder_limit)), (1,1,1), -1) 
 
-
-            occlude_mask = cv2.GaussianBlur(occlude_mask*255, (self.occluder_blur*2+1,self.occluder_blur*2+1), 0) 
-
+            occlude_mask = cv2.GaussianBlur(occlude_mask*255, (self.occluder_blur*2+1,self.occluder_blur*2+1), 0)
+            
+            occlude_mask = cv2.resize(occlude_mask, (512,512))
             
             occlude_mask /= 255
             img_mask *= occlude_mask 
