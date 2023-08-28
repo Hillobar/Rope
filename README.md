@@ -1,26 +1,23 @@
-![Screenshot 2023-08-04 212706](https://github.com/Hillobar/Rope/assets/63615199/114b4073-9a25-42cc-844d-1afc3625907b)
+![Screenshot 2023-08-28 100045](https://github.com/Hillobar/Rope/assets/63615199/9ad7b854-05c5-481d-b521-50f5a82478e5)
 
 # Rope
 Rope implements the insightface inswapper_128 model with a helpful GUI.
-### Discord link: ###
-[Discord](https://discord.gg/5CxhgRKBdN)
+### New Discord link: ###
+[Discord](https://discord.gg/EcdVAFJzqp)
 
 ### Features: ###
-* Ugly GUI, but incredible features and fast workflow
-* Fastest face swapper available
+* Incredible features and fast workflow
+* High performance
 * Real-time video player
 * Occlusion functions
 
-### Changes for Rope - Space Worm: ###
-* Updated video rendering to use Target Video parameters
-* Mousewheel scroll on the time bar to control frame position
-* Added an occluder model (experimental, very fast, make sure you download the new model-link below)
-* Greatly increased performance for larger videos/multiple faces
-* CLIP crashing fixed. Add as many words as you like!
-* Detachable video preview
-* Fixed most bugs related to changing options while playing. Adjust setting on the fly!
-* GFPGAN now renders up to 512x512
-* Status bar (still adding features to this)
+### Upcoming changes for Rope - Crystal: ###
+* Mouse Scroll on Target/Source Faces and Target Videos
+* Improvements in workflow efficiency
+* Fixed some bugs with Recording
+* ?
+* ?
+* ? 
 
 ### Known bugs: ### 
 * Stop video playback before loading a new video, or bork
@@ -84,4 +81,16 @@ Note: It's only configured for CUDA (Nvidia)
   * Once you allocate memory by increasing # threads, you can't un-allocate it by reducing # threads. You will need to restart Rope.
 * In general, always stop the video before changing anything. Otherwise, it might bork. Reassigning faces is okay
 * If it does bork, reload the video (reclick on it). If that doesn't work you'll need to restart
+
+### Changelog ###
+### Changes for Rope - Space Worm: ###
+* Updated video rendering to use Target Video parameters
+* Mousewheel scroll on the time bar to control frame position
+* Added an occluder model (experimental, very fast, make sure you download the new model-link below)
+* Greatly increased performance for larger videos/multiple faces
+* CLIP crashing fixed. Add as many words as you like!
+* Detachable video preview
+* Fixed most bugs related to changing options while playing. Adjust setting on the fly!
+* GFPGAN now renders up to 512x512
+* Status bar (still adding features to this)
   
