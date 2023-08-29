@@ -18,6 +18,18 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * ?
 * ? 
 
+### Performance (3090Ti): ###
+| File | Rendering Time [s] |
+| --- | --- |
+| target-240p.mp4 | 2.9 |
+| target-360p.mp4 | 3 |
+| target-540p.mp4 | 3.4 |
+| target-720p.mp4 | 7 |
+| target-1080p.mp4 | 9.6 |
+| target-1440p.mp4 | 13.9 |
+| target-2160p.mp4 | 24.7 |
+
+
 ### Known bugs: ### 
 * Stop video playback before loading a new video, or bork
 
