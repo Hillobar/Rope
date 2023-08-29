@@ -14,7 +14,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Mouse Scroll on Target/Source Faces and Target Videos
 * Improvements in workflow efficiency
 * Fixed some bugs with Recording
-* ?
+* Much lower memory requirements (only 2.7GB if you don't enable GFPGAN, CLIP, etc.)
 * ?
 * ? 
 
