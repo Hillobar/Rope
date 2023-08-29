@@ -20,6 +20,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Merged Source Faces. Select multiple Source Faces to create an average Source Face result. Combine different people to create a blend, or select the same person from different Source Faces to improve the likeness of the person
 * Save/Delete Merged Source Faces to use later. Shows up in the Source Faces area as names that you have assigned to the Merged Source Faces.
 * (experimental) Mouth parser. Another occlusion tool just for the mouth area. Improves dialogue and lip sync, but will replace the Source Face mouth.
+* ?
 
 ### Performance (3090Ti): ###
 | File | Rendering Time [s] |
