@@ -15,8 +15,11 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Improvements in workflow efficiency
 * Fixed some bugs with Recording
 * Much lower memory requirements (only 2.7GB if you don't enable GFPGAN, CLIP, etc.)
-* ?
-* ? 
+* More speed improvements. Results below. I'll start tracking benchmarks for each release.
+* Mouse scrolling in the video player cycles through the Source Faces for the selected Target Face. Quickly view your Source Faces against the Target Face!
+* Merged Source Faces. Select multiple Source Faces to create an average Source Face result. Combine different people to create a blend, or select the same person from different Source Faces to improve the likeness of the person
+* Save/Delete Merged Source Faces to use later. Shows up in the Source Faces area as names that you have assigned to the Merged Source Faces.
+* (experimental) Mouth parser. Another occlusion tool just for the mouth area. Improves dialogue and lip sync, but will replace the Source Face mouth.
 
 ### Performance (3090Ti): ###
 | File | Rendering Time [s] |
