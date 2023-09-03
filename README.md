@@ -36,6 +36,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### Known bugs: ### 
 * Stop video playback before loading a new video, or bork
+* Nottifications on bottom sometime status early
 
 ### Preview: ###
 ![image](https://github.com/Hillobar/Rope/assets/63615199/fda0c05f-72a6-4935-a882-dc6d17cfc014)
