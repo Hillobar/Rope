@@ -8,21 +8,22 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Incredible features and fast workflow
 * High performance
 * Real-time video player
-* Occlusion functions
+* Helpful functions
 
-### Upcoming changes for Rope - Crystal: ###
-* Mouse Scroll on Target/Source Faces and Target Videos
-* Improvements in workflow efficiency
-* Fixed some bugs with Recording
-* Much lower memory requirements (only 2.7GB if you don't enable GFPGAN, CLIP, etc.)
-* More speed improvements. Results below. I'll start tracking benchmarks for each release.
-* Mouse scrolling in the video player cycles through the Source Faces for the selected Target Face. Quickly view your Source Faces against the Target Face!
+### New Features for Rope - Crystal: ###
+* New, slightly improved GUI
 * Merged Source Faces. Select multiple Source Faces to create an average Source Face result. Combine different people to create a blend, or select the same person from different Source Faces to improve the likeness of the person
-* Save/Delete Merged Source Faces to use later. Shows up in the Source Faces area as names that you have assigned to the Merged Source Faces.
+* Source Faces Shortcuts to always have access to your favorite faces. Works with Merged Source Faces too!
+* Improvements to layout for workflow efficiency
+* Improvements to Target/Source Face selection for workflow efficiency
+* Mousescroll on Target/Source Faces and Target Videos
+* Much lower memory requirements (only 2.7GB if you don't enable GFPGAN, CLIP, etc.)
+* Mouse scrolling in the video player cycles through the Source Faces for the selected Target Face. Quickly view your Source Faces against the Target Face!
+* More speed improvements. Results below. I'll start tracking benchmarks for each release
 * (experimental) Mouth parser. Another occlusion tool just for the mouth area. Improves dialogue and lip sync, but will replace the Source Face mouth.
-* ?
+* Bug fixes
 
-### Performance (3090Ti): ###
+### Performance (3090Ti 24GB): ###
 | File | Rendering Time [s] |
 | --- | --- |
 | target-240p.mp4 | 2.9 |
@@ -33,79 +34,34 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 | target-1440p.mp4 | 13.9 |
 | target-2160p.mp4 | 24.7 |
 
-
 ### Known bugs: ### 
 * Stop video playback before loading a new video, or bork
 
 ### Preview: ###
-![Screenshot 2023-08-05 154156](https://github.com/Hillobar/Rope/assets/63615199/921698ab-af0e-43ca-b669-a2b2537d5c0f)
-### Getting Started: ###
-![Screenshot 2023-08-05 152851](https://github.com/Hillobar/Rope/assets/63615199/68b4ec4e-615f-4fd6-9215-f5a2ae8314b4)
-### Features: ###
-![Screenshot 2023-08-05 152835](https://github.com/Hillobar/Rope/assets/63615199/4e64237e-7d0f-4a83-a738-64b0df206766)
+![image](https://github.com/Hillobar/Rope/assets/63615199/fda0c05f-72a6-4935-a882-dc6d17cfc014)
 
 ### Disclaimer: ###
-Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me. I don't have time to troubleshoot or add requested features, so it is provided as-is. Don't look at this code for example of good coding practices. I am primarily focused on performance and my specific use cases. There are plenty of ways to bork the workflow. Please see how to use below.
+Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me.
+I've copied the disclaimer from [Swap-Mukham](https://github.com/harisreedhar/Swap-Mukham) here since it is well-written and applies 100% to this repo.
+ 
+I would like to emphasize that our deep fake software is intended for responsible and ethical use only. I must stress that users are solely responsible for their actions when using our software.
 
-### Install: ###
-Note: It's only configured for CUDA (Nvidia)
-* Set up a local venv
-  * python.exe -m venv venv
-* Activate your new venv
-  * .\venv\Scripts\activate
-* Install requirements
-  * .\venv\Scripts\pip.exe install -r .\requirements.txt
-* Place [GFPGANv1.4.onnx](https://github.com/Hillobar/Rope/releases/download/Space_Worm/GFPGANv1.4.onnx), [inswapper_128_fp16.onnx](https://github.com/Hillobar/Rope/releases/download/Space_Worm/inswapper_128.fp16.onnx), and [occluder.ckpt](https://github.com/Hillobar/Rope/releases/download/Space_Worm/occluder.ckpt) in the root directory
-* Do this if you've never installed roop or Rope (or any other onnx runtimes):
-  * Install CUDA Toolkit 11.8
-  * Install dependencies:
-  * pip uninstall onnxruntime onnxruntime-gpu
-  * pip install onnxruntime-gpu==1.15.1
-* Double-click on Rope.bat!
+Intended Usage: This software is designed to assist users in creating realistic and entertaining content, such as movies, visual effects, virtual reality experiences, and other creative applications. I encourage users to explore these possibilities within the boundaries of legality, ethical considerations, and respect for others' privacy.
 
-### To use: ###
-* Run Rope.bat
-* Set your Target Video, Source Faces, and Video Output folders
-  * Buttons will be gold if they are not set
-  * Only places videos or images in the respective folders. Other files my bork it
-  * Rope creates a JSON file to remember your last set paths
-  * I like to keep my folders <20 or so items. Helps to organize and reduces load times
-* Click on the Load Models button to initialize Rope
-* Select a video to load it into the player
-* Find Target Faces
-  * Adds all faces in the current frame to the Found Faces pane
-  * If a Face is already Found and in the pane, it won't re-add it
-* Click a Source Face
-  * Source Face number will appear
-* Select a Target Face
-  * Target Faces will show assignment number to the Source Face number
-  * Toggle a Target Face to unselect and reassign to currently selected Source Face
-* Continue to select other Source Faces and assign them to Target Faces
-* Click SWAP to enable face swapping
-* Click PLAY to play
-* Click REC to arm recording
-  * Click PLAY to start recording using the current settings
-  * Click PLAY again to stop recording, otherwise it will record to the end of the Target Video
-* Toggle GFPGAN, adjust blending amount
-* Toggle Diffing, adjust blending amount
-* Lower the threshhold if you have multiple Source Faces assigned and they are jumping around. You can also try Clearing and Finding new Target Faces (disable SWAP first)
-* Modify the Masking boundaries
-* Use CLIP to identify objects to swap or not swap (e.g Pos: face, head; Neg: hair, hand), adjust the gain of the words, and set the blur amount around the items
-* Change # threads to match your GPU memory (24GB ~9 threads with GFPGAN on, more threads w/o GFPGAN)
-  * Start with the lowest you think will run and watch your GPU memory.
-  * Once you allocate memory by increasing # threads, you can't un-allocate it by reducing # threads. You will need to restart Rope.
-* In general, always stop the video before changing anything. Otherwise, it might bork. Reassigning faces is okay
-* If it does bork, reload the video (reclick on it). If that doesn't work you'll need to restart
+Ethical Guidelines: Users are expected to adhere to a set of ethical guidelines when using our software. These guidelines include, but are not limited to:
 
-### Changelog ###
-### Changes for Rope - Space Worm: ###
-* Updated video rendering to use Target Video parameters
-* Mousewheel scroll on the time bar to control frame position
-* Added an occluder model (experimental, very fast, make sure you download the new model-link below)
-* Greatly increased performance for larger videos/multiple faces
-* CLIP crashing fixed. Add as many words as you like!
-* Detachable video preview
-* Fixed most bugs related to changing options while playing. Adjust setting on the fly!
-* GFPGAN now renders up to 512x512
-* Status bar (still adding features to this)
+Not creating or sharing content that could harm, defame, or harass individuals. Obtaining proper consent and permissions from individuals featured in the content before using their likeness. Avoiding the use of this technology for deceptive purposes, including misinformation or malicious intent. Respecting and abiding by applicable laws, regulations, and copyright restrictions.
+
+Privacy and Consent: Users are responsible for ensuring that they have the necessary permissions and consents from individuals whose likeness they intend to use in their creations. We strongly discourage the creation of content without explicit consent, particularly if it involves non-consensual or private content. It is essential to respect the privacy and dignity of all individuals involved.
+
+Legal Considerations: Users must understand and comply with all relevant local, regional, and international laws pertaining to this technology. This includes laws related to privacy, defamation, intellectual property rights, and other relevant legislation. Users should consult legal professionals if they have any doubts regarding the legal implications of their creations.
+
+Liability and Responsibility: We, as the creators and providers of the deep fake software, cannot be held responsible for the actions or consequences resulting from the usage of our software. Users assume full liability and responsibility for any misuse, unintended effects, or abusive behavior associated with the content they create.
+
+By using this software, users acknowledge that they have read, understood, and agreed to abide by the above guidelines and disclaimers. We strongly encourage users to approach this technology with caution, integrity, and respect for the well-being and rights of others.
+
+Remember, technology should be used to empower and inspire, not to harm or deceive. Let's strive for ethical and responsible use of deep fake technology for the betterment of society.
+
+
+
   
