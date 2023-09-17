@@ -20,6 +20,7 @@ Fun Stuff:
 Boring Stuff:
 * Mouth Parser and Occluder now use onnxruntime instead of PyTorch. Hopefully this will solve issues with AMD cpu users
 * InsightFace libraries have been removed as a dependency
+* Dependencies have been updated and aligned
 * Performance increase
 * Swapping is now automatically toggled off when dragging the timeline slider. this is to make it more responsive. It will automatically toggle the swap back on once you stop dragging if you had swap on to begin with.
 
@@ -28,16 +29,22 @@ Bug Fixes:
 * Fixed several remaining bugs with recording 
 * Fixed right click behavior on the video player slider
 
-### Performance (3090Ti 24GB): ###
-| File | Rendering Time [s] |
+### Performance:  ###
+Machine: 3090Ti (24GB), i5-13600K
+
+<img src="https://github.com/Hillobar/Rope/assets/63615199/3e3505db-bc76-48df-b8ac-1e7e86c8d751" width="200">
+
+File: benchmark/target-1080p.mp4, 2048x1080, 269 frames, 25 fps, 10s
+
+| Option | Rendering Time [s] |
 | --- | --- |
-| target-240p.mp4 | 2.9 |
-| target-360p.mp4 | 3 |
-| target-540p.mp4 | 3.4 |
-| target-720p.mp4 | 7 |
-| target-1080p.mp4 | 9.6 |
-| target-1440p.mp4 | 13.9 |
-| target-2160p.mp4 | 24.7 |
+| Only Swap | 7.3 |
+| Swap+GFPGAN | 10.7 |
+| Swap+Codeformer | 12.4 |
+| Swap+one word CLIP | 10.4 |
+| Swap+Occluder | 7.8 |
+| Swap+MouthParser | 13.9 |
+| target-2160p.mp4 | 9.7 |
 
 ### Known bugs: ### 
 * Stop video playback before loading a new video, or bork
