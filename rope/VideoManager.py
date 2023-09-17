@@ -7,13 +7,10 @@ import time
 import numpy as np
 from numpy.linalg import norm as l2norm
 from skimage import transform as trans
-from insightface.utils.face_align import norm_crop2
 import subprocess
 from math import floor, ceil
 
 import torch
-import requests
-from PIL import Image
 from torchvision import transforms
 import json
 import math
@@ -36,9 +33,9 @@ class VideoManager():
         self.arcface_dst = np.array( [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.7299, 92.2041]], dtype=np.float32)                 
         self.GFPGAN_model = []
         self.occluder_model = []
-        self.occluder_tensor = []        
         self.face_parsing_model = []
         self.face_parsing_tensor = []   
+        self.codeformer_model = []
         
         #Video related
         self.capture = []                   # cv2 video
@@ -52,8 +49,8 @@ class VideoManager():
         self.vid_qual = []
         
         # Play related
-        self.set_read_threads = []          # Name of threaded function
-        self.frame_timer = time.time()      # used to set the framerate during playing
+        # self.set_read_threads = []          # Name of threaded function
+        self.frame_timer = 0.0      # used to set the framerate during playing
         self.play_frame_tracker = -1        # tracks the next frame during playing in case the threads return out of order
         
         # Queues
@@ -77,10 +74,9 @@ class VideoManager():
         self.temp_file = []
 
         self.i_image = []
-        self.io_binding = False
+        self.io_binding = True
         self.video_read_success = False
         self.clip_session = []
-        self.cuda_device = []
 
         self.start_time = []
         self.record = False
@@ -89,6 +85,25 @@ class VideoManager():
         self.saved_video_path = []
         self.sp = []
         self.timer = []
+        self.fps_average = []
+        self.total_thread_time = 0.0
+        
+        self.rec_thread = []
+        
+        self.process_q =    {
+                            "Thread":                   [],
+                            "FrameNumber":              [],
+                            "ProcessedFrame":           [],
+                            "Status":                   'clear',
+                            "ThreadTime":               []
+                            }   
+        self.process_qs = []
+        self.rec_q =    {
+                            "Thread":                   [],
+                            "FrameNumber":              [],
+                            "Status":                   'clear'
+                            }   
+        self.rec_qs = []
 
         self.clip_transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), transforms.Resize((256, 256))])
 
@@ -121,7 +136,7 @@ class VideoManager():
             self.play = False 
             self.current_frame = 0
          
-            self.set_read_threads = []
+            # self.set_read_threads = []
             self.frame_timer = time.time()
             self.play_frame_tracker = 0
  
@@ -176,11 +191,13 @@ class VideoManager():
 
     def get_requested_video_frame(self, frame):    
         if self.is_video_loaded == True:
-            self.play_video(False)
+            if self.play == True:            
+                self.play_video("stop")
+                self.process_qs = []
             self.current_frame = int(frame)
-            self.capture.set(cv2.CAP_PROP_POS_FRAMES, min(self.video_frame_total, self.current_frame))
+            self.capture.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
             success, target_image = self.capture.read()
-            self.capture.set(cv2.CAP_PROP_POS_FRAMES, min(self.video_frame_total, self.current_frame))
+            self.current_frame += 1
             if success:
                 # target_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
                 if not self.swap:   
@@ -190,139 +207,210 @@ class VideoManager():
                 temp[0] = cv2.cvtColor(temp[0], cv2.COLOR_BGR2RGB) 
                 self.r_frame_q.append(temp)     
            
-    def play_video(self, command):     #"record", "play", "stop"       
+    def play_video(self, command):        
         if command == "play":
             self.play = True
-            self.play_frame_tracker = self.current_frame          
-            # self.capture.set(cv2.CAP_PROP_POS_FRAMES, min(self.video_frame_total, self.current_frame))     
-
+            self.play_frame_tracker = self.current_frame   
+            self.fps_average = []            
+            
+            self.process_qs = []
+            for i in range(self.num_threads):
+                    new_process_q = self.process_q.copy()
+                    self.process_qs.append(new_process_q)
+                                                
         if command == "stop":
             self.play = False
+            self.add_action("stop_play", True)
+            
+
         if command == "record":
             self.record = True
             self.play = True
-            # Initialize
+            self.play_frame_tracker = self.current_frame 
+            self.total_thread_time = 0.0
+
+            self.process_qs = []
+            
+            for i in range(self.num_threads):
+                    new_process_q = self.process_q.copy()
+                    self.process_qs.append(new_process_q)
+                    self.rec_qs.append(new_process_q)
+            self.rec_qs = []
+            for i in range(self.num_threads):
+                    new_rec_q = self.rec_q.copy()
+                    self.rec_qs.append(new_rec_q)
+                    self.rec_qs.append(new_rec_q)
+           # Initialize
             self.timer = time.time()
             frame_width = int(self.capture.get(3))
             frame_height = int(self.capture.get(4))
-            frame_size = (frame_width,frame_height)
 
-            
-            self.play_frame_tracker = self.current_frame 
-            # self.start_time = self.capture.get(cv2.CAP_PROP_POS_MSEC)/1000.0
-            self.start_time = float(self.capture.get(cv2.CAP_PROP_POS_FRAMES) / float(self.fps))
-            
+            self.start_time = float(self.capture.get(cv2.CAP_PROP_POS_FRAMES) / float(self.fps))            
             
             self.file_name = os.path.splitext(os.path.basename(self.target_video))
-
             base_filename =  self.file_name[0]+"_"+str(time.time())[:10]
-
             self.output = os.path.join(self.saved_video_path, base_filename)
-
             self.temp_file = self.output+"_temp"+self.file_name[1]  
+
+            args =  ["ffmpeg", 
+                    '-hide_banner',
+                    '-loglevel',    'error',
+                    "-an",       
+                    "-r",           str(self.fps),
+                    "-i",           "pipe:",
+                    # '-g',           '25',
+                    "-vf",          "format=yuvj420p",
+                    "-c:v",         "libx264",
+                    "-crf",         str(self.vid_qual),
+                    "-r",           str(self.fps),
+                    "-s",           str(frame_width)+"x"+str(frame_height),
+                    self.temp_file]  
             
-            data = subprocess.run(['ffprobe', '-loglevel', 'error', '-show_streams', '-of', 'json', f'{self.target_video}'], capture_output=True).stdout
-            d = json.loads(data)
-
-            # if d['streams'][0]['codec_name'] =='vp9':
-                            # args = ["ffmpeg", 
-                # "-an",            
-                # "-r", str(self.fps),
-                # "-i", "pipe:",
-                # "-vf", "format="+d['streams'][0]['pix_fmt'],
-                # "-vcodec", d['streams'][0]['codec_name'],
-                # "-r", str(self.fps),
-                # "-s", str(frame_width)+"x"+str(frame_height),
-                # final_file] 
-
-            args = ["ffmpeg", 
-                "-an",       
-                "-r", str(self.fps),
-                "-i", "pipe:",
-                "-vf", "format=yuvj420p",
-                "-c:v", "libx264",
-                "-crf", str(self.vid_qual),
-                "-r", str(self.fps),
-                "-s", str(frame_width)+"x"+str(frame_height),
-                self.temp_file]  
-
-
-
             self.sp = subprocess.Popen(args, stdin=subprocess.PIPE)
+            
+            # exists = False
+            # while not exists:
+                # exists = os.path.isfile(self.temp_file)
+    def lil_thread(self, image, frame_number ):     
+        pil_image = Image.fromarray(image)
+        with lock:
+            pil_image.save(self.sp.stdin, 'JPEG')     
 
+        for i in range(len(self.rec_qs)):
 
+            if self.rec_qs[i]['FrameNumber'] == frame_number:
 
+                self.rec_qs[i]['Status'] = 'clear'
+                self.rec_qs[i]['FrameNumber'] = []
+                self.rec_qs[i]['Thread'] = []
 
-
+                break            
+                
+    # @profile
     def process(self):
+        process_qs_len = range(len(self.process_qs))
 
-        if len(self.set_read_threads) != self.num_threads:
-            self.set_read_threads = [[0] * 4 for i in range(self.num_threads)]
-        
         # Add threads to Queue
         if self.play == True and self.is_video_loaded == True:
-            for i in range(self.num_threads):
-                if self.set_read_threads[i][3] == 0:
-                    self.set_read_threads [i] = [threading.Thread(target=self.thread_video_read, args = [self.current_frame]).start(), 0, self.current_frame, 1]
+            for i in range(len(self.process_qs)):
+                if self.process_qs[i]['Status'] == 'clear' and self.current_frame < self.video_frame_total:                    
+                    current_frame = self.current_frame
+                    self.process_qs[i]['Thread'] = threading.Thread(target=self.thread_video_read, args = [current_frame]).start()
+                    self.process_qs[i]['FrameNumber'] = current_frame
+                    self.process_qs[i]['Status'] = 'started'
+                    self.process_qs[i]['ThreadTime'] = time.time()
+
                     self.current_frame += 1
                     break
-
+          
         else:
             self.play == False
 
         # Always be emptying the queues
         time_diff = time.time() - self.frame_timer
-
+        
+        
+        
         if not self.record and time_diff >= 1.0/float(self.fps):
-            for i in range(self.num_threads):
-                if self.set_read_threads[i][3] == 2 and self.set_read_threads[i][2] == self.play_frame_tracker:
-                    
-                    temp = [self.set_read_threads[i][1], self.set_read_threads[i][2]]
+            for i in process_qs_len:
+                
+                if self.process_qs[i]['Status'] == 'finished' and self.process_qs[i]['FrameNumber'] == self.play_frame_tracker:
+                    self.fps_average.append(1.0/time_diff)
+                    temp = [self.process_qs[i]['ProcessedFrame'], self.process_qs[i]['FrameNumber']]
                     self.frame_q.append(temp)
-                    fps = round(1.0/time_diff, 1)
-                    msg = "Playing at %s fps" %fps
-                    self.add_action("send_msg", msg)
+                    if len(self.fps_average) >= floor(self.fps):
+                        # print('length:', len(self.fps_average))
+                        # print('file fps:', self.fps)
+                        # print('file frame time:', 1.0/float(self.fps))
+                        # print('time_diff:', time_diff)
+                        # print(self.fps_average)
+                        fps = sum(self.fps_average)/len(self.fps_average)
+                        fps = round(fps, 2)
+                        msg = "%s fps, %s process time" % (fps, round(self.process_qs[i]['ThreadTime'], 4))
+                        self.add_action("send_msg", msg)
+                        self.fps_average = []
                     self.play_frame_tracker += 1
-                    self.set_read_threads[i][3] = 0
+                    self.process_qs[i]['Status'] = 'clear'
+                    self.process_qs[i]['Thread'] = []
+                    self.process_qs[i]['FrameNumber'] = []
+                    self.process_qs[i]['ThreadTime'] = []
                     self.frame_timer = time.time()
                     break    
                     
         elif self.record:
             empty_count = 0
-            for i in range(self.num_threads):
-                # print(self.set_read_threads[i][3])
-                if self.set_read_threads[i][3] == 2 and self.set_read_threads[i][2] == self.play_frame_tracker:
-                    
-                    temp = [self.set_read_threads[i][1], self.set_read_threads[i][2]]
+            empty_count_rec = 0
+            for i in process_qs_len:
+                # If the swapper thread has finished generating a frame
+                if self.process_qs[i]['Status'] == 'finished' and self.process_qs[i]['FrameNumber'] == self.play_frame_tracker:
+# Default
+                    image = self.process_qs[i]['ProcessedFrame']          
+
+                    pil_image = Image.fromarray(image)
+                    pil_image.save(self.sp.stdin, 'JPEG')   
+
+                    temp = [image, self.process_qs[i]['FrameNumber']]
                     self.frame_q.append(temp)
 
-                    image = self.set_read_threads[i][1]
-                    pil_image = Image.fromarray(image)
-                    pil_image.save(self.sp.stdin, 'JPEG')                    
                     framen = self.play_frame_tracker
-                    msg = "Rendering frame %s/%s" %(framen, self.video_frame_total-1)    
+                    self.total_thread_time += self.process_qs[i]['ThreadTime']
 
                     self.play_frame_tracker += 1
-                    self.set_read_threads[i][3] = 0
+                    self.process_qs[i]['Status'] = 'clear'
                     self.frame_timer = time.time()
-                    break  
-                elif self.set_read_threads[i][3] == 0:
+                    break                      
+# Default
+
+# # Option 1
+                    # # Then start a thread for recording into the stdin
+                    # # Find a clear spot in the buffer
+                    # for j in range(len(self.rec_qs)):
+                        # if self.rec_qs[j]['Status'] == 'clear':                             
+                            # self.rec_qs[j]['FrameNumber'] = self.process_qs[i]['FrameNumber']
+                            # self.rec_qs[j]['Thread'] = threading.Thread(target=self.lil_thread, args = [self.process_qs[i]['ProcessedFrame'], self.rec_qs[j]['FrameNumber']]).start()
+                            # self.rec_qs[j]['Status'] = 'started'
+
+                            # temp = [self.process_qs[i]['ProcessedFrame']  , self.process_qs[i]['FrameNumber']]
+                            # self.frame_q.append(temp)
+
+                            # framen = self.play_frame_tracker
+                            # self.total_thread_time += self.process_qs[i]['ThreadTime']
+
+                            # self.play_frame_tracker += 1
+                            # self.process_qs[i]['Status'] = 'clear'
+                            # self.frame_timer = time.time()
+                            # break  
+# # Option 1
+                elif self.process_qs[i]['Status'] == 'clear':
                     empty_count = empty_count + 1
+# # Option 1           
+            # # process write q
+            # for i in process_qs_len:
+                # if self.rec_qs[i]['Status'] == 'clear':
+                    # empty_count_rec = empty_count_rec + 1
 
+            # # Close video and process
+            # if empty_count == self.num_threads and empty_count_rec == self.num_threads:
+# # Option 1
+
+# Default
+            # Close video and process
             if empty_count == self.num_threads:
-        # Close video and process
-
+# Default
                 stop_time = float(self.capture.get(cv2.CAP_PROP_POS_FRAMES) / float(self.fps))
                 if stop_time == 0:
                     stop_time = float(self.video_frame_total) / float(self.fps)
                 
                 self.sp.stdin.close()
                 self.sp.wait()
+                self.play_video("stop")
 
                 orig_file = self.target_video
                 final_file = self.output+self.file_name[1]
                 self.add_action("send_msg", "adding audio...")    
                 args = ["ffmpeg",
+                        '-hide_banner',
+                        '-loglevel',    'error',
                         "-i", self.temp_file,
                         "-ss", str(self.start_time), "-to", str(stop_time), "-i",  orig_file,
                         "-c",  "copy", # may be c:v
@@ -332,13 +420,16 @@ class VideoManager():
                 
                 four = subprocess.run(args)
 
+                
                 os.remove(self.temp_file)
 
-                self.record = False
                 timef= time.time() - self.timer 
-                msg = "done...total rendering time: %s seconds" % round(timef,1)
+                t_time = self.total_thread_time/self.video_frame_total
+                self.record = False
+                msg = "Total time: %s s. Average thread time is %s s" % (round(timef,1), round(t_time,4))
+                print(msg)
                 self.add_action("send_msg", msg) 
-
+    # @profile
     def thread_video_read(self, frame_number):   
         # frame_timer = time.time()
 
@@ -351,20 +442,22 @@ class VideoManager():
             else:
                 temp = [self.swap_video(target_image), frame_number]
             temp[0] = cv2.cvtColor(temp[0], cv2.COLOR_BGR2RGB) 
-            for i in range(len(self.set_read_threads)):
-                if self.set_read_threads[i][2] == frame_number:
-                    self.set_read_threads[i][1] = temp[0]
-                    self.set_read_threads[i][3] = 2
+            for i in range(len(self.process_qs)):
+                if self.process_qs[i]['FrameNumber'] == frame_number:
+                    self.process_qs[i]['ProcessedFrame'] = temp[0]
+                    self.process_qs[i]['Status'] = 'finished'
+                    self.process_qs[i]['ThreadTime'] = time.time() - self.process_qs[i]['ThreadTime']
                     break
       
         else:
-            for i in range(len(self.set_read_threads)):
-                if self.set_read_threads[i][2] == frame_number:
-                    self.set_read_threads[i][3] = 0
-                    break
+            # for i in range(len(self.process_qs)):
+                # if self.set_read_threads[i][2] == frame_number:
+                    # self.set_read_threads[i][3] = 0
+                    # break
 
-            self.play = False
-            self.add_action("stop_play", True)
+            self.play_video("stop")
+
+
         # time_diff = time.time() - frame_timer
         # print( time_diff) 
 
@@ -397,10 +490,13 @@ class VideoManager():
         
     def set_faceapp_model(self, faceapp):
         self.faceapp_model = faceapp
-
+    # @profile
     def swap_video(self, target_image):        
         # Find faces, returns all faces
+        # tie = time.time()
         ret = self.faceapp_model.get(target_image, max_num=10)
+        # tie = time.time()-tie
+        # print(tie)
         if ret:
             img = target_image
             target_face = ret
@@ -412,10 +508,10 @@ class VideoManager():
                     sim = self.findCosineDistance(target_face[i].embedding, self.found_faces_assignments[j]["Embedding"])
                   
                     # if the face[i] in the frame matches afound face[j] AND the found face is active (not []) 
-                    if self.parameters["ThreshholdState"]:
+                    if self.parameters["Threshold"]:
                         threshhold = 2.0
                     else:    
-                        threshhold = self.parameters["Threshhold"]
+                        threshhold = self.parameters["ThresholdAmount"]
                     
                     if sim<float(threshhold) and self.found_faces_assignments[j]["SourceFaceAssignments"]:
                         total_s_e = self.source_embedding[self.found_faces_assignments[j]["SourceFaceAssignments"][0]]   
@@ -423,21 +519,13 @@ class VideoManager():
                             total_s_e = total_s_e + self.source_embedding[self.found_faces_assignments[j]["SourceFaceAssignments"][k]]
 
                         s_e =  total_s_e / len(self.found_faces_assignments[j]["SourceFaceAssignments"])
+                        
                         img = self.swap_core(img, target_face[i].kps, s_e, target_face[i].bbox) 
 
             return img
         else:
             return target_image
-            
-        # self.target_face = {    
-                                # "TKButton":                 [],
-                                # "ButtonState":              "off",
-                                # "Image":                    [],
-                                # "Embedding":                [],
-                                # "SourceFaceAssignments":    []
-                            # }              
-            
-            
+      
             
        
     def findCosineDistance(self, vector1, vector2):
@@ -478,7 +566,7 @@ class VideoManager():
         tform.estimate(kps, dst)
         M512 = tform.params[0:2, :]
         IM512 = cv2.invertAffineTransform(M512)
-        
+        # option 2
         kps_dist = []
         kps_dist.append( math.sqrt((kps[0][0]-kps[1][0])*(kps[0][0]-kps[1][0]) + (kps[0][1]-kps[1][1])*(kps[0][1]-kps[1][1])) )
         kps_dist.append( math.sqrt((kps[1][0]-kps[4][0])*(kps[1][0]-kps[4][0]) + (kps[1][1]-kps[4][1])*(kps[1][1]-kps[4][1])) )
@@ -494,12 +582,11 @@ class VideoManager():
         # distance between same features from arcface reference
         arcface_distance_max = self.arcface_dst_max[kps_dist_max_index]
         kps_ratio = kps_dist_max / arcface_distance_max
-
+        # option 2
         original_face_512 = cv2.warpAffine(img, M512, (512,512), borderValue=0.0)
         original_face_256 = cv2.resize(original_face_512, (256,256))
         original_face = cv2.resize(original_face_256, (128, 128))
-        # cv2.imwrite('./original_face_512.jpg',original_face_512 )
-
+        
         blob = cv2.dnn.blobFromImage(original_face, 1.0 / 255.0, self.input_size, (0.0, 0.0, 0.0), swapRB=True)
 
         #Select source embedding
@@ -508,7 +595,7 @@ class VideoManager():
         latent = np.dot(latent, self.emap)
         latent /= np.linalg.norm(latent)
         
-        if self.io_binding:                            
+        if self.io_binding: 
             io_binding = self.swapper_model.io_binding()            
             io_binding.bind_cpu_input(self.input_names[0], blob)
             io_binding.bind_cpu_input(self.input_names[1], latent)
@@ -516,8 +603,7 @@ class VideoManager():
                
             self.swapper_model.run_with_iobinding(io_binding)
             ort_outs = io_binding.copy_outputs_to_cpu()
-            pred = ort_outs[0]
-        
+            pred = ort_outs[0]        
         else:
             pred = self.swapper_model.run(self.output_names, {self.input_names[0]: blob, self.input_names[1]: latent})[0]
 
@@ -532,56 +618,66 @@ class VideoManager():
         
         img_mask = np.ones((128, 128), dtype=np.float32)  
         
-        if self.parameters["GFPGANState"]:           
+        # Codeformer
+        if self.parameters["GFPGAN"] and self.parameters['Enhancer'] == 'CF':           
+            swapped_face_upscaled = self.codeformer(swapped_face_upscaled) 
+            
+        # GFPGAN
+        if self.parameters["GFPGAN"] and self.parameters['Enhancer'] == 'GFPGAN':          
             swapped_face_upscaled = self.apply_GFPGAN(swapped_face_upscaled) 
 
+
         # Occluder
-        if self.parameters["OccluderState"]:
+        if self.parameters["Occluder"]:
             occlude_mask = self.apply_occlusion(original_face_256)
             occlude_mask = cv2.resize(occlude_mask, (128,128))  
             img_mask *= occlude_mask 
-            
-            # parse_mask = 1.0-self.apply_face_parser_nose(swapped_face_upscaled)
-            # img_mask += parse_mask
-            # img_mask = np.clip(img_mask, 0, 1)
-
-            # cv2.imwrite('occluder.png', img_mask*255) 
 
         # CLIPs CLIPs
-        if self.parameters["CLIPState"]:
+        if self.parameters["CLIP"]:
             mask = self.apply_neg_CLIPs(original_face_512)
             mask = cv2.resize(mask, (128,128))
             img_mask *= mask
 
         # Face Parsing
-        if self.parameters["FaceParserState"]:
-            mask = self.apply_face_parser(swapped_face_upscaled)
-            mask *= self.apply_face_parser(original_face_512)
+        if self.parameters["FaceParser"]:
+            # mask = self.apply_face_parser(swapped_face_upscaled)
+            mask = self.apply_face_parser(original_face_512)
             mask = cv2.resize(mask, (128,128))
             img_mask *= mask
 
         # Face Diffing
-        if self.parameters["DiffState"]:
+        if self.parameters["Diff"]:
             fake_diff = self.apply_fake_diff(swapped_face, original_face)
             fake_diff /= 255
             img_mask *= fake_diff
         
         img_mask = cv2.GaussianBlur(img_mask, (self.parameters["BlurAmount"]*2+1,self.parameters["BlurAmount"]*2+1),0)
         img_mask *= border_mask
-          
 
         img_mask = cv2.resize(img_mask, (512,512))
         img_mask = np.reshape(img_mask, [img_mask.shape[0],img_mask.shape[1],1]) 
-        # print(swapped_face_upscaled.dtype, img_mask.dtype)
         swapped_face_upscaled *= img_mask
 
         swapped_face_upscaled = cv2.warpAffine(swapped_face_upscaled, IM512, (img.shape[1], img.shape[0]), borderValue=0.0) 
      
+        # # Option 1 - 21.1 ms
         # img_mask = cv2.warpAffine(img_mask, IM512, (img.shape[1], img.shape[0]), borderValue=0.0)
-        # img_mask = np.reshape(img_mask, [img_mask.shape[0],img_mask.shape[1],1])        
+        # img_mask = np.reshape(img_mask, [img_mask.shape[0],img_mask.shape[1],1])  
         # index = np.where(img_mask != 0)        
         # img[index[0], index[1]] = (1.0-img_mask[index[0], index[1]])*img[index[0], index[1]] + swapped_face_upscaled[index[0], index[1]]
+        # # Option 1
         
+        # # Option 1a - 33.2 ms
+        # img_mask = cv2.warpAffine(img_mask, IM512, (img.shape[1], img.shape[0]), borderValue=0.0)
+        # img_mask = np.reshape(img_mask, [img_mask.shape[0],img_mask.shape[1],1]) 
+        # img_mask = 1.0-img_mask        
+        # img_mask = torch.from_numpy(img_mask)
+        # img = torch.from_numpy(img)           
+        # img=torch.mul(img_mask,img).numpy()+swapped_face_upscaled
+        # # Option 1a
+   
+        # Option 2 - 9.8 ms
         kps_scale = 1.42
         bbox[0] = kps[2][0]-kps_ratio*56.0252*kps_scale
         bbox[1] = kps[2][1]-kps_ratio*71.7366*kps_scale
@@ -608,29 +704,49 @@ class VideoManager():
         img_mask = cv2.warpAffine(img_mask, IM512, (img.shape[1], img.shape[0]), borderValue=0.0)
         img_mask = np.reshape(img_mask, [img_mask.shape[0],img_mask.shape[1],1])
         img_mask = img_mask[top:bottom, left:right, 0:1]
+        
 
         img_mask = 1.0-img_mask 
       
-        swapped_face_upscaled += img_mask*img_a
+        img_mask = torch.from_numpy(img_mask)
+        img_a = torch.from_numpy(img_a)
+        
+        swapped_face_upscaled += torch.mul(img_mask,img_a).numpy()
+        # swapped_face_upscaled += img_mask*img_a
         
         img[top:bottom, left:right, 0:3] = swapped_face_upscaled        
- 
+        # Option 2
 
         return img.astype(np.uint8)   #BGR
         
+    # @profile    
+    def apply_occlusion(self, img):        
+        img = (img /255.0)
 
+        img = np.float32(img[np.newaxis,:,:,:])
+        img = img.transpose(0, 3, 1, 2)
+        
+        inputs = {"img": img}
+        
+        if self.io_binding: 
+            io_binding = self.occluder_model.io_binding()            
+            io_binding.bind_cpu_input('img', img)
+            io_binding.bind_output('output', "cuda")
+               
+            self.occluder_model.run_with_iobinding(io_binding)
+            output = io_binding.copy_outputs_to_cpu()[0][0]
+        else:
+            occlude_mask = self.occluder_model.run(None, inputs)[0][0]     
 
- 
-    def apply_occlusion(self, img):
-        data = self.occluder_tensor(img).unsqueeze(0)
-        data = data.to('cuda')
-        with lock:
-            with torch.no_grad():
-                pred = self.occluder_model(data)
-        occlude_mask = (pred > 0).type(torch.float32)
-        occlude_mask = occlude_mask.squeeze().cpu().numpy()*1.0
- 
-        return occlude_mask 
+        occlude_mask = self.occluder_model.run(None, inputs)[0][0]
+        
+        occlude_mask = (occlude_mask > 0)
+        occlude_mask = occlude_mask.transpose(1, 2, 0).astype(np.float32)
+
+        
+        # occlude_mask = occlude_mask.squeeze().numpy()*1.0
+
+        return occlude_mask         
     
       
     def apply_neg_CLIPs(self, img):
@@ -653,52 +769,59 @@ class VideoManager():
             clip_mask[clip_mask<=self.parameters["CLIPAmount"]] = 0.0
 
         return clip_mask     
-
+    # @profile
     def apply_face_parser(self, img):
 
         # atts = [1 'skin', 2 'l_brow', 3 'r_brow', 4 'l_eye', 5 'r_eye', 6 'eye_g', 7 'l_ear', 8 'r_ear', 9 'ear_r', 10 'nose', 11 'mouth', 12 'u_lip', 13 'l_lip', 14 'neck', 15 'neck_l', 16 'cloth', 17 'hair', 18 'hat']
 
+        img1 = self.face_parsing_tensor(img.astype(np.uint8))
+        img = torch.unsqueeze(img1, 0).numpy()      
+
+        if self.io_binding:
+            io_binding = self.face_parsing_model.io_binding()            
+            io_binding.bind_cpu_input("input", img)
+            io_binding.bind_output("out")
+               
+            self.face_parsing_model.run_with_iobinding(io_binding)
+            out = io_binding.copy_outputs_to_cpu()[0]
+        else:
+            out = self.face_parsing_model.run(None, {'input':img})[0]
+
+        out = out.squeeze(0).argmax(0)
+        out = np.isin(out, [11,12,13]).astype('float32')
+        out = -1.0*(out-1.0)
         
-        with lock:
-            with torch.no_grad():
-                img1 = self.face_parsing_tensor(img.astype(np.uint8))
-                img1 = torch.unsqueeze(img1, 0)
-                img1 = img1.cuda()
-                out = self.face_parsing_model(img1)[0]
-                parsing = out.squeeze(0).cpu().numpy().argmax(0)
-
-        vis_parsing_anno = parsing.copy().astype(np.uint8)
-        vis_parsing_anno = cv2.resize(vis_parsing_anno, None, fx=1, fy=1, interpolation=cv2.INTER_NEAREST)
-        vis_parsing_anno_color = np.ones((vis_parsing_anno.shape[0], vis_parsing_anno.shape[1]))
-
-        index = np.where((vis_parsing_anno == 11) | (vis_parsing_anno == 12) | (vis_parsing_anno == 13))
-        # index = np.where(vis_parsing_anno == 11)
-        vis_parsing_anno_color[index[0], index[1]] = 0.0
-        # kernel = np.ones((2, 2))
-        # vis_parsing_anno_color = cv2.erode(vis_parsing_anno_color, kernel, iterations=10)
-        return vis_parsing_anno_color   
-
-    def apply_face_parser_nose(self, img):
-
-        # atts = [1 'skin', 2 'l_brow', 3 'r_brow', 4 'l_eye', 5 'r_eye', 6 'eye_g', 7 'l_ear', 8 'r_ear', 9 'ear_r', 10 'nose', 11 'mouth', 12 'u_lip', 13 'l_lip', 14 'neck', 15 'neck_l', 16 'cloth', 17 'hair', 18 'hat']
-
+        size = int(self.parameters["FaceParserAmount"])
+        kernel = np.ones((size, size))
+        out = cv2.erode(out, kernel, iterations=5)
         
-        with lock:
-            with torch.no_grad():
-                img1 = self.face_parsing_tensor(img)
-                img1 = torch.unsqueeze(img1, 0)
-                img1 = img1.cuda()
-                out = self.face_parsing_model(img1)[0]
-                parsing = out.squeeze(0).cpu().numpy().argmax(0)
+        return out.clip(0,1)
 
-        vis_parsing_anno = parsing.copy().astype(np.uint8)
-        vis_parsing_anno = cv2.resize(vis_parsing_anno, None, fx=1, fy=1, interpolation=cv2.INTER_NEAREST)
-        vis_parsing_anno_color = np.ones((vis_parsing_anno.shape[0], vis_parsing_anno.shape[1]))
 
-        index = np.where((vis_parsing_anno == 10) | (vis_parsing_anno == 17))
-        vis_parsing_anno_color[index[0], index[1]] = 0.0
-        
-        return vis_parsing_anno_color         
+    # def apply_face_parser(self, img):
+
+        # # atts = [1 'skin', 2 'l_brow', 3 'r_brow', 4 'l_eye', 5 'r_eye', 6 'eye_g', 7 'l_ear', 8 'r_ear', 9 'ear_r', 10 'nose', 11 'mouth', 12 'u_lip', 13 'l_lip', 14 'neck', 15 'neck_l', 16 'cloth', 17 'hair', 18 'hat']
+
+        # with lock:
+            # with torch.no_grad():
+                # img1 = self.face_parsing_tensor(img.astype(np.uint8))
+                # img1 = torch.unsqueeze(img1, 0)
+                # img1 = img1.cuda()
+                # out = self.face_parsing_model(img1)[0]
+                # parsing = out.squeeze(0).cpu().numpy().argmax(0)
+
+        # vis_parsing_anno = parsing.copy().astype(np.uint8)
+        # vis_parsing_anno = cv2.resize(vis_parsing_anno, None, fx=1, fy=1, interpolation=cv2.INTER_NEAREST)
+        # vis_parsing_anno_color = np.ones((vis_parsing_anno.shape[0], vis_parsing_anno.shape[1]))
+
+        # index = np.where((vis_parsing_anno == 11) | (vis_parsing_anno == 12) | (vis_parsing_anno == 13))
+        # # index = np.where(vis_parsing_anno == 11)
+        # vis_parsing_anno_color[index[0], index[1]] = 0.0
+        # size = int(self.parameters["FaceParserAmount"])
+        # kernel = np.ones((size, size))
+        # vis_parsing_anno_color = cv2.erode(vis_parsing_anno_color, kernel, iterations=5)
+        # return vis_parsing_anno_color   
+ 
         
     def apply_GFPGAN(self, swapped_face_upscaled):
         
@@ -737,10 +860,6 @@ class VideoManager():
         output = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
         output = (output * 255.0).round()
 
-
-
-
-
         temp2 = float(self.parameters["GFPGANAmount"])/100.0
         swapped_face_upscaled = cv2.addWeighted(output, temp2, swapped_face_upscaled, 1.0-temp2,0)
         
@@ -759,8 +878,33 @@ class VideoManager():
         fake_diff[fake_diff>=fthresh] = 255 
 
         return fake_diff    
-            
+    # @profile        
+    def codeformer(self, swapped_face_upscaled):
 
+        img =swapped_face_upscaled
 
+        img = img.astype(np.float32)[:,:,::-1] / 255.0
+        img = img.transpose((2, 0, 1))
+        img = (img - 0.5) / 0.5
+        img = np.expand_dims(img, axis=0).astype(np.float32)
+        w = np.array([1.0], dtype=np.double)
+        
+        if self.io_binding: 
+            io_binding = self.codeformer_model.io_binding()            
+            io_binding.bind_cpu_input('x', img)
+            io_binding.bind_cpu_input('w', w)
+            io_binding.bind_output('y', "cuda")
+               
+            self.codeformer_model.run_with_iobinding(io_binding)
+            output = io_binding.copy_outputs_to_cpu()[0][0]
+        else:
+            output = self.codeformer_model.run(None, {'x':img, 'w':w})[0][0]
 
-    # @profile    
+        img = (output.transpose(1,2,0).clip(-1,1) + 1) * 0.5
+        img = (img * 255)[:,:,::-1]
+        img = img.clip(0, 255)
+        temp2 = float(self.parameters["GFPGANAmount"])/100.0
+        img = cv2.addWeighted(img, temp2, swapped_face_upscaled, 1.0-temp2,0)
+        
+        return img
+    

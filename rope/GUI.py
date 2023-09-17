@@ -1,12 +1,10 @@
 import os
 import cv2
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, font
 import numpy as np
 from PIL import Image, ImageTk
 import json
-
-
 
 class GUI(tk.Tk):
     def __init__( self ):  
@@ -34,25 +32,36 @@ class GUI(tk.Tk):
         self.source_faces = []
 
         self.parameters =   {
-                            "GFPGANState":              False,
+                            "GFPGAN":               False,
                             "GFPGANAmount":             100,
-                            "DiffState":                False,
+                            "Diff":                False,
                             "DiffAmount":               4,
-                            "ThreshholdState":          False,
-                            "Threshhold":               0.85,
-                            "MaskTop":                  20,
-                            "MaskSide":                 30,
-                            "MaskBlur":                 15,
-                            "OccluderState":            False,
-                            "CLIPState":                False,
+                            "Threshold":          False,
+                            "ThresholdAmount":               0.85,
+                            "MaskTop":                  10,
+                            "MaskSide":                 10,
+                            "MaskBlur":                 10,
+                            "Occluder":            False,
+                            "CLIP":                False,
                             "CLIPText":                 tk.StringVar(value=""),
                             "CLIPAmount":               0.5,
-                            "FaceParserState":          False,
-                            "BlurAmount":               5
+                            "FaceParser":          False,
+                            "FaceParserAmount":         5,
+                            "BlurAmount":               5,
+                            'Enhancer':             'GFPGAN',
                             }
-                                
+        self.parameters_buttons =   {
+                                    'GFPGAN':       [],
+                                    'Diff':         [],
+                                    'Threshold':    [],
+                                    'Occluder':     [],
+                                    'CLIP':         [],
+                                    'FaceParser':   [],
+                                    'TopMask':      [],
+                                    'MaskBlur':     [],
+                                    'Blur':         [],
+                                    }
                  
-
 
         self.num_threads = 1
         self.video_quality = 18
@@ -91,7 +100,7 @@ class GUI(tk.Tk):
                                 'activeforeground': 'light goldenrod',
                                 'relief':           'flat',
                                 'border':           '0',
-                                'font':             ("Arial", 9)
+                                'font':             ("Cascadia Mono Light", 9)
                                 }   
         self.inactive_button_style =    {  
                                 'bg':               'gray20', 
@@ -100,7 +109,7 @@ class GUI(tk.Tk):
                                 'activeforeground': 'white',
                                 'relief':           'flat',
                                 'border':           '0',
-                                'font':             ("Arial", 9)
+                                'font':             ("Cascadia Mono Light", 9)
                                 }   
         self.active_button_style =    {  
                                 'bg':               'black', 
@@ -109,14 +118,14 @@ class GUI(tk.Tk):
                                 'activeforeground': 'white',
                                 'relief':           'flat',
                                 'border':           '0',
-                                'font':             ("Arial", 9)
+                                'font':             ("Cascadia Mono Light", 9)
                                 }
         self.need_button_style =    {  
                                 'bg':               'gray30', 
                                 'fg':               'white', 
                                 'relief':           'flat',
                                 'border':           '0',                                	
-                                'font':             ("Arial italic", 9)
+                                'font':             ("Cascadia Mono Light", 9)
                                 } 
 
         self.canvas_label_style =    {  
@@ -132,22 +141,7 @@ class GUI(tk.Tk):
                                 'bd':               '0',
                                 'highlightthickness': '0'
                                 }                 
-        self.button_style2 =    {  
-                                'bg':               'light goldenrod', 
-                                } 
-        self.button_style3 =    {  
-                                'bg':               'gray25', 
-                                'relief':           'flat',
-                                'border':           '1'
-                                } 
- 
-        self.spinbox_style =    { 
-                                'width':            '5',
-                                'bg':               'gray40', 
-                                'fg':               'white', 
-                                'relief':           'flat',
-                                'width':            '5'
-                                }
+
                                 
                                
         self.frame_style =      {  
@@ -169,6 +163,7 @@ class GUI(tk.Tk):
                                 'fg':               'white',                                
                                 'relief':           'flat',
                                 'bd':               '0',
+                                'font':             ("Cascadia Mono Light", 9),
                                 'anchor':           'w'                                
                                 }      
         self.slider_style =     {  
@@ -181,7 +176,7 @@ class GUI(tk.Tk):
                                 'border':           '0',
                                 'width':            '10',
                                 'troughcolor':      'gray40',
-                                'font':             ("Arial", 9)
+                                'font':             ("Cascadia Mono Light", 9)
                                 }                                    
                                                     
         # Video frame
@@ -224,8 +219,9 @@ class GUI(tk.Tk):
         # Video Slider
         self.video_slider = tk.Scale( self.video_frame, self.slider_style, orient='horizontal')
         self.video_slider.bind("<B1-Motion>", lambda event:self.add_action_and_update_frame("set_video_position", self.video_slider.get(), False))
-        self.video_slider.bind("<ButtonPress-1>", lambda event:self.add_action_and_update_frame("set_video_position", self.video_slider.get(), False))
-        self.video_slider.bind("<ButtonRelease-1>", lambda event:self.add_action_and_update_frame("set_video_position", self.video_slider.get(), False))
+        self.video_slider.bind("<ButtonPress-1>", lambda event: self.slider_move('press'))
+        self.video_slider.bind("<ButtonRelease-1>", lambda event: self.slider_move('release'))
+        self.video_slider.bind("<ButtonRelease-3>", lambda event:self.add_action_and_update_frame("set_video_position", self.video_slider.get(), False))
         self.video_slider.bind("<MouseWheel>", self.mouse_wheel)
         self.video_slider.grid( row = 1, column = 1, sticky='NEWS', pady = 2 )
 
@@ -248,24 +244,21 @@ class GUI(tk.Tk):
         
         column1=8
         # GFPGAN
-        # GFPGAN-checkbox
         img = Image.open('./rope/media/gfpgan_logo.png')
-        resized_image= img.resize((45,20), Image.ANTIALIAS)
+        resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.GFPGAN_icon = ImageTk.PhotoImage(resized_image)
-        temp = '              ' + str(int(self.parameters["GFPGANAmount"])) + '%' 
-        self.GFPGAN_button = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.GFPGAN_icon, text=temp, anchor='w', command=lambda: self.toggle_GFPGAN())
-        self.GFPGAN_button.place(x=column1, y=8, width = 125, height = 26) 
-        self.GFPGAN_button.bind("<MouseWheel>", self.change_GFPGAN_amount)
+        self.parameters_buttons['GFPGAN'] = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.GFPGAN_icon, anchor='w', command=lambda: self.toggle_parameter('GFPGAN'))
+        self.parameters_buttons['GFPGAN'].place(x=column1, y=8, width = 125, height = 26) 
+        self.parameters_buttons['GFPGAN'].bind("<MouseWheel>", lambda event: self.enhancer_amount(event))
+        self.parameters_buttons['GFPGAN'].bind("<ButtonRelease-3>", lambda event:self.toggle_enhancer())
 
         # Fake_diff
-        # Fake_diff-checkbox
         img = Image.open('./rope/media/diff.png')
         resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.diff_icon = ImageTk.PhotoImage(resized_image)
-        temp = ' Differ             ' + str(int(self.parameters["DiffAmount"]*10)) + '%'
-        self.differ_button = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.diff_icon, text=temp, anchor='w', command=lambda: self.toggle_differ())
-        self.differ_button.place(x=column1, y=37, width = 125, height = 26) 
-        self.differ_button.bind("<MouseWheel>", self.change_differ_amount)        
+        self.parameters_buttons['Diff'] = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.diff_icon, anchor='w', command=lambda: self.toggle_parameter('Diff'))
+        self.parameters_buttons['Diff'].place(x=column1, y=37, width = 125, height = 26) 
+        self.parameters_buttons['Diff'].bind("<MouseWheel>", lambda event: self.parameter_amount(event, 'Diff', 'DiffAmount', 0.5, 10))        
 
         column2=column1+125+x_space
         # Mask top
@@ -273,42 +266,28 @@ class GUI(tk.Tk):
         img = Image.open('./rope/media/maskup.png')
         resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.masktop_icon = ImageTk.PhotoImage(resized_image)        
-        temp = ' Top Mask     ' + str(int(self.parameters["MaskTop"]*100.0/64.0)) + '%'
         
-        self.top_blend_id = tk.Label(self.label_frame1, self.label_style, compound='left', image=self.masktop_icon, text=temp, anchor='w')
-        self.top_blend_id.place(x=column2, y=8, width = 125, height = 26)
-        self.top_blend_id.bind("<MouseWheel>", self.change_mask_top_amount) 
-
-        # # Mask sides
-        # # Mask sides-label
-        # img = Image.open('./rope/media/maskside.png')
-        # resized_image= img.resize((20,20), Image.ANTIALIAS)
-        # self.maskside_icon = ImageTk.PhotoImage(resized_image)        
-        # temp = ' Side Mask    ' + str(int(self.parameters["MaskSide"]*100.0/64.0)) + '%'
-        # self.side_blend_id = tk.Label(self.label_frame1, self.label_style, compound='left', image=self.maskside_icon, text=temp, anchor='w')
-        # self.side_blend_id.place(x=column2, y=37, width = 125, height = 26)
-        # self.side_blend_id.bind("<MouseWheel>", self.change_mask_side_amount) 
+        self.parameters_buttons['TopMask'] = tk.Label(self.label_frame1, self.label_style, compound='left', image=self.masktop_icon, anchor='w')
+        self.parameters_buttons['TopMask'].place(x=column2, y=8, width = 125, height = 26)
+        self.parameters_buttons['TopMask'].bind("<MouseWheel>", lambda event: self.parameter_amount(event, 'TopMask', 'MaskTop', 1, 64)) 
 
         # # Mask blur
         # # Mask blur-label 
         img = Image.open('./rope/media/maskblur.png')
         resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.maskblur_icon = ImageTk.PhotoImage(resized_image)  
-        temp = ' Mask Blur    ' + str(int(self.parameters["MaskBlur"]*100.0/64.0)) + '%'
-        self.mask_blur_id = tk.Label(self.label_frame1, self.label_style, compound='left', image=self.maskblur_icon, text=temp, anchor='w')
-        self.mask_blur_id.place(x=column2, y=37, width = 125, height = 26)
-        self.mask_blur_id.bind("<MouseWheel>", self.change_mask_blur_amount) 
+        self.parameters_buttons['MaskBlur'] = tk.Label(self.label_frame1, self.label_style, compound='left', image=self.maskblur_icon, anchor='w')
+        self.parameters_buttons['MaskBlur'].place(x=column2, y=37, width = 125, height = 26)
+        self.parameters_buttons['MaskBlur'].bind("<MouseWheel>", lambda event: self.parameter_amount(event, 'MaskBlur', 'MaskBlur', 1, 30)) 
 
         column3=column2+125+x_space
         # CLIP
-        # CLIP-checkbox
         img = Image.open('./rope/media/CLIP.png')
         resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.CLIP_icon = ImageTk.PhotoImage(resized_image)        
-        temp = ' CLIP              ' + str(int(self.parameters["CLIPAmount"]*100)) + '%'
-        self.CLIP_button = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.CLIP_icon, text=temp, anchor='w', command=lambda: self.toggle_CLIP())
-        self.CLIP_button.place(x=column3, y=8, width=125, height=26)
-        self.CLIP_button.bind("<MouseWheel>", self.change_CLIP_amount)         
+        self.parameters_buttons['CLIP'] = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.CLIP_icon, anchor='w', command=lambda: self.toggle_parameter('CLIP'))
+        self.parameters_buttons['CLIP'].place(x=column3, y=8, width=125, height=26)
+        self.parameters_buttons['CLIP'].bind("<MouseWheel>", lambda event: self.parameter_amount(event, 'CLIP', 'CLIPAmount', 0.01, 1))         
 
         # CLIP-entry
         self.CLIP_text = tk.Entry(self.label_frame1, relief='flat', bd=0, textvariable=self.parameters["CLIPText"])
@@ -316,44 +295,38 @@ class GUI(tk.Tk):
         self.CLIP_text.bind("<Return>", lambda event: self.add_action_and_update_frame("parameters", self.parameters))
 
         column4=column3+125+x_space
-        # # Occluder
-        # # Occluder-checkbox
+        # Occluder
         img = Image.open('./rope/media/occluder.png')
         resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.occluder_icon = ImageTk.PhotoImage(resized_image)        
         temp = ' Occluder'        
-        self.occluder_button = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.occluder_icon, text=temp, anchor='w', command=lambda: self.toggle_occluder())
-        self.occluder_button.place(x=column4, y=8, width=125, height=26)
+        self.parameters_buttons['Occluder'] = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.occluder_icon, text=temp, anchor='w', command=lambda: self.toggle_parameter('Occluder'))
+        self.parameters_buttons['Occluder'].place(x=column4, y=8, width=125, height=26)
 
-        # # Face Parser
-        # # Face Parser-checkbox
+        # Face Parser
         img = Image.open('./rope/media/parse.png')
         resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.parser_icon = ImageTk.PhotoImage(resized_image)        
-        temp = ' Mouth Parser'        
-        self.parser_button = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.parser_icon, text=temp, anchor='w', command=lambda: self.toggle_parser())
-        self.parser_button.place(x=column4, y=37, width=125, height=26)        
+        self.parameters_buttons['FaceParser'] = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.parser_icon, anchor='w', command=lambda: self.toggle_parameter('FaceParser'))
+        self.parameters_buttons['FaceParser'].place(x=column4, y=37, width=125, height=26)   
+        self.parameters_buttons['FaceParser'].bind("<MouseWheel>", lambda event: self.parameter_amount(event, 'FaceParser', 'FaceParserAmount', 1, 50))          
         
         column5=column4+125+x_space
-        # # Blur
-        # # Blur-label
+        # Blur
         img = Image.open('./rope/media/blur.png')
         resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.blur_icon = ImageTk.PhotoImage(resized_image)        
-        temp = ' Blur                   ' + str(int(self.parameters["BlurAmount"]*100.0/64.0)) + '%'
-        self.blur_id = tk.Label(self.label_frame1, self.label_style, compound='left', image=self.blur_icon, text=temp, anchor='w')
-        self.blur_id.place(x=column5, y=8, width = 125, height = 26)
-        self.blur_id.bind("<MouseWheel>", self.change_blur_amount) 
+        self.parameters_buttons['Blur'] = tk.Label(self.label_frame1, self.label_style, compound='left', image=self.blur_icon, anchor='w')
+        self.parameters_buttons['Blur'].place(x=column5, y=8, width = 125, height = 26)
+        self.parameters_buttons['Blur'].bind("<MouseWheel>", lambda event: self.parameter_amount(event, 'Blur', 'BlurAmount', 1, 64)) 
 
-        # # Face Threshhold
-        # # Face Threshhold-label
+        # Face Threshhold
         img = Image.open('./rope/media/thresh.png')
         resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.threshhold_icon = ImageTk.PhotoImage(resized_image)        
-        temp = ' Threshhold  ' + str(int(self.parameters["Threshhold"]*100)) + '%'
-        self.threshhold_button = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.threshhold_icon, text=temp, anchor='w', command=lambda: self.toggle_threshhold())
-        self.threshhold_button.place(x=column5, y=37, width=125, height=26)
-        self.threshhold_button.bind("<MouseWheel>", self.change_threshhold_amount)         
+        self.parameters_buttons['Threshold'] = tk.Button(self.label_frame1, self.inactive_button_style, compound='left', image=self.threshhold_icon, anchor='w', command=lambda: self.toggle_parameter('Threshold'))
+        self.parameters_buttons['Threshold'].place(x=column5, y=37, width=125, height=26)
+        self.parameters_buttons['Threshold'].bind("<MouseWheel>", lambda event: self.parameter_amount(event, 'Threshold', 'ThresholdAmount', 0.01, 1))         
 
  ######## Target Faces           
         # Found Faces frame [1,0]
@@ -395,11 +368,7 @@ class GUI(tk.Tk):
         self.found_faces_canvas.bind("<MouseWheel>", self.target_faces_mouse_wheel)
         self.found_faces_canvas.create_text(8, 45, anchor='w', fill='grey25', font=("Arial italic", 50), text=" Target Faces")
         
-                # # Label
-        # self.target_faces_id = tk.Canvas(self.found_faces_buttons_canvas, self.canvas_label_style)
-        # self.target_faces_id.place(x=8, y=8, width = 20, height = 84) 
-        # self.target_faces_id.create_text(8, 45, justify='center', fill='white', font=("Arial italic", 9), text="Target Faces", angle=90 )
-    
+   
                 
  ######## Source Faces       
         # Source Faces frame [2,0]
@@ -505,8 +474,7 @@ class GUI(tk.Tk):
         img = Image.open('./rope/media/threads.png')
         resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.threads_icon = ImageTk.PhotoImage(resized_image)        
-        temp = ' Threads           ' + str(self.num_threads)
-        self.num_threads_id = tk.Label(self.program_options_label, self.label_style, compound='left', image=self.threads_icon, text=temp, anchor='w')
+        self.num_threads_id = tk.Label(self.program_options_label, self.label_style, compound='left', image=self.threads_icon, anchor='w')
         self.num_threads_id.place(x=column, y=8, width = 125, height = 26)
         self.num_threads_id.bind("<MouseWheel>", self.change_threads_amount)    
         
@@ -515,8 +483,7 @@ class GUI(tk.Tk):
         img = Image.open('./rope/media/maskside.png')
         resized_image= img.resize((20,20), Image.ANTIALIAS)
         self.video_quality_icon = ImageTk.PhotoImage(resized_image)        
-        temp = ' Video Quality     ' + str(self.video_quality)
-        self.vid_qual_button = tk.Label(self.program_options_label, self.label_style, compound='left', image=self.video_quality_icon, text=temp, anchor='w')
+        self.vid_qual_button = tk.Label(self.program_options_label, self.label_style, compound='left', image=self.video_quality_icon, anchor='w')
         self.vid_qual_button.place(x=column, y=8, width = 125, height=26)
         self.vid_qual_button.bind("<MouseWheel>", self.change_video_quality)  
 
@@ -563,10 +530,10 @@ class GUI(tk.Tk):
         self.grid_rowconfigure(6, weight = 0) 
 
 
-        self.add_action_and_update_frame("vid_qual",int(self.video_quality), False)
-        self.add_action_and_update_frame("num_threads",int(self.num_threads), False)        
-        self.add_action_and_update_frame("parameters", self.parameters, False)
-        
+        # self.add_action_and_update_frame("vid_qual",int(self.video_quality), False)
+        # self.add_action_and_update_frame("num_threads",int(self.num_threads), False)        
+        # self.add_action_and_update_frame("parameters", self.parameters, False)
+
 
         try:
             self.save_file = open("data.json", "r")
@@ -582,7 +549,7 @@ class GUI(tk.Tk):
             if self.json_dict["source videos"]:
                 temp = self.json_dict["source videos"]
                 temp_len = len(temp)
-                temp = '...'+temp[temp_len-10:]
+                temp = ' '+temp[temp_len-9:]
                  
                 self.video_filepath_button.configure(self.inactive_button_style, text=temp) 
         
@@ -590,7 +557,7 @@ class GUI(tk.Tk):
             if self.json_dict["source faces"]:
                 temp = self.json_dict["source faces"]
                 temp_len = len(temp)
-                temp = '...'+temp[temp_len-10:]
+                temp = ' '+temp[temp_len-9:]
                 
                 self.faces_filepath_button.configure(self.inactive_button_style, text=temp)
             
@@ -598,7 +565,7 @@ class GUI(tk.Tk):
             if self.json_dict["saved videos"]:
                 temp = self.json_dict["saved videos"]
                 temp_len = len(temp)
-                temp = '...'+temp[temp_len-10:]
+                temp = ' '+temp[temp_len-9:]
                  
                 self.save_video_filepath_button.configure(self.inactive_button_style, text=temp)
                 self.add_action_and_update_frame("saved_video_path",self.json_dict["saved videos"], False)
@@ -613,7 +580,21 @@ class GUI(tk.Tk):
          
                 self.add_action_and_update_frame("num_threads",int(self.num_threads), False)
                 
+        class empty:
+            def __init__(self):
+                self.delta = 0
+        event = empty()    
             
+        self.parameter_amount(event, 'GFPGAN', 'GFPGANAmount', 5, 100)
+        self.parameter_amount(event, 'Diff', 'DiffAmount', 0.5, 10)
+        self.parameter_amount(event, 'Threshold', 'ThresholdAmount', 0.01, 1)
+        self.parameter_amount(event, 'CLIP', 'CLIPAmount', 0.01, 1)
+        self.parameter_amount(event, 'FaceParser', 'FaceParserAmount', 1, 100)
+        self.parameter_amount(event, 'TopMask', 'MaskTop', 1, 64)
+        self.parameter_amount(event, 'MaskBlur', 'MaskBlur', 1, 30)
+        self.parameter_amount(event, 'Blur', 'BlurAmount', 1, 64)
+        self.change_video_quality(event)
+        self.change_threads_amount(event)    
             
     def load_all(self):
         if not self.json_dict["source videos"] or not self.json_dict["source faces"]:
@@ -632,7 +613,7 @@ class GUI(tk.Tk):
         
         temp = self.json_dict["source videos"]
         temp_len = len(temp)
-        temp = '...'+temp[temp_len-10:]
+        temp = ' '+temp[temp_len-9:]
          
         self.video_filepath_button.configure(self.inactive_button_style, text=temp) 
         
@@ -648,7 +629,7 @@ class GUI(tk.Tk):
         
         temp = self.json_dict["saved videos"]
         temp_len = len(temp)
-        temp = '...'+temp[temp_len-10:]
+        temp = ' '+temp[temp_len-9:]
          
         self.save_video_filepath_button.configure(self.inactive_button_style, text=temp) 
         
@@ -664,7 +645,7 @@ class GUI(tk.Tk):
         
         temp = self.json_dict["source faces"]
         temp_len = len(temp)
-        temp = '...'+temp[temp_len-10:]
+        temp = ' '+temp[temp_len-9:]
         
         self.faces_filepath_button.configure(self.inactive_button_style, text=temp)
          
@@ -819,7 +800,7 @@ class GUI(tk.Tk):
                     for j in range(len(self.target_faces)):
                         sim = self.findCosineDistance(ret[i].embedding, self.target_faces[j]["Embedding"])
                         
-                        if sim<self.parameters["Threshhold"]:
+                        if sim<self.parameters["ThresholdAmount"]:
                             found = True
                             
                             self.target_faces[j]["Embedding"] = self.target_faces[j]["Embedding"]*self.target_faces[j]["EmbeddingNumber"] + ret[i].embedding
@@ -1094,7 +1075,12 @@ class GUI(tk.Tk):
             self.video_play.config(self.inactive_button_style)
             if self.rec_video:
                 self.toggle_rec_video()
-    
+
+    def set_player_buttons_to_inactive(self):
+        self.video_play.config(self.inactive_button_style)
+        self.video_record.config(self.inactive_button_style)
+        self.rec_video = False
+        self.play_video = False
     
     
     def toggle_swapper(self):
@@ -1131,27 +1117,26 @@ class GUI(tk.Tk):
         
     
     def add_action_and_update_frame(self, action, parameter, update_frame=True):
-        
-        # Get values for self.parameters
         if action == "parameters":
             parameter = {
-                        "GFPGANState":              parameter["GFPGANState"],
+                        "GFPGAN":              parameter["GFPGAN"],
                         "GFPGANAmount":             parameter["GFPGANAmount"],
-                        "DiffState":                parameter["DiffState"],
+                        "Diff":                parameter["Diff"],
                         "DiffAmount":               parameter["DiffAmount"],
-                        "Threshhold":               parameter["Threshhold"],
-                        "ThreshholdState":          parameter["ThreshholdState"],
+                        "ThresholdAmount":               parameter["ThresholdAmount"],
+                        "Threshold":          parameter["Threshold"],
                         "MaskTop":                  parameter["MaskTop"],
                         "MaskSide":                 parameter["MaskSide"],
                         "MaskBlur":                 parameter["MaskBlur"],
-                        "OccluderState":            parameter["OccluderState"],
-                        "CLIPState":                parameter["CLIPState"],
+                        "Occluder":            parameter["Occluder"],
+                        "CLIP":                parameter["CLIP"],
                         "CLIPText":                 parameter["CLIPText"].get(),
                         "CLIPAmount":               parameter["CLIPAmount"],
-                        "FaceParserState":          parameter["FaceParserState"],
-                        "BlurAmount":               parameter["BlurAmount"]
+                        "FaceParser":          parameter["FaceParser"],
+                        "FaceParserAmount":         parameter["FaceParserAmount"],
+                        "BlurAmount":               parameter["BlurAmount"],
+                        'Enhancer':             parameter['Enhancer'],
                         }
-        
         # Send over action/parmeters tuple
         temp = [action, parameter]
         self.action_q.append(temp) 
@@ -1260,198 +1245,28 @@ class GUI(tk.Tk):
                     self.toggle_source_faces_buttons_state(None, i-1)
                     break
 
-    def toggle_GFPGAN(self):
-        self.parameters["GFPGANState"] = not self.parameters["GFPGANState"]
+    def toggle_parameter(self, parameter):
+        self.parameters[parameter] = not self.parameters[parameter]
         
-        if self.parameters["GFPGANState"]:
-            self.GFPGAN_button.config(self.active_button_style)
+        if self.parameters[parameter]:
+            self.parameters_buttons[parameter].config(self.active_button_style)
         else:
-            self.GFPGAN_button.config(self.inactive_button_style)
+            self.parameters_buttons[parameter].config(self.inactive_button_style)
             
         self.add_action_and_update_frame("parameters", self.parameters)
-        
-    def change_GFPGAN_amount(self, event):        
-        self.parameters["GFPGANAmount"] += (5*int(event.delta/120.0))
-        if self.parameters["GFPGANAmount"] > 100:
-            self.parameters["GFPGANAmount"] = 100
-        if self.parameters["GFPGANAmount"] < 0 :
-            self.parameters["GFPGANAmount"] = 0
+    
+    def parameter_amount(self, event, parameter, parameter_amount, increment, maximum ):
+        self.parameters[parameter_amount] += increment*int(event.delta/120.0)
+        if self.parameters[parameter_amount] > maximum:
+            self.parameters[parameter_amount] = maximum
+        if self.parameters[parameter_amount] < 0 :
+            self.parameters[parameter_amount] = 0
 
-        if self.parameters["GFPGANAmount"] >= 100:
-            temp = '             ' + str(int(self.parameters["GFPGANAmount"])) + '%'
-        else:
-            temp = '               ' + str(int(self.parameters["GFPGANAmount"])) + '%' 
-        
+        temp_num = str(int(100.0*self.parameters[parameter_amount]/maximum))
+        temp = ' '+parameter+' '*(12-len(parameter)-len(temp_num))+temp_num+'%'
 
-        self.GFPGAN_button.config(text=temp)
-        
-        self.add_action_and_update_frame("parameters", self.parameters)
-        
-    def toggle_differ(self):
-        self.parameters["DiffState"] = not self.parameters["DiffState"]
-        
-        if self.parameters["DiffState"]:
-            self.differ_button.config(self.active_button_style)
-        else:
-            self.differ_button.config(self.inactive_button_style)
-            
-        self.add_action_and_update_frame("parameters", self.parameters)
-        
-    def change_differ_amount(self, event):        
-        self.parameters["DiffAmount"] += (0.5*int(event.delta/120.0))
-        if self.parameters["DiffAmount"] > 10:
-            self.parameters["DiffAmount"] = 10
-        if self.parameters["DiffAmount"] < 0 :
-            self.parameters["DiffAmount"] = 0
-        
-        if self.parameters["DiffAmount"] >= 10:
-            temp = ' Differ           ' + str(int(self.parameters["DiffAmount"]*10)) + '%'
-        else:
-            temp = ' Differ             ' + str(int(self.parameters["DiffAmount"]*10)) + '%'       
-
-        self.differ_button.config(text=temp)
-        
-        self.add_action_and_update_frame("parameters", self.parameters)
-
-    def toggle_threshhold(self):
-        self.parameters["ThreshholdState"] = not self.parameters["ThreshholdState"]
-        
-        if self.parameters["ThreshholdState"]:
-            self.threshhold_button.config(self.active_button_style)            
-        else:
-            self.threshhold_button.config(self.inactive_button_style)
-            
-        self.add_action_and_update_frame("parameters", self.parameters)
-
-    def change_threshhold_amount(self, event):        
-        self.parameters["Threshhold"] += (0.01*int(event.delta/120.0))
-        if self.parameters["Threshhold"] > 1:
-            self.parameters["Threshhold"] = 1
-        if self.parameters["Threshhold"] < 0 :
-            self.parameters["Threshhold"] = 0
-        
-        if self.parameters["Threshhold"] >= 1:
-            temp = ' Threshhold' + str(int(self.parameters["Threshhold"]*100)) + '%'
-        else:
-            temp = ' Threshhold  ' + str(int(self.parameters["Threshhold"]*100)) + '%'
-            
-        self.threshhold_button.config(text=temp)
-        
-        self.add_action_and_update_frame("parameters", self.parameters)  
-        
-    def change_mask_top_amount(self, event):     
-
-        self.parameters["MaskTop"] += (1*int(event.delta/120.0))
-        if self.parameters["MaskTop"] > 64:
-            self.parameters["MaskTop"] = 64
-        if self.parameters["MaskTop"] < 0 :
-            self.parameters["MaskTop"] = 0
-        
-        if self.parameters["MaskTop"] >= 64:
-            temp = ' Top Mask   ' + str(int(self.parameters["MaskTop"]*100.0/64.0)) + '%'
-        else:
-            temp = ' Top Mask     ' + str(int(self.parameters["MaskTop"]*100.0/64.0)) + '%'
-            
-        self.top_blend_id.config(text=temp)
-        
-        self.add_action_and_update_frame("parameters", self.parameters)         
-        
-    def change_mask_side_amount(self, event):     
-
-        self.parameters["MaskSide"] += (1*int(event.delta/120.0))
-        if self.parameters["MaskSide"] > 64:
-            self.parameters["MaskSide"] = 64
-        if self.parameters["MaskSide"] < 0 :
-            self.parameters["MaskSide"] = 0
-        
-        if self.parameters["MaskSide"] >= 64:
-            temp = ' Side Mask  ' + str(int(self.parameters["MaskSide"]*100.0/64.0)) + '%'
-        else:
-            temp = ' Side Mask    ' + str(int(self.parameters["MaskSide"]*100.0/64.0)) + '%'
-            
-        self.side_blend_id.config(text=temp)
-        
-        self.add_action_and_update_frame("parameters", self.parameters)      
-
-    def change_mask_blur_amount(self, event):     
-
-        self.parameters["MaskBlur"] += (1*int(event.delta/120.0))
-        if self.parameters["MaskBlur"] > 30:
-            self.parameters["MaskBlur"] = 30
-        if self.parameters["MaskBlur"] < 0 :
-            self.parameters["MaskBlur"] = 0
-        
-        temp_num = str(int(self.parameters["MaskBlur"]*100.0/30.0))
-        temp_num_len = 4-len(temp_num)
-        
-        temp = ' Mask Blur  ' + ' '*temp_num_len + temp_num + '%'
-            
-        self.mask_blur_id.config(text=temp)
-        
-        self.add_action_and_update_frame("parameters", self.parameters)        
-        
-    def toggle_CLIP(self):
-        self.parameters["CLIPState"] = not self.parameters["CLIPState"]
-        
-        if self.parameters["CLIPState"]:
-            self.CLIP_button.config(self.active_button_style)            
-        else:
-            self.CLIP_button.config(self.inactive_button_style)
-            
-        self.add_action_and_update_frame("parameters", self.parameters)
-
-    def change_CLIP_amount(self, event):        
-        self.parameters["CLIPAmount"] += (0.01*int(event.delta/120.0))
-        if self.parameters["CLIPAmount"] > 1:
-            self.parameters["CLIPAmount"] = 1
-        if self.parameters["CLIPAmount"] < 0 :
-            self.parameters["CLIPAmount"] = 0
-        
-        if self.parameters["CLIPAmount"] >= 1:
-            temp = ' CLIP            ' + str(int(self.parameters["CLIPAmount"]*100)) + '%'
-        else:
-            temp = ' CLIP              ' + str(int(self.parameters["CLIPAmount"]*100)) + '%'
-            
-        self.CLIP_button.config(text=temp)
-        
-        self.add_action_and_update_frame("parameters", self.parameters) 
-
-    def toggle_occluder(self):
-        self.parameters["OccluderState"] = not self.parameters["OccluderState"]
-        
-        if self.parameters["OccluderState"]:
-            self.occluder_button.config(self.active_button_style)            
-        else:
-            self.occluder_button.config(self.inactive_button_style)
-            
-        self.add_action_and_update_frame("parameters", self.parameters)
-
-    def toggle_parser(self):
-        self.parameters["FaceParserState"] = not self.parameters["FaceParserState"]
-        
-        if self.parameters["FaceParserState"]:
-            self.parser_button.config(self.active_button_style)            
-        else:
-            self.parser_button.config(self.inactive_button_style)
-            
-        self.add_action_and_update_frame("parameters", self.parameters)
-
-    def change_blur_amount(self, event):     
-
-        self.parameters["BlurAmount"] += (1*int(event.delta/120.0))
-        if self.parameters["BlurAmount"] > 64:
-            self.parameters["BlurAmount"] = 64
-        if self.parameters["BlurAmount"] < 0 :
-            self.parameters["BlurAmount"] = 0
-        
-        if self.parameters["BlurAmount"] >= 10:
-            temp = ' Blur                 ' + str(int(self.parameters["BlurAmount"]*100.0/64.0)) + '%'
-        else:
-            temp = ' Blur                   ' + str(int(self.parameters["BlurAmount"]*100.0/64.0)) + '%'
-            
-        self.blur_id.config(text=temp)
-        
-        self.add_action_and_update_frame("parameters", self.parameters)   
+        self.parameters_buttons[parameter].config(text=temp)        
+        self.add_action_and_update_frame("parameters", self.parameters)    
 
     def change_video_quality(self, event): 
         self.video_quality += (1*int(event.delta/120.0))
@@ -1461,8 +1276,10 @@ class GUI(tk.Tk):
         if self.video_quality < 0 :
             self.video_quality = 0
         
-        temp = ' Video Quality     ' + str(self.video_quality)
-            
+        parameter = 'Vid Qual'
+        temp_num = str(int(self.video_quality))
+        temp = ' '+parameter+' '*(13-len(parameter)-len(temp_num))+temp_num
+
         self.vid_qual_button.config(text=temp)        
  
         self.add_action_and_update_frame("vid_qual",int(self.video_quality), False)
@@ -1475,15 +1292,65 @@ class GUI(tk.Tk):
         if self.num_threads < 1:
             self.num_threads = 1
         
-        temp = ' Threads           ' + str(self.num_threads)
+        parameter = 'Threads'
+        temp_num = str(int(self.num_threads))
+        temp = ' '+parameter+' '*(13-len(parameter)-len(temp_num))+temp_num
             
         self.num_threads_id.config(text=temp)        
- 
+
         self.add_action_and_update_frame("num_threads",int(self.num_threads), False)
         
         self.json_dict["threads"] = self.num_threads
         with open("data.json", "w") as outfile:
             json.dump(self.json_dict, outfile)
 
+    def slider_move(self, button_state):
+        global carry_state
+
+        if button_state == 'press':
+            carry_state = self.swap
+            if carry_state:
+                self.toggle_swapper()
+        elif button_state == 'release' and carry_state:
+            self.toggle_swapper()
+            
+        self.add_action_and_update_frame("set_video_position", self.video_slider.get(), False)
+    
+    def toggle_enhancer(self):
+        if self.parameters['Enhancer'] == 'GFPGAN':
+             self.parameters['Enhancer'] = 'CF'
+        else:
+            self.parameters['Enhancer'] = 'GFPGAN'
+
+        
+        temp_num = str(int(100.0*self.parameters['GFPGANAmount']/100.0))    
+        parameter = self.parameters['Enhancer']
+        temp = ' '+parameter+' '*(12-len(parameter)-len(temp_num))+temp_num+'%'
+
+        self.parameters_buttons['GFPGAN'].config(text=temp)     
+
+        self.add_action_and_update_frame("parameters", self.parameters)  
+
+    def enhancer_amount(self, event):
+        increment = 5
+        maximum = 100
+        parameter = 'GFPGAN'
+        parameter_amount = 'GFPGANAmount'
+        
+        self.parameters[parameter_amount] += increment*int(event.delta/120.0)
+        if self.parameters[parameter_amount] > maximum:
+            self.parameters[parameter_amount] = maximum
+        if self.parameters[parameter_amount] < 0 :
+            self.parameters[parameter_amount] = 0
+        
+        parameter1 = self.parameters['Enhancer']
+        temp_num = str(int(100.0*self.parameters[parameter_amount]/maximum))
+        temp = ' '+parameter1+' '*(12-len(parameter1)-len(temp_num))+temp_num+'%'
+
+        self.parameters_buttons[parameter].config(text=temp)        
+        self.add_action_and_update_frame("parameters", self.parameters)         
+
+
+     
         
     # https://discord.gg/EcdVAFJzqp
