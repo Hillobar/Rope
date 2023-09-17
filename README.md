@@ -12,7 +12,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Real-time video player
 * Helpful functions
 
-### (2023-09-17) New Features for Rope - Crystal Shard: ###
+### (2023-09-17) Changelog for Rope - Crystal Shard: ###
 Fun Stuff:
 * Added mousewheel function to Mouth Parser to adjust the size of the mask
 * Added Codeformer as an enhancer option. Codeformer does a noticeably better job with skin textures, but runs slower. Right-click on the button to toggle Codeformer or GFPGAN. Note: Codeformer takes 15-30 secondfs to load the first time.
