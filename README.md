@@ -12,18 +12,21 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Real-time video player
 * Helpful functions
 
-### New Features for Rope - Crystal: ###
-* New, slightly improved GUI
-* Merged Source Faces. Select multiple Source Faces to create an average Source Face result. Combine different people to create a blend, or select the same person from different Source Faces to improve the likeness of the person
-* Source Faces Shortcuts to always have access to your favorite faces. Works with Merged Source Faces too!
-* Improvements to layout for workflow efficiency
-* Improvements to Target/Source Face selection for workflow efficiency
-* Mousescroll on Target/Source Faces and Target Videos
-* Much lower memory requirements (only 2.7GB if you don't enable GFPGAN, CLIP, etc.)
-* Mouse scrolling in the video player cycles through the Source Faces for the selected Target Face. Quickly view your Source Faces against the Target Face!
-* More speed improvements. Results below. I'll start tracking benchmarks for each release
-* (experimental) Mouth parser. Another occlusion tool just for the mouth area. Improves dialogue and lip sync, but will replace the Source Face mouth.
-* Bug fixes
+### (2023-09-17) New Features for Rope - Crystal Shard: ###
+Fun Stuff:
+* Added mousewheel function to Mouth Parser to adjust the size of the mask
+* Added Codeformer as an enhancer option. Codeformer does a noticeably better job with skin textures, but runs slower. Right-click on the button to toggle Codeformer or GFPGAN. Note: Codeformer takes 15-30 secondfs to load the first time.
+
+Boring Stuff:
+* Mouth Parser and Occluder now use onnxruntime instead of PyTorch. Hopefully this will solve issues with AMD cpu users
+* InsightFace libraries have been removed as a dependency
+* Performance increase
+* Swapping is now automatically toggled off when dragging the timeline slider. this is to make it more responsive. It will automatically toggle the swap back on once you stop dragging if you had swap on to begin with.
+
+Bug Fixes:
+* Fixed bug when dragging the Video timeline. It can now be moved when playing
+* Fixed several remaining bugs with recording 
+* Fixed right click behavior on the video player slider
 
 ### Performance (3090Ti 24GB): ###
 | File | Rendering Time [s] |
