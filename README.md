@@ -15,7 +15,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Helpful functions
 
 ### (2023-11-17) Changelog for Rope - Sapphire: ###
-**Note: Please check the wiki for installing new model files**
+**Note: Please check the wiki for installation**
 - Images! In addition to videos, use Rope to swap images. Seamlessly integrated into the current interface.
 - Timeline markers. Add markers to the timeline that capture the current settings at a specific frame. When playing back or recording, markers control the options when the frame is reached. Add as many markers as you need!
 - Iterations. Apply the swapper model multiple times to a face. It seems to increase likeliness if used carefully.
