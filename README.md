@@ -14,24 +14,19 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Real-time video player
 * Helpful functions
 
-### (2023-09-17) Changelog for Rope - Crystal Shard: ###
+### (2023-11-17) Changelog for Rope - Sapphire: ###
 **Note: Please check the wiki for installing new model files**
+- Images! In addition to videos, use Rope to swap images. Seamlessly integrated into the current interface.
+- Timeline markers. Add markers to the timeline that capture the current settings at a specific frame. When playing back or recording, markers control the options when the frame is reached. Add as many markers as you need!
+- Iterations. Apply the swapper model multiple times to a face. It seems to increase likeliness if used carefully.
+- Orientation. Sometimes faces are at a bad orientation, like laying down or upside-down. The face detector has problems with this, so I added a way to manually tell the detector which way the face is oriented. In this first version it will apply it per frame. Later I hope to be able to do it per face. It is also markerable, so you can set markers for it per frame!
+- Tool tips on (almost) everything. Tips are in the bottom pane.
+- Bug fixes and refactoring
 
-Fun Stuff:
-* Added mousewheel function to Mouth Parser to adjust the size of the mask
-* Added Codeformer as an enhancer option. Codeformer does a noticeably better job with skin textures, but runs slower. Right-click on the button to toggle Codeformer or GFPGAN. Note: Codeformer takes 15-30 secondfs to load the first time.
-
-Boring Stuff:
-* Mouth Parser and Occluder now use onnxruntime instead of PyTorch. Hopefully this will solve issues with AMD cpu users
-* InsightFace libraries have been removed as a dependency
-* Dependencies have been updated and aligned
-* Performance increase
-* Swapping is now automatically toggled off when dragging the timeline slider. this is to make it more responsive. It will automatically toggle the swap back on once you stop dragging if you had swap on to begin with.
-
-Bug Fixes:
-* Fixed bug when dragging the Video timeline. It can now be moved when playing
-* Fixed several remaining bugs with recording 
-* Fixed right click behavior on the video player slider
+### Known Bugs: ###
+- Recording starts on the next frame. It's an issue with how the opencv lib is used. In the future, I hope to get around this with another lib or just working directly with ffmpeg.
+- Toggling between img/vid leaves a residual frame in the window. I'll clean this up in the future
+- Unfortunately recording is bugged with Threads = 1. I need to change some logic.
 
 ### Performance:  ###
 Machine: 3090Ti (24GB), i5-13600K
