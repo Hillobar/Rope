@@ -5,8 +5,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Donate](https://www.paypal.com/donate/?hosted_button_id=Y5SB9LSXFGRF2)
 
-### New [Wiki](https://github.com/Hillobar/Rope/wiki)
-* New install instructions
+### [Wiki](https://github.com/Hillobar/Rope/wiki)
 
 ### Features: ###
 * Incredible features and fast workflow
