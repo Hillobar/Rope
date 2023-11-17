@@ -18,7 +18,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 - Images! In addition to videos, use Rope to swap images. Seamlessly integrated into the current interface.
 - Timeline markers. Add markers to the timeline that capture the current settings at a specific frame. When playing back or recording, markers control the options when the frame is reached. Add as many markers as you need!
 - Iterations. Apply the swapper model multiple times to a face. It seems to increase likeliness if used carefully.
-- Orientation. Sometimes faces are at a bad orientation, like laying down or upside-down. The face detector has problems with this, so I added a way to manually tell the detector which way the face is oriented. In this first version it will apply it per frame. Later I hope to be able to do it per face. It is also markerable, so you can set markers for it per frame!
+- Orientation. Sometimes faces are at a bad orientation, like laying down or upside-down. The face detector has problems with this, so Rope now has an option to tell the detector which way the face is oriented. It is also markerable, so you can set markers for it per frame!
 - Tool tips on (almost) everything. Tips are in the bottom pane.
 - Bug fixes and refactoring
 
