@@ -1,4 +1,4 @@
-![Screenshot 2023-09-17 133025](https://github.com/Hillobar/Rope/assets/63615199/ebd12aa2-666c-49f5-a6f0-53f5eb1e5f52)
+![Screenshot 2023-07-11 071622](https://github.com/Hillobar/Rope/assets/63615199/e919e3c9-85c5-4b7b-ac46-643c75c01a28)
 
 Rope implements the insightface inswapper_128 model with a helpful GUI.
 ### [Discord](https://discord.gg/EcdVAFJzqp)
