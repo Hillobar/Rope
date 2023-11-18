@@ -30,7 +30,6 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 - (fixed) bug (I hope :D) : When clicking on a registered face name (the one of the left) to swap, on the previous version, clicking back to the same face name would delete the choice and unswap the face. Now it's just blocked and I can't "unswap" (unselect) the face. I'm force to select a face or just close and restart the soft.
 - (fixed) update text for all the parser features
 
-
 ### Known Bugs: ###
 - Recording starts on the next frame. It's an issue with how the opencv lib is used. In the future, I hope to get around this with another lib or just working directly with ffmpeg.
 - Toggling between img/vid leaves a residual frame in the window. I'll clean this up in the future
@@ -53,11 +52,7 @@ File: benchmark/target-1080p.mp4, 2048x1080, 269 frames, 25 fps, 10s
 | Swap+MouthParser | 13.9 |
 | target-2160p.mp4 | 9.7 |
 
-### Known bugs: ### 
-* Stop video playback before loading a new video, or bork
-* Nottifications on bottom sometime status early
-
-### Preview: ###
+### Preview (from Rope-Space Worm): ###
 ![image](https://github.com/Hillobar/Rope/assets/63615199/fda0c05f-72a6-4935-a882-dc6d17cfc014)
 
 ### Disclaimer: ###
