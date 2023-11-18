@@ -838,6 +838,8 @@ class GUI(tk.Tk):
 
 
     def toggle_source_faces_buttons_state(self, event, button):  
+        # jot down the current state of the button
+        state = self.source_faces[button]["ButtonState"]
 
         # Set all Source Face buttons to False 
         for face in self.source_faces:      
@@ -845,20 +847,30 @@ class GUI(tk.Tk):
             face["ButtonState"] = False
 
         # Toggle the selected Source Face
-        self.source_faces[button]["ButtonState"] = True
-        self.source_faces[button]["TKButton"].config(self.button_highlight_style)
+        self.source_faces[button]["ButtonState"] = not state
+        
+        # If the source face is now on
+        if self.source_faces[button]["ButtonState"]:
+            self.source_faces[button]["TKButton"].config(self.button_highlight_style)
+        else:
+            self.source_faces[button]["TKButton"].config(self.inactive_button_style)
 
         # Determine which target face is selected
+        # If there are target faces
         if self.target_faces:
             for face in self.target_faces:
+                
+                # Find the first target face that is highlighted
                 if face["ButtonState"]:
                     
                     # Clear the assignments
                     face["SourceFaceAssignments"] = []
                     
-                    # Append new assignment
-                    face["SourceFaceAssignments"].append(button)
-                    face['AssignedEmbedding'] = self.source_faces[button]['Embedding']
+                    # If a source face is highlighted
+                    if self.source_faces[button]["ButtonState"]:
+                        # Append new assignment 
+                        face["SourceFaceAssignments"].append(button)
+                        face['AssignedEmbedding'] = self.source_faces[button]['Embedding']
 
                     break        
 
@@ -899,7 +911,8 @@ class GUI(tk.Tk):
                         
                         num +=1
                 
-                tface['AssignedEmbedding'] /= float(num)
+                if num>0:
+                    tface['AssignedEmbedding'] /= float(num)
                 
                 break
 
@@ -997,8 +1010,6 @@ class GUI(tk.Tk):
         elif media_type == 'Images':
             self.add_action("load_target_image", media_file, True)
             self.image_file_name = os.path.splitext(os.path.basename(media_file))
-            base_filename =  self.image_file_name[0]+"_"+str(time.time())[:10]
-            self.image_file_name = os.path.join(self.json_dict["saved videos"], base_filename)
     
         self.set_status(media_file) 
         for i in range(len(self.target_media_buttons)):
@@ -1022,7 +1033,7 @@ class GUI(tk.Tk):
         self.add_action("markers", self.markers)
       
             
-    
+    # @profile
     def set_image(self, image, requested):
         self.video_image = image[0]
         frame = image[1]
@@ -1057,7 +1068,8 @@ class GUI(tk.Tk):
         image = ImageTk.PhotoImage(image)
         self.video.configure(image=image)
         self.video.image = image
-        
+    
+    # @profile    
     def resize_image(self):
     
         image = self.video_image
@@ -1088,7 +1100,7 @@ class GUI(tk.Tk):
         self.video.configure(image=image)
         self.video.image = image
         
-
+    # @profile
     def check_for_video_resize(self):
         if self.video_loaded:
             if self.x1 != self.video.winfo_width() or self.y1 != self.video.winfo_height():
@@ -1537,7 +1549,9 @@ class GUI(tk.Tk):
                 break
                 
     def save_image(self):
-        cv2.imwrite(self.image_file_name+'.jpg', cv2.cvtColor(self.video_image, cv2.COLOR_BGR2RGB))
+        filename =  self.image_file_name[0]+"_"+str(time.time())[:10]
+        filename = os.path.join(self.json_dict["saved videos"], filename)
+        cv2.imwrite(filename+'.jpg', cv2.cvtColor(self.video_image, cv2.COLOR_BGR2RGB))
     
 
     def create_ui_button(self, parameter, root, x, y, width=125, height=26):

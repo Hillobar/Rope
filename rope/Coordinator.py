@@ -14,7 +14,7 @@ from torchvision import transforms
 from rope.external.clipseg import CLIPDensePredT
 from rope.external.insight.face_analysis import FaceAnalysis
 
-
+# @profile
 def coordinator():
     global gui, vm, action, frame, r_frame, load_notice
     start = time.time()
@@ -196,7 +196,7 @@ def load_GFPGAN_model():
     options = onnxruntime.SessionOptions()
     # options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_DISABLE_ALL
 
-    GFPGAN_session = onnxruntime.InferenceSession( "./models/GFPGANv1.4.fp16.onnx", options=options, providers=["CUDAExecutionProvider"])
+    GFPGAN_session = onnxruntime.InferenceSession( "./models/GFPGANv1.4.onnx", options=options, providers=["CUDAExecutionProvider"])
     return GFPGAN_session
     
 def load_codeformer_model():    

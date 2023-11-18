@@ -540,9 +540,10 @@ class VideoManager():
                     if sim<float(threshhold) and tface["SourceFaceAssignments"]:
                         s_e =  tface["AssignedEmbedding"]
                         img = self.swap_core(img, fface.kps, s_e, orientation, parameters, fface.bbox) 
-                    else:
-                        for i in range(orientation):
-                            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+
+            for i in range(orientation):
+                img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+            
             return img
         else:
             for i in range(orientation):
@@ -749,8 +750,8 @@ class VideoManager():
         
         img[top:bottom, left:right, 0:3] = swapped_face_upscaled        
         # Option 2        
-        for i in range(rot):
-            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)        
+        # for i in range(rot):
+            # img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)        
         
         return img.astype(np.uint8)   #BGR
         
@@ -901,7 +902,7 @@ class VideoManager():
         output = output.transpose(1, 2, 0)
         # output = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
         output = (output * 255.0).round()
-
+        cv2.imwrite('!.jpg', output)
         alpha = float(GFPGANAmount)/100.0
         
         swapped_face_upscaled = output*alpha + swapped_face_upscaled*(1.0-alpha)
@@ -924,9 +925,8 @@ class VideoManager():
         return fake_diff    
     # @profile        
     def codeformer(self, swapped_face_upscaled, GFPGANAmount):
-
-        img =swapped_face_upscaled
-
+        img = swapped_face_upscaled
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         img = img.astype(np.float32)[:,:,::-1] / 255.0
         img = img.transpose((2, 0, 1))
         img = (img - 0.5) / 0.5
@@ -941,14 +941,16 @@ class VideoManager():
                
             self.codeformer_model.run_with_iobinding(io_binding)
             output = io_binding.copy_outputs_to_cpu()[0][0]
+        
         else:
             output = self.codeformer_model.run(None, {'x':img, 'w':w})[0][0]
 
         img = (output.transpose(1,2,0).clip(-1,1) + 1) * 0.5
         img = (img * 255)[:,:,::-1]
         img = img.clip(0, 255)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
         alpha = float(GFPGANAmount)/100.0
-        
         img = img*alpha + swapped_face_upscaled*(1.0-alpha)
         
         return img

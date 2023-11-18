@@ -74,7 +74,7 @@ PARAM_BUTTONS_PARAMS =    {
     'FaceParserInc':            1,                                                 
     'FaceParserUnit':           '%', 
     'FaceParserIcon':           './rope/media/parse.png',
-    'FaceParserMessage':        'PARSER - Performs occlusion based on features. [LB: on/off, RB: mouth/everything but the face, MW: amount]',
+    'FaceParserMessage':        'PARSER - Performs occlusion based on features. [LB: on/off, RB: mouth/everything but the face, MW: amount (0 is off, -1 is inside of mouth only for mouth mode)]',
     
     'BlurState':                False,
     'BlurMode':                 0, 
