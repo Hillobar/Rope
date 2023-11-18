@@ -52,7 +52,7 @@ File: benchmark/target-1080p.mp4, 2048x1080, 269 frames, 25 fps, 10s
 | Swap+MouthParser | 13.9 |
 | target-2160p.mp4 | 9.7 |
 
-### Preview (from Rope-Space Worm): ###
+### Preview (from Rope-Crystal): ###
 ![image](https://github.com/Hillobar/Rope/assets/63615199/fda0c05f-72a6-4935-a882-dc6d17cfc014)
 
 ### Disclaimer: ###
