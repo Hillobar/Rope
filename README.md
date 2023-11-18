@@ -29,11 +29,13 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 - (fixed) the orientation feature might not be unorienting
 - (fixed) bug (I hope :D) : When clicking on a registered face name (the one of the left) to swap, on the previous version, clicking back to the same face name would delete the choice and unswap the face. Now it's just blocked and I can't "unswap" (unselect) the face. I'm force to select a face or just close and restart the soft.
 - (fixed) update text for all the parser features
+- (fixed) "Switch from one timeline marker to another doesn't properly show the correct features configured. Switch to the next frame (and back the previous one is working too) will fix it and show the correct configuration actually configured on the frame."
 
 ### Known Bugs: ###
 - Recording starts on the next frame. It's an issue with how the opencv lib is used. In the future, I hope to get around this with another lib or just working directly with ffmpeg.
 - Toggling between img/vid leaves a residual frame in the window. I'll clean this up in the future
 - Unfortunately recording is bugged with Threads = 1. I need to change some logic.
+- When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
 
 ### Performance:  ###
 Machine: 3090Ti (24GB), i5-13600K
