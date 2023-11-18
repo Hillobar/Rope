@@ -1526,7 +1526,7 @@ class GUI(tk.Tk):
             self.video_slider.set(self.markers[idx]['frame'])
             
             # self.add_action("get_requested_video_frame", self.markers[idx]['frame'])  
-            self.add_action('get_requested_video_frame', self.video_slider.get())
+            self.add_action('get_requested_video_frame', self.markers[idx]['frame'])
             self.parameter_update_from_marker(self.markers[idx]['frame'])
         
     def previous_marker(self):
