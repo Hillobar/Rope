@@ -1,4 +1,4 @@
-![Screenshot 2023-07-11 071622](https://github.com/Hillobar/Rope/assets/63615199/e919e3c9-85c5-4b7b-ac46-643c75c01a28)
+![image](https://github.com/Hillobar/Rope/assets/63615199/3003777e-1477-4c39-9749-cf2314287cad)
 
 Rope implements the insightface inswapper_128 model with a helpful GUI.
 ### [Discord](https://discord.gg/EcdVAFJzqp)
@@ -21,6 +21,15 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 - Orientation. Sometimes faces are at a bad orientation, like laying down or upside-down. The face detector has problems with this, so Rope now has an option to tell the detector which way the face is oriented. It is also markerable, so you can set markers for it per frame!
 - Tool tips on (almost) everything. Tips are in the bottom pane.
 - Bug fixes and refactoring
+
+### (2023-11-18) Bug Fixes for Sapphire - Shard: ###
+- (fixed) saving the same image multiple times in a row overwrites it. the time is appended when the image is loaded, not saved, so the time is always the same
+- (fixed) cf is returning weird colors, similar to when the rgm bgr stuff was messed up. try swapping rgp before netering cf
+- (fixed) GFPGAN fp16 might be causing too much harm (going back to original)
+- (fixed) the orientation feature might not be unorienting
+- (fixed) bug (I hope :D) : When clicking on a registered face name (the one of the left) to swap, on the previous version, clicking back to the same face name would delete the choice and unswap the face. Now it's just blocked and I can't "unswap" (unselect) the face. I'm force to select a face or just close and restart the soft.
+- (fixed) update text for all the parser features
+
 
 ### Known Bugs: ###
 - Recording starts on the next frame. It's an issue with how the opencv lib is used. In the future, I hope to get around this with another lib or just working directly with ffmpeg.
