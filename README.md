@@ -67,7 +67,7 @@ File: benchmark/target-1080p.mp4, 2048x1080, 269 frames, 25 fps, 10s
 Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me.
 I've copied the disclaimer from [Swap-Mukham](https://github.com/harisreedhar/Swap-Mukham) here since it is well-written and applies 100% to this repo.
  
-I would like to emphasize that our deep fake software is intended for responsible and ethical use only. I must stress that users are solely responsible for their actions when using our software.
+I would like to emphasize that our swapping software is intended for responsible and ethical use only. I must stress that users are solely responsible for their actions when using our software.
 
 Intended Usage: This software is designed to assist users in creating realistic and entertaining content, such as movies, visual effects, virtual reality experiences, and other creative applications. I encourage users to explore these possibilities within the boundaries of legality, ethical considerations, and respect for others' privacy.
 
