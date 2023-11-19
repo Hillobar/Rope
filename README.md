@@ -7,6 +7,8 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Wiki](https://github.com/Hillobar/Rope/wiki)
 
+### Last Updated 2023-11-19 9:07 PST ###
+
 ### Features: ###
 * Incredible features and fast workflow
 * High performance
@@ -30,6 +32,10 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 - (fixed) bug (I hope :D) : When clicking on a registered face name (the one of the left) to swap, on the previous version, clicking back to the same face name would delete the choice and unswap the face. Now it's just blocked and I can't "unswap" (unselect) the face. I'm force to select a face or just close and restart the soft.
 - (fixed) update text for all the parser features
 - (fixed) "Switch from one timeline marker to another doesn't properly show the correct features configured. Switch to the next frame (and back the previous one is working too) will fix it and show the correct configuration actually configured on the frame."
+- (fixed) update mask tooltip
++ (fixed) Btw accidentially scrolling Strength below 100% crashed Rope now the third time when CF is enabled. Haven't seen this with GFPGAN yet. I can screenshot the console error if that helps...
++ (new) Added Mask view button, moved mask blur to button above mask view
++ (new) MothParser scrolls in negative direction to a)only mask the inside of the mouth, and b) grow the inside mouth mask as the amount increases
 
 ### Known Bugs: ###
 - Recording starts on the next frame. It's an issue with how the opencv lib is used. In the future, I hope to get around this with another lib or just working directly with ffmpeg.
