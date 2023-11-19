@@ -7,8 +7,6 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Wiki](https://github.com/Hillobar/Rope/wiki)
 
-${{\color{Goldenrod}\Huge{\textsf{  Hi\ there\ \}}}}\$
-
 ### ${{\color{Goldenrod}{\textsf{Last Updated 2023-11-19 9:07 PST}}}}$ ###
 
 ### Features: ###
