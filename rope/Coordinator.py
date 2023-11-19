@@ -168,18 +168,12 @@ def load_swapper_model():
     graph = model.graph
     emap = onnx.numpy_helper.to_array(graph.initializer[-1])
     
-    # providers = [
-    # ('TensorrtExecutionProvider', {
-        # 'device_id': 0,
-        # 'trt_engine_cache_enable': True,
-        # # 'trt_fp16_enable': True,
-        # 'trt_engine_cache_path': './'        
-    # }),
-    # 'CUDAExecutionProvider']
+    sess_options = onnxruntime.SessionOptions()
+    sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_DISABLE_ALL
     
-    providers = ['CUDAExecutionProvider']
     
-    return onnxruntime.InferenceSession( "./models/inswapper_128.fp16.onnx", providers=providers), emap
+    
+    return onnxruntime.InferenceSession( "./models/inswapper_128.fp16.onnx", sess_options, providers = ['CUDAExecutionProvider']), emap
     
 def load_clip_model():
     # https://github.com/timojl/clipseg

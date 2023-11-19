@@ -644,7 +644,8 @@ class VideoManager():
         alpha = (parameters['StrengthAmount'][0]%100)*0.01
         swapped_face = swapped_face*alpha + previous_face*(1.0-alpha)
 
-        # swapped_face = swapped_face.astype('uint8')
+        # convert to float32 for other models to work (codeformer)
+        swapped_face = swapped_face.astype(np.float32)
 
         
         swapped_face_upscaled = cv2.resize(swapped_face, (512,512))
@@ -659,14 +660,15 @@ class VideoManager():
         top = parameters['MaskAmount'][0]
         sides = parameters['MaskAmount'][1]
         bottom = parameters['MaskAmount'][2]
+        blur = parameters['MaskAmount'][3]
         border_mask = cv2.rectangle(border_mask, (sides, top), (127-sides, 127-bottom), 255, -1)/255
-        border_mask = cv2.GaussianBlur(border_mask, (parameters["MaskBlurAmount"][0]*2+1,parameters["MaskBlurAmount"][0]*2+1),0)
+        border_mask = cv2.GaussianBlur(border_mask, (blur*2+1,blur*2+1),0)
         img_mask = np.ones((128, 128), dtype=np.float32)  
         
         index = parameters['UpscaleMode']
         # Codeformer
         if parameters["UpscaleState"] and parameters['UpscaleModes'][index] == 'CF':           
-            swapped_face_upscaled = self.codeformer(swapped_face_upscaled, parameters["UpscaleAmount"][index]) 
+            swapped_face_upscaled = self.apply_codeformer(swapped_face_upscaled, parameters["UpscaleAmount"][index]) 
             
         # GFPGAN
         if parameters["UpscaleState"] and parameters['UpscaleModes'][index] == 'GFPGAN':      
@@ -675,9 +677,9 @@ class VideoManager():
 
         # Occluder
         if parameters["OccluderState"]:
-            occlude_mask = self.apply_occlusion(original_face_256)
-            occlude_mask = cv2.resize(occlude_mask, (128,128))  
-            img_mask *= occlude_mask 
+            mask = self.apply_occlusion(original_face_256)
+            mask = cv2.resize(mask, (128,128))  
+            img_mask *= mask 
 
         # CLIPs CLIPs
         if parameters["CLIPState"]:
@@ -696,63 +698,62 @@ class VideoManager():
 
         # Face Diffing
         if parameters["DiffState"]:
-            fake_diff = self.apply_fake_diff(swapped_face, original_face, parameters["DiffAmount"][0])
-            fake_diff /= 255
-            img_mask *= fake_diff
+            mask = self.apply_fake_diff(swapped_face, original_face, parameters["DiffAmount"][0])
+            mask /= 255
+            img_mask *= mask
         
         img_mask = cv2.GaussianBlur(img_mask, (parameters["BlurAmount"][0]*2+1,parameters["BlurAmount"][0]*2+1),0)
         img_mask *= border_mask
-
-
     
         img_mask = cv2.resize(img_mask, (512,512))
         img_mask = np.reshape(img_mask, [img_mask.shape[0],img_mask.shape[1],1]) 
         swapped_face_upscaled *= img_mask
-        swapped_face_upscaled = cv2.warpAffine(swapped_face_upscaled, IM512, (img.shape[1], img.shape[0]), borderValue=0.0) 
+        
+        if not parameters['MaskViewState']:
+        
+            swapped_face_upscaled = cv2.warpAffine(swapped_face_upscaled, IM512, (img.shape[1], img.shape[0]), borderValue=0.0) 
 
-        # Option 2 - 9.8 ms
-        kps_scale = 1.42
+            # Option 2 - 9.8 ms
+            kps_scale = 1.42
 
-        bbox[0] = kps[2][0]-kps_ratio*56.0252*kps_scale
-        bbox[1] = kps[2][1]-kps_ratio*71.7366*kps_scale
-        bbox[2] = kps[2][0]+kps_ratio*71.7366*kps_scale
-        bbox[3] = kps[2][1]+kps_ratio*56.0252*kps_scale
+            bbox[0] = kps[2][0]-kps_ratio*56.0252*kps_scale
+            bbox[1] = kps[2][1]-kps_ratio*71.7366*kps_scale
+            bbox[2] = kps[2][0]+kps_ratio*71.7366*kps_scale
+            bbox[3] = kps[2][1]+kps_ratio*56.0252*kps_scale
 
-        left = floor(bbox[0])
-        if left<0:
-            left=0
-        top = floor(bbox[1])
-        if top<0: 
-            top=0
-        right = ceil(bbox[2])
-        if right>img.shape[1]:
-            right=img.shape[1]
-        
-        bottom = ceil(bbox[3])
-        if bottom>img.shape[0]:
-            bottom=img.shape[0]
-        
-        swapped_face_upscaled = swapped_face_upscaled[top:bottom, left:right, 0:3].astype(np.float32)  
-        img_a = img[top:bottom, left:right, 0:3].astype(np.float32)
-     
-        img_mask = cv2.warpAffine(img_mask, IM512, (img.shape[1], img.shape[0]), borderValue=0.0)
-        img_mask = np.reshape(img_mask, [img_mask.shape[0],img_mask.shape[1],1])
-        img_mask = img_mask[top:bottom, left:right, 0:1]
-        
+            left = floor(bbox[0])
+            if left<0:
+                left=0
+            top = floor(bbox[1])
+            if top<0: 
+                top=0
+            right = ceil(bbox[2])
+            if right>img.shape[1]:
+                right=img.shape[1]
+            
+            bottom = ceil(bbox[3])
+            if bottom>img.shape[0]:
+                bottom=img.shape[0]
+            
+            swapped_face_upscaled = swapped_face_upscaled[top:bottom, left:right, 0:3].astype(np.float32)  
+            img_a = img[top:bottom, left:right, 0:3].astype(np.float32)
+         
+            img_mask = cv2.warpAffine(img_mask, IM512, (img.shape[1], img.shape[0]), borderValue=0.0)
+            img_mask = np.reshape(img_mask, [img_mask.shape[0],img_mask.shape[1],1])
+            img_mask = img_mask[top:bottom, left:right, 0:1]
+            img_mask = 1.0-img_mask 
+            img_mask = torch.from_numpy(img_mask)
+            img_a = torch.from_numpy(img_a)
+            
+            swapped_face_upscaled += torch.mul(img_mask,img_a).numpy()
+            img[top:bottom, left:right, 0:3] = swapped_face_upscaled        
 
-        img_mask = 1.0-img_mask 
-      
-        img_mask = torch.from_numpy(img_mask)
-        img_a = torch.from_numpy(img_a)
-        
-        swapped_face_upscaled += torch.mul(img_mask,img_a).numpy()
-        # swapped_face_upscaled += img_mask*img_a
-        
-        img[top:bottom, left:right, 0:3] = swapped_face_upscaled        
-        # Option 2        
-        # for i in range(rot):
-            # img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)        
-        
+        else:
+
+            img_mask = cv2.merge((img_mask, img_mask, img_mask))
+            swapped_face_upscaled += (1.0-img_mask)*original_face_512
+            img = np.hstack([swapped_face_upscaled, img_mask*255])
+
         return img.astype(np.uint8)   #BGR
         
     # @profile    
@@ -785,11 +786,8 @@ class VideoManager():
       
     def apply_neg_CLIPs(self, img, CLIPText, CLIPAmount):
         clip_mask = np.ones((352, 352))
-        
- 
         CLIPimg = self.clip_transform(img).unsqueeze(0)
 
-        
         if CLIPText != "":
             prompts = CLIPText.split(',')
             with lock:
@@ -805,7 +803,6 @@ class VideoManager():
             thresh = CLIPAmount/100.0
             clip_mask[clip_mask>thresh] = 1.0
             clip_mask[clip_mask<=thresh] = 0.0
-
         return clip_mask     
     # @profile
     def apply_face_parser(self, img, FaceParserAmount):
@@ -830,15 +827,18 @@ class VideoManager():
 
             out = out.squeeze(0).argmax(0)
             
-            if FaceParserAmount == -1:
+            if FaceParserAmount <0:
                 out = np.isin(out, [11]).astype('float32')
                 out = -1.0*(out-1.0)
+                size = int(-FaceParserAmount)
+                kernel = np.ones((size, size))
+                out = cv2.erode(out, kernel, iterations=1)
             else:
                 out = np.isin(out, [11,12,13]).astype('float32')
                 out = -1.0*(out-1.0)
-                size = int(FaceParserAmount-1)
+                size = int(FaceParserAmount)
                 kernel = np.ones((size, size))
-                out = cv2.erode(out, kernel, iterations=3)
+                out = cv2.erode(out, kernel, iterations=1)
             
         return out.clip(0,1)
 
@@ -924,7 +924,7 @@ class VideoManager():
 
         return fake_diff    
     # @profile        
-    def codeformer(self, swapped_face_upscaled, GFPGANAmount):
+    def apply_codeformer(self, swapped_face_upscaled, GFPGANAmount):
         img = swapped_face_upscaled
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         img = img.astype(np.float32)[:,:,::-1] / 255.0
