@@ -59,14 +59,13 @@ Machine: 3090Ti (24GB), i5-13600K
 File: benchmark/target-1080p.mp4, 2048x1080, 269 frames, 25 fps, 10s
 
 | Option | Rendering Time [s] |
-| --- | --- |
-| Only Swap | 7.3 |
-| Swap+GFPGAN | 10.7 |
-| Swap+Codeformer | 12.4 |
-| Swap+one word CLIP | 10.4 |
-| Swap+Occluder | 7.8 |
-| Swap+MouthParser | 13.9 |
-| target-2160p.mp4 | 9.7 |
+| --- | --- | --- |
+| Only Swap | 7.3 | 7.5 |
+| Swap+GFPGAN | 10.7 | 11.0 |
+| Swap+Codeformer | 12.4 | 13.5 |
+| Swap+one word CLIP | 10.4 | 11.2 |
+| Swap+Occluder | 7.8 | 7.8 |
+| Swap+MouthParser | 13.9 | 12.1 |
 
 ### Preview (from Rope-Crystal): ###
 ![image](https://github.com/Hillobar/Rope/assets/63615199/fda0c05f-72a6-4935-a882-dc6d17cfc014)
