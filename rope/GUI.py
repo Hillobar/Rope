@@ -1223,7 +1223,7 @@ class GUI(tk.Tk):
 
  
     def update_CLIP_text(self, text):
-        self.parameters['CLIPText'] = text
+        self.parameters['CLIPText'] = text.get()
         self.add_action("parameters", self.parameters, True)
         self.focus()
     
