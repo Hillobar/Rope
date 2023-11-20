@@ -7,7 +7,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Wiki](https://github.com/Hillobar/Rope/wiki)
 
-### ${{\color{Goldenrod}{\textsf{Last Updated 2023-11-19 10:20 PST}}}}$ ###
+### ${{\color{Goldenrod}{\textsf{Last Updated 2023-11-20 13:14 PST}}}}$ ###
 
 ### Features: ###
 * Incredible features and fast workflow
@@ -36,6 +36,14 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 - (fixed) Btw accidentially scrolling Strength below 100% crashed Rope now the third time when CF is enabled. Haven't seen this with GFPGAN yet. I can screenshot the console error if that helps...
 - (new) Added Mask view button, moved mask blur to button above mask view
 - (new) MouthParser scrolls in negative direction to a)only mask the inside of the mouth, and b) grow the inside mouth mask as the amount increases
+- (fixed) GFPGAN and Codeformer will give better results now, especially with details around the eyes and mouth. 
+- (fixed) in some cases, pixel values will be > 255
+- (new) added undock button to image view
+- (new) 'Strength' now has an on/off state
+- (fixed) intermittent play bug
+- (new) Click the mouse on the playback screen to control play/pause
+- (new) Keyboard control with wasd and space 
+- (new) Stop Marker. Sets a frame that will stop the video playing/recording
 
 ### Known Bugs: ###
 - Recording starts on the next frame. It's an issue with how the opencv lib is used. In the future, I hope to get around this with another lib or just working directly with ffmpeg.
