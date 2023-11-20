@@ -20,8 +20,44 @@ class GUI(tk.Tk):
         super().__init__()
         # Adding a title to the self
         # self.call('tk', 'scaling', 0.5)
-        self.title("Test Application")
+        self.title('Rope')
         self.pixel = []
+        self.parameters = PARAM_BUTTONS_PARAMS
+        self.actions = ACTIONS
+        self.param_const = PARAM_BUTTONS_CONSTANT
+        self.parameters_buttons={}
+        self.num_threads = 1
+        self.video_quality = 18
+        self.target_media = []
+        self.target_video_file = []
+        self.action_q = []
+        self.video_image = []
+        self.x1 = []
+        self.y1 = []
+        self.found_faces_assignments = []
+        self.play_video = False
+        self.rec_video = False
+        self.faceapp_model = []
+        self.video_loaded = False
+        self.dock = True
+        self.undock = []
+        self.image_file_name = []
+        self.stop_marker = []
+        self.stop_image = []
+        self.marker_icon = []
+        self.stop_marker_icon = []
+        
+        self.arcface_dst = np.array( [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.7299, 92.2041]], dtype=np.float32)   
+
+        self.json_dict = {"source videos":None, "source faces":None, "saved videos":None, "threads":1}
+
+        self.marker =  {
+                        'frame':        '0',
+                        'parameters':   '',
+                        'icon_ref':     '',
+                        }
+        self.markers = []   
+
         self.target_face = {    
                             "TKButton":                 [],
                             "ButtonState":              "off",
@@ -39,57 +75,8 @@ class GUI(tk.Tk):
                             "Image":                    [],
                             "Embedding":                []
                             }   
-        self.source_faces = []
+        self.source_faces = []        
 
-        self.parameters = PARAM_BUTTONS_PARAMS
-        self.actions = ACTIONS
-        self.param_const = PARAM_BUTTONS_CONSTANT
-
-
-        self.parameters_buttons={}
-                 
-        
-        self.button_data =  {
-                            'FindFaces':                ['./rope/media/tarface.png', '', ''],
-                            }
-                            
-       
-        
-        self.num_threads = 1
-        self.video_quality = 18
-        self.target_media = []
-        self.target_video_file = []
-        self.action_q = []
-        self.video_image = []
-        self.x1 = []
-        self.y1 = []
-        self.found_faces_assignments = []
-        self.play_video = False
-        self.rec_video = False
-        self.faceapp_model = []
-
-        self.video_loaded = False
-
-        self.dock = True
-        self.undock = []
-        self.arcface_dst = np.array( [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.7299, 92.2041]], dtype=np.float32)   
-        self.image_file_name = []
-
-      
-        self.json_dict = {"source videos":None, "source faces":None, "saved videos":None, "threads":1}
-        
-        self.new_int = tk.IntVar()
-        self.marker =  {
-                        'frame':        '0',
-                        'parameters':   '',
-                        'icon_ref':     '',
-                        }
-        self.markers = []                
-        
-        self.button1 = "gray25"
-        self.button_1_text = "light goldenrod"
-        self.button1_active = "gray50"
-        
         self.button_highlight_style =    {  
                                 'bg':               'light goldenrod', 
                                 'fg':               'black', 
@@ -138,15 +125,11 @@ class GUI(tk.Tk):
                                 'bd':               '0',
                                 'highlightthickness': '0'
                                 }                 
-
-                                
-                               
         self.frame_style =      {  
                                 'bg':               'gray20', 
                                 'relief':           'flat',
                                 'bd':               '0'
                                 }  
-
         self.checkbox_style =   {  
                                 'bg':               'gray40', 
                                 'fg':               'white',
@@ -187,7 +170,8 @@ class GUI(tk.Tk):
         self.video = tk.Label( self.video_frame, self.label_style, bg='black')
         self.video.grid( row = 0, column = 0, sticky='NEWS', pady =0 )
         self.video.bind("<MouseWheel>", self.iterate_through_merged_embeddings)
-        
+        self.video.bind("<ButtonRelease-1>", lambda event: self.toggle_play_video())
+
         # Media control canvas
         self.media_control_canvas = tk.Canvas( self.video_frame, self.canvas_style1, height = 40)
         self.media_control_canvas.grid( row = 1, column = 0, sticky='NEWS', pady = 0)  
@@ -215,12 +199,8 @@ class GUI(tk.Tk):
         self.video_slider.bind("<MouseWheel>", lambda event: self.mouse_wheel(event, self.video_slider.get()))
         self.video_slider.pack(fill=tk.X)
 
-        img = Image.open('./rope/media/marker.png')
-        resized_image= img.resize((15,30), Image.ANTIALIAS)
-        self.marker_icon = ImageTk.PhotoImage(resized_image)    
-
         # Marker canvas
-        self.marker_canvas = tk.Canvas( self.media_control_canvas, self.canvas_style1, width = 150, height = 40)
+        self.marker_canvas = tk.Canvas( self.media_control_canvas, self.canvas_style1, width = 180, height = 40)
         self.marker_canvas.grid( row = 0, column = 2, sticky='news', pady = 0)        
         
         # Marker Buttons
@@ -228,6 +208,7 @@ class GUI(tk.Tk):
         self.create_ui_button_2('RemoveMarker', self.marker_canvas, 35, 2, width=36, height=36)
         self.create_ui_button_2('PrevMarker', self.marker_canvas, 69, 2, width=36, height=36)
         self.create_ui_button_2('NextMarker', self.marker_canvas, 107, 2, width=36, height=36)
+        self.create_ui_button_2('ToggleStop', self.marker_canvas, 140, 2, width=36, height=36)
 
         # Image control canvas
         self.image_control_canvas = tk.Canvas( self.video_frame, self.canvas_style1, height = 40)
@@ -235,6 +216,7 @@ class GUI(tk.Tk):
         self.image_control_canvas.grid_columnconfigure(1, weight = 1)        
         
         # Image Save
+        self.create_ui_button_2('ImgDock', self.image_control_canvas, 8, 2, width=15, height=36)
         self.create_ui_button_2('SaveImage', self.image_control_canvas, 31, 2, width=36, height=36)
 
         
@@ -270,7 +252,8 @@ class GUI(tk.Tk):
         self.temptkstr = tk.StringVar(value="")
         self.CLIP_text = tk.Entry(self.label_frame1, relief='flat', bd=0, textvariable=self.temptkstr)
         self.CLIP_text.place(x=column3, y=40, width = 125, height=20) 
-        self.CLIP_text.bind("<Return>", lambda event: self.update_CLIP_text())
+        self.CLIP_text.bind("<Return>", lambda event: self.update_CLIP_text(self.temptkstr))
+        self.CLIP_name = self.nametowidget(self.CLIP_text)
 
         column4=column3+125+x_space  
         self.create_ui_button('Occluder', self.label_frame1, column4, 8)
@@ -333,6 +316,7 @@ class GUI(tk.Tk):
         self.merged_embeddings_text = tk.Entry(self.source_button_canvas, relief='flat', bd=0, textvariable=self.merged_embedding_name)
         self.merged_embeddings_text.place(x=8, y=37, width = 96, height=20) 
         self.merged_embeddings_text.bind("<Return>", lambda event: self.save_selected_source_faces(self.merged_embedding_name)) 
+        self.me_name = self.nametowidget(self.merged_embeddings_text)
 
         # Scroll Canvas
         self.source_faces_canvas = tk.Canvas( self.source_faces_frame, self.canvas_style1, height = 100)
@@ -413,11 +397,38 @@ class GUI(tk.Tk):
    
     def target_videos_mouse_wheel(self, event):
         self.target_media_canvas.xview_scroll(1*int(event.delta/120.0), "units")
+    # focus_get()
+    def key_event(self, event):
+        # print(event.char, event.keysym, event.keycode)
+
+        if self.focus_get() != self.CLIP_name and self.focus_get() != self.me_name:
+            if event.char == ' ':
+                self.toggle_play_video()
+            elif event.char == 'w':
+                frame = self.video_slider.get()+1
+                self.video_slider.set(frame)
+                self.add_action("get_requested_video_frame", frame)
+                self.parameter_update_from_marker(frame)
+            elif event.char == 's':
+                frame = self.video_slider.get()-1   
+                self.video_slider.set(frame)
+                self.add_action("get_requested_video_frame", frame)
+                self.parameter_update_from_marker(frame)
+            elif event.char == 'd':
+                frame = self.video_slider.get()+30 
+                self.video_slider.set(frame)
+                self.add_action("get_requested_video_frame", frame)
+                self.parameter_update_from_marker(frame)
+            elif event.char == 'a':
+                frame = self.video_slider.get()-30 
+                self.video_slider.set(frame)
+                self.add_action("get_requested_video_frame", frame)
+                self.parameter_update_from_marker(frame)
 
 
     def initialize_gui( self ):
-
-        self.title("Rope")
+        self.bind('<Key>', lambda event: self.key_event(event))
+        self.bind('<space>', lambda event: self.key_event(event))
         # self.overrideredirect(True)
         self.configure(bg='grey10')
         self.resizable(width=True, height=True) 
@@ -502,6 +513,14 @@ class GUI(tk.Tk):
             self.add_action("num_threads",int(self.num_threads))
         
         self.actions['StartRopeButton'].configure(self.button_highlight_style, text=' Load Rope')
+        
+        img = Image.open('./rope/media/marker.png')
+        resized_image= img.resize((15,30), Image.ANTIALIAS)
+        self.marker_icon = ImageTk.PhotoImage(resized_image) 
+        
+        img = Image.open('./rope/media/stop_marker.png')
+        resized_image= img.resize((15,30), Image.ANTIALIAS)
+        self.stop_marker_icon = ImageTk.PhotoImage(resized_image) 
         
         class empty:
             def __init__(self):
@@ -1022,6 +1041,8 @@ class GUI(tk.Tk):
         self.markers = []
         self.add_action("markers", self.markers)
       
+        self.stop_marker = []
+        self.video_slider_canvas.delete(self.stop_image)
             
     # @profile
     def set_image(self, image, requested):
@@ -1199,18 +1220,12 @@ class GUI(tk.Tk):
                 self.actions['RecordButton'].config(self.inactive_button_style)
             else:
                 self.actions['RecordButton'].config(self.active_button_style, bg='red') 
-                
-        
-            
-            
 
-        
-    # def set_faceapp_model(self, faceapp):
-        # self.faceapp_model = faceapp
  
-    def update_CLIP_text(self):
-        self.parameters['CLIPText'] = self.temptkstr.get()
+    def update_CLIP_text(self, text):
+        self.parameters['CLIPText'] = text
         self.add_action("parameters", self.parameters, True)
+        self.focus()
     
     def add_action(self, action, parameter=None, request_updated_frame=False, ignore_markers=True):
         
@@ -1275,7 +1290,7 @@ class GUI(tk.Tk):
                     embedfile.write("%s\n" % identifier)
                     for number in temp:
                         embedfile.write("%s\n" % number)
-
+        self.focus()
         self.load_source_faces()
     
 
@@ -1540,6 +1555,21 @@ class GUI(tk.Tk):
                 self.markers.pop(i)
                 break
                 
+    def toggle_stop(self):
+        if self.stop_marker == self.video_slider.get():
+            self.stop_marker = []
+            self.add_action('set_stop', False)
+            self.video_slider_canvas.delete(self.stop_image)
+        else:
+            self.video_slider_canvas.delete(self.stop_image)
+            self.stop_marker = self.video_slider.get()
+            self.add_action('set_stop', self.stop_marker)
+        
+            width = self.video_slider_canvas.winfo_width()-30
+            position = 15+int(width*self.video_slider.get()/self.video_slider.configure('to')[4])  
+            self.stop_image = self.video_slider_canvas.create_image(position, 30, image=self.stop_marker_icon)
+
+  
     def save_image(self):
         filename =  self.image_file_name[0]+"_"+str(time.time())[:10]
         filename = os.path.join(self.json_dict["saved videos"], filename)
@@ -1653,6 +1683,11 @@ class GUI(tk.Tk):
             resized_image= img.resize((12,30), Image.ANTIALIAS)
             self.actions[icon_holder] = ImageTk.PhotoImage(resized_image)
             self.actions[button] = tk.Button( root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.toggle_dock())
+            
+        if parameter == 'ImgDock':
+            resized_image= img.resize((12,30), Image.ANTIALIAS)
+            self.actions[icon_holder] = ImageTk.PhotoImage(resized_image)
+            self.actions[button] = tk.Button( root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.toggle_dock())            
         
         elif parameter == 'SaveImage':   
             resized_image= img.resize((30,30), Image.ANTIALIAS)
@@ -1680,7 +1715,9 @@ class GUI(tk.Tk):
         elif parameter == 'PrevMarker':   
             self.actions[button] = tk.Button( root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.previous_marker())
         elif parameter == 'NextMarker':   
-            self.actions[button] = tk.Button( root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.next_marker())            
+            self.actions[button] = tk.Button( root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.next_marker())        
+        elif parameter == 'ToggleStop':   
+            self.actions[button] = tk.Button( root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.toggle_stop())               
 
             
         elif parameter == 'FindFaces':

@@ -134,9 +134,17 @@ ACTIONS =   {
     'DockMode':                 0, 
     'DockModes':                [''],                         
     'DockIcon':                 './rope/media/dock.png',
-    'DockMessage':              'UNDOCK VIDEO - Undocks the video player area. Cannot be re-docked.', 
+    'DockMessage':              'UNDOCK WINDOW - Undocks the wimdow area. Cannot be re-docked.', 
     'DockButton':               [],
     'DockIconHolder':           [],
+
+    'ImgDockState':                False,
+    'ImgDockMode':                 0, 
+    'ImgDockModes':                [''],                         
+    'ImgDockIcon':                 './rope/media/dock.png',
+    'ImgDockMessage':              'UNDOCK WINDOW - Undocks the wimdow area. Cannot be re-docked.', 
+    'ImgDockButton':               [],
+    'ImgDockIconHolder':           [],    
     
     'SaveImageState':                False,
     'SaveImageMode':                 0, 
@@ -192,7 +200,16 @@ ACTIONS =   {
     'NextMarkerIcon':           './rope/media/next.png',
     'NextMarkerMessage':        'NEXT MARKER - Move to the next marker.', 
     'NextMarkerButton':         [],
-    'NextMarkerIconHolder':     [],                  
+    'NextMarkerIconHolder':     [],  
+
+    'ToggleStopState':          False,
+    'ToggleStopMode':           0, 
+    'ToggleStopModes':          [''],                         
+    'ToggleStopIcon':           './rope/media/STOP.png',
+    'ToggleStopMessage':        'STOP MARKER - Sets a frame that will stop the video playing/recording.', 
+    'ToggleStopButton':         [],
+    'ToggleStopIconHolder':     [],                  
+    
 
     'FindFacesState':           False,
     'FindFacesMode':            0, 

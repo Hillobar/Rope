@@ -93,6 +93,9 @@ def coordinator():
         elif action [0][0] == "vid_qual":
             vm.vid_qual = int(action[0][1])
             action.pop(0) 
+        elif action [0][0] == "set_stop":
+            vm.stop_marker = action[0][1]
+            action.pop(0)             
         elif action [0][0] == "load_null":
             vm.load_null()
             action.pop(0) 
@@ -187,10 +190,8 @@ def load_clip_model():
     return clip_session 
 
 def load_GFPGAN_model():
-    options = onnxruntime.SessionOptions()
-    # options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_DISABLE_ALL
 
-    GFPGAN_session = onnxruntime.InferenceSession( "./models/GFPGANv1.4.onnx", options=options, providers=["CUDAExecutionProvider"])
+    GFPGAN_session = onnxruntime.InferenceSession( "./models/GFPGANv1.4.onnx", providers=["CUDAExecutionProvider"])
     return GFPGAN_session
     
 def load_codeformer_model():    
