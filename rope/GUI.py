@@ -1558,7 +1558,7 @@ class GUI(tk.Tk):
     def toggle_stop(self):
         if self.stop_marker == self.video_slider.get():
             self.stop_marker = []
-            self.add_action('set_stop', False)
+            self.add_action('set_stop', -1)
             self.video_slider_canvas.delete(self.stop_image)
         else:
             self.video_slider_canvas.delete(self.stop_image)

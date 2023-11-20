@@ -100,7 +100,7 @@ class VideoManager():
         self.rec_thread = []
         self.markers = []
         self.is_image_loaded = False
-        self.stop_marker = False
+        self.stop_marker = -1
         
         self.process_q =    {
                             "Thread":                   [],
@@ -409,6 +409,7 @@ class VideoManager():
 
                 # Close video and process
                 if mfn['FrameNumber'] >= self.video_frame_total-1 or mfn['FrameNumber'] == self.stop_marker or self.play == False:
+                    print ('here')
                     self.play_video("stop")
                     stop_time = float(self.capture.get(cv2.CAP_PROP_POS_FRAMES) / float(self.fps))
                     if stop_time == 0:
