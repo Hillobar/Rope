@@ -409,7 +409,6 @@ class VideoManager():
 
                 # Close video and process
                 if mfn['FrameNumber'] >= self.video_frame_total-1 or mfn['FrameNumber'] == self.stop_marker or self.play == False:
-                    print ('here')
                     self.play_video("stop")
                     stop_time = float(self.capture.get(cv2.CAP_PROP_POS_FRAMES) / float(self.fps))
                     if stop_time == 0:
@@ -777,7 +776,7 @@ class VideoManager():
     def apply_neg_CLIPs(self, img, CLIPText, CLIPAmount):
         clip_mask = np.ones((352, 352))
         CLIPimg = self.clip_transform(img).unsqueeze(0)
-
+        
         if CLIPText != "":
             prompts = CLIPText.split(',')
             with lock:
@@ -793,7 +792,8 @@ class VideoManager():
             thresh = CLIPAmount/100.0
             clip_mask[clip_mask>thresh] = 1.0
             clip_mask[clip_mask<=thresh] = 0.0
-        return clip_mask     
+        return clip_mask   
+        
     # @profile
     def apply_face_parser(self, img, FaceParserAmount):
 
