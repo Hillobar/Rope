@@ -10,13 +10,14 @@ from skimage import transform as trans
 from math import floor, ceil
 import copy
 import bisect
+#import inspect print(inspect.currentframe().f_back.f_code.co_name, 'resize_image')
 
 from  rope.Dicts import PARAM_BUTTONS_PARAMS, ACTIONS, PARAM_BUTTONS_CONSTANT
 
 last_frame = 0
 
 class GUI(tk.Tk):
-    def __init__( self ):  
+    def __init__( self):  
         super().__init__()
         # Adding a title to the self
         # self.call('tk', 'scaling', 0.5)
@@ -39,17 +40,29 @@ class GUI(tk.Tk):
         self.rec_video = False
         self.faceapp_model = []
         self.video_loaded = False
-        self.dock = True
+        self.docked = True
         self.undock = []
         self.image_file_name = []
         self.stop_marker = []
         self.stop_image = []
         self.marker_icon = []
         self.stop_marker_icon = []
+
+        self.window_y = []
+        self.window_width = []
+        self.window_height = []
         
         self.arcface_dst = np.array( [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.7299, 92.2041]], dtype=np.float32)   
 
-        self.json_dict = {"source videos":None, "source faces":None, "saved videos":None, "threads":1}
+        self.json_dict =    {
+                            "source videos":    None, 
+                            "source faces":     None, 
+                            "saved videos":     None, 
+                            "threads":          1, 
+                            'dock_win_geom':    [980, 1020, self.winfo_screenwidth()/2-400, self.winfo_screenheight()/2-510],
+                            'undock_win_geom':  [980, 517, self.winfo_screenwidth()/2-400, self.winfo_screenheight()/2-510],
+                            'player_geom':      [1024, 768, self.winfo_screenwidth()/2-400, self.winfo_screenheight()/2-510],
+                            }
 
         self.marker =  {
                         'frame':        '0',
@@ -159,9 +172,28 @@ class GUI(tk.Tk):
                                 'font':             ("Cascadia Mono Light", 9)
                                 }                                    
                                                     
-        # Media frame
+        # Pop up window
+        self.undock_video_window = tk.Toplevel()
+        self.undock_video_window.withdraw()           
+        
+        # Undocked Media frame
+        self.undock_video_frame = tk.Frame( self.undock_video_window, self.frame_style)
+        self.undock_video_frame.grid( row = 0, column = 0, sticky='NEWS', pady = 2 )
+        
+        self.undock_video_frame.grid_columnconfigure(0, weight=1)  
+        self.undock_video_frame.grid_rowconfigure(0, weight = 1)
+        
+        # Video [0,0]
+        self.undock_video = tk.Label( self.undock_video_frame, self.label_style, bg='black')
+        self.undock_video.grid( row = 0, column = 0, sticky='NEWS', pady =0 )
+        self.undock_video.bind("<MouseWheel>", self.iterate_through_merged_embeddings)
+        self.undock_video.bind("<ButtonRelease-1>", lambda event: self.toggle_play_video())
+        
+
+        
+        # Docked Media frame
         self.video_frame = tk.Frame( self, self.frame_style)
-        self.video_frame.grid( row = 0, column = 0, sticky='NEWS', pady = 2 )
+        self.video_frame.grid( row = 0, column = 0, sticky='NEWS', pady = 0 )
         
         self.video_frame.grid_columnconfigure(0, weight=1)  
         self.video_frame.grid_rowconfigure(0, weight = 1)
@@ -171,10 +203,19 @@ class GUI(tk.Tk):
         self.video.grid( row = 0, column = 0, sticky='NEWS', pady =0 )
         self.video.bind("<MouseWheel>", self.iterate_through_merged_embeddings)
         self.video.bind("<ButtonRelease-1>", lambda event: self.toggle_play_video())
-
+        
+ ######### Options 
+        # Play bar
+        self.options_frame = tk.Frame( self, self.frame_style, height = 71)
+        self.options_frame.grid( row = 1, column = 0, sticky='NEWS', pady = 2 )
+        
+        self.options_frame.grid_rowconfigure( 0, weight = 100 )  
+        self.options_frame.grid_rowconfigure( 1, weight = 100 )         
+        self.options_frame.grid_columnconfigure( 0, weight = 1 ) 
+        
         # Media control canvas
-        self.media_control_canvas = tk.Canvas( self.video_frame, self.canvas_style1, height = 40)
-        self.media_control_canvas.grid( row = 1, column = 0, sticky='NEWS', pady = 0)  
+        self.media_control_canvas = tk.Canvas( self.options_frame, self.canvas_style1, height = 40)
+        self.media_control_canvas.grid( row = 0, column = 0, sticky='NEWS', pady = 0)  
         self.media_control_canvas.grid_columnconfigure(1, weight = 1) 
 
         # Video button canvas
@@ -220,54 +261,44 @@ class GUI(tk.Tk):
         self.create_ui_button_2('SaveImage', self.image_control_canvas, 31, 2, width=36, height=36)
 
         
-        
- ######### Options
+        # Options Area
         x_space = 40
-        self.options_frame = tk.Frame( self, self.frame_style, height = 71)
-        self.options_frame.grid( row = 1, column = 0, sticky='NEWS', pady = 2 )
-        
-        self.options_frame.grid_rowconfigure( 0, weight = 100 )          
-        self.options_frame.grid_columnconfigure( 0, weight = 1 ) 
-        
         # Left Canvas
         self.options_frame_canvas1 = tk.Canvas( self.options_frame, self.canvas_style1, height = 71)
-        self.options_frame_canvas1.grid( row = 0, column = 0, sticky='NEWS', pady = 0 )
+        self.options_frame_canvas1.grid( row = 1, column = 0, sticky='NEWS', pady = 0 )
 
         # Label Frame 1
-        self.label_frame1 = tk.LabelFrame( self.options_frame_canvas1, self.frame_style, height = 71, width = 1000 )
+        self.label_frame1 = tk.LabelFrame( self.options_frame_canvas1, self.frame_style, height = 71, width = 1200 )
         self.label_frame1.place(x=0, y=0)
         
-        column1=8
-        self.create_ui_button('Upscale', self.label_frame1, column1, 8)
-        self.create_ui_button('Diff', self.label_frame1, column1, 37)
+        column=8
+        self.create_ui_button('Upscale', self.label_frame1, column, 8)
+        self.create_ui_button('Threshold', self.label_frame1, column, 37) 
 
-        column2=column1+125+x_space
-        self.create_ui_button('Mask', self.label_frame1, column2, 8)
-        self.create_ui_button('MaskView', self.label_frame1, column2, 37)
+        column=column+125+x_space
+        self.create_ui_button('Strength', self.label_frame1, column, 8)
+        self.create_ui_button('Orientation', self.label_frame1, column, 37)        
+        
+        column=column+125+x_space
+        self.create_ui_button('Border', self.label_frame1, column, 8)
+        self.create_ui_button('Diff', self.label_frame1, column, 37)
+        
+        column=column+125+x_space  
+        self.create_ui_button('Occluder', self.label_frame1, column, 8)
+        self.create_ui_button('FaceParser', self.label_frame1, column, 37)        
 
-        column3=column2+125+x_space
-        self.create_ui_button('CLIP', self.label_frame1, column3, 8)
-
+        column=column+125+x_space  
+        self.create_ui_button('CLIP', self.label_frame1, column, 8)
         # CLIP-entry
         self.temptkstr = tk.StringVar(value="")
         self.CLIP_text = tk.Entry(self.label_frame1, relief='flat', bd=0, textvariable=self.temptkstr)
-        self.CLIP_text.place(x=column3, y=40, width = 125, height=20) 
+        self.CLIP_text.place(x=column, y=40, width = 125, height=20) 
         self.CLIP_text.bind("<Return>", lambda event: self.update_CLIP_text(self.temptkstr))
         self.CLIP_name = self.nametowidget(self.CLIP_text)
 
-        column4=column3+125+x_space  
-        self.create_ui_button('Occluder', self.label_frame1, column4, 8)
-        self.create_ui_button('FaceParser', self.label_frame1, column4, 37)
-
-        column5=column4+125+x_space        
-        self.create_ui_button('Blur', self.label_frame1, column5, 8)        
-        self.create_ui_button('Threshold', self.label_frame1, column5, 37)
- 
-
-        column6=column5+125+x_space
-        self.create_ui_button('Strength', self.label_frame1, column6, 8)
-        self.create_ui_button('Orientation', self.label_frame1, column6, 37)
-        
+        column=column+125+x_space
+        self.create_ui_button('Blur', self.label_frame1, column, 8)   
+        self.create_ui_button('MaskView', self.label_frame1, column, 37)
 
  ######## Target Faces           
         # Frame
@@ -342,7 +373,7 @@ class GUI(tk.Tk):
         # Buttons
         self.create_ui_button_2('LoadTVideos', self.target_button_canvas, 8, 8)        
         self.create_ui_button_2('ImgVid', self.target_button_canvas, 8, 37)        
-         
+        # self.create_ui_button_2('HoldFace', self.target_button_canvas, 8, 66)
         
         # Video Canvas [0,1]
         self.target_media_canvas = tk.Canvas( self.target_videos_frame, self.canvas_style1, height = 100)
@@ -378,6 +409,8 @@ class GUI(tk.Tk):
         self.create_ui_button_2('Threads', self.program_options_label, column, 8, width = 125, height = 26)
         column=column+125+x_space
         self.create_ui_button_2('VideoQuality', self.program_options_label, column, 8,width = 125, height = 26)
+        column=column+125+x_space
+        self.create_ui_button_2('PerfTest', self.program_options_label, column, 8,width = 125, height = 26)
         
         # Status
         self.status_frame = tk.Frame( self, bg='grey20', height = 15)
@@ -401,7 +434,7 @@ class GUI(tk.Tk):
     def key_event(self, event):
         # print(event.char, event.keysym, event.keycode)
 
-        if self.focus_get() != self.CLIP_name and self.focus_get() != self.me_name:
+        if self.focus_get() != self.CLIP_name and self.focus_get() != self.me_name and self.actions['ImgVidMode'] == 0:
             if event.char == ' ':
                 self.toggle_play_video()
             elif event.char == 'w':
@@ -427,25 +460,7 @@ class GUI(tk.Tk):
 
 
     def initialize_gui( self ):
-        self.bind('<Key>', lambda event: self.key_event(event))
-        self.bind('<space>', lambda event: self.key_event(event))
-        # self.overrideredirect(True)
-        self.configure(bg='grey10')
-        self.resizable(width=True, height=True) 
 
-        self.geometry('%dx%d+%d+%d' % (980, 1020, self.winfo_screenwidth()/2-400, self.winfo_screenheight()/2-510))
-
-        self.grid_columnconfigure(0, weight = 1)  
-        self.grid_rowconfigure(0, weight = 10)
-        self.grid_rowconfigure(1, weight = 0)  
-        self.grid_rowconfigure(2, weight = 0)  
-        self.grid_rowconfigure(3, weight = 0)
-        self.grid_rowconfigure(4, weight = 0)    
-        self.grid_rowconfigure(5, weight = 0)  
-        self.grid_rowconfigure(6, weight = 0) 
-
-        self.image_control_canvas.grid_remove()
-        self.media_control_canvas.grid()
 
         # check if data.json exists, if not then create it 
         try:
@@ -511,6 +526,54 @@ class GUI(tk.Tk):
             temp = ' Threads           ' + str(self.num_threads)
             self.actions['ThreadsButton'].configure(text=temp)        
             self.add_action("num_threads",int(self.num_threads))
+            
+        try:
+            self.json_dict['dock_win_geom'] = json_object['dock_win_geom']
+        except:
+            self.json_dict['dock_win_geom'] = self.json_dict['dock_win_geom']
+        
+        try:
+            self.json_dict["undock_win_geom"] = json_object["undock_win_geom"]
+        except:
+            self.json_dict["undock_win_geom"] = self.json_dict["undock_win_geom"]      
+
+        try:
+            self.json_dict["player_geom"] = json_object["player_geom"]
+        except:
+            self.json_dict["player_geom"] = self.json_dict["player_geom"]              
+       
+
+
+
+
+        self.bind('<Key>', lambda event: self.key_event(event))
+        self.bind('<space>', lambda event: self.key_event(event))
+        
+        self.undock_video_window.bind('<Key>', lambda event: self.key_event(event))
+        self.undock_video_window.bind('<space>', lambda event: self.key_event(event))
+        
+        # self.overrideredirect(True)
+        self.configure(bg='grey10')
+        self.resizable(width=True, height=True) 
+        
+
+ 
+        self.geometry('%dx%d+%d+%d' % (self.json_dict['dock_win_geom'][0], self.json_dict['dock_win_geom'][1] , self.json_dict['dock_win_geom'][2], self.json_dict['dock_win_geom'][3]))
+
+        self.undock_video_window.grid_columnconfigure(0, weight = 1)  
+        self.undock_video_window.grid_rowconfigure(0, weight = 10)
+
+        self.grid_columnconfigure(0, weight = 1)  
+        self.grid_rowconfigure(0, weight = 10)
+        self.grid_rowconfigure(1, weight = 0)  
+        self.grid_rowconfigure(2, weight = 0)  
+        self.grid_rowconfigure(3, weight = 0)
+        self.grid_rowconfigure(4, weight = 0)    
+        self.grid_rowconfigure(5, weight = 0)  
+        self.grid_rowconfigure(6, weight = 0) 
+
+        self.image_control_canvas.grid_remove()
+        self.media_control_canvas.grid()
         
         self.actions['StartRopeButton'].configure(self.button_highlight_style, text=' Load Rope')
         
@@ -529,7 +592,7 @@ class GUI(tk.Tk):
 
         self.update_ui_button('Upscale')
         self.update_ui_button('Diff')
-        self.update_ui_button('Mask')
+        self.update_ui_button('Border')
         self.update_ui_button('MaskView')
         self.update_ui_button('CLIP')
         self.update_ui_button('Occluder')
@@ -733,6 +796,11 @@ class GUI(tk.Tk):
         except Exception:
             print(" No video selected")
         else:    
+            threshold = self.parameters["ThresholdAmount"][0]/100.0
+            if self.parameters["ThresholdState"]:
+                threshold = 2.0      
+        
+        
             # Find all faces and add to faces[]
             if ret:
                 # Loop thgouh all faces in video frame
@@ -779,17 +847,18 @@ class GUI(tk.Tk):
 
                     
                     found = False
+                    # old code for doing averages on the taget
                     # Test for existing simularities
-                    for j in range(len(self.target_faces)):
-                        sim = self.findCosineDistance(ret[i].embedding, self.target_faces[j]["Embedding"])
-                        
-                        if sim<self.parameters["ThresholdAmount"][0]/100.0:
-                            found = True
+                    # for j in range(len(self.target_faces)):
+                        # sim = self.findCosineDistance(ret[i].embedding, self.target_faces[j]["Embedding"])
+                        # if sim<threshold:
+                            # found = True
                             
-                            self.target_faces[j]["Embedding"] = self.target_faces[j]["Embedding"]*self.target_faces[j]["EmbeddingNumber"] + ret[i].embedding
                             
-                            self.target_faces[j]["EmbeddingNumber"] += 1
-                            self.target_faces[j]["Embedding"] /=  self.target_faces[j]["EmbeddingNumber"]
+                            # self.target_faces[j]["Embedding"] = self.target_faces[j]["Embedding"]*self.target_faces[j]["EmbeddingNumber"] + ret[i].embedding
+                            
+                            # self.target_faces[j]["EmbeddingNumber"] += 1
+                            # self.target_faces[j]["Embedding"] /=  self.target_faces[j]["EmbeddingNumber"]
                         
                     
                     # If we dont find any existing simularities, it means that this is a new face and should be added to our found faces
@@ -1043,6 +1112,70 @@ class GUI(tk.Tk):
       
         self.stop_marker = []
         self.video_slider_canvas.delete(self.stop_image)
+        
+    # def load_target(self, button, media_file, media_type):
+        # self.video_loaded = True
+
+        # if media_type == 'Videos':
+            # self.video_slider.set(0)
+            # self.add_action("load_target_video", media_file, True)
+
+        # elif media_type == 'Images':
+            # self.add_action("load_target_image", media_file, True)
+            # self.image_file_name = os.path.splitext(os.path.basename(media_file))
+    
+        # self.set_status(media_file) 
+        # for i in range(len(self.target_media_buttons)):
+            # self.target_media_buttons[i].config(self.inactive_button_style)
+        
+        # self.target_media_buttons[button].config(self.button_highlight_style)
+        
+        # if self.play_video == True:
+            # self.toggle_play_video()
+        
+        # self.clear_faces()
+        
+        # if self.actions['HoldFaceMode'] == 0:
+            # if self.actions['SwapFacesState'] == True:
+                # self.toggle_swapper()
+            
+        # elif self.actions['HoldFaceMode'] == 1:
+            # self.find_faces('nul')
+            
+            # print(self.target_faces)
+            # for i in range(len(self.target_faces)):
+                # self.target_faces[i]["ButtonState"] = True
+                # self.target_faces[i]["TKButton"].config(self.active_button_style)
+
+            # # if self.target_faces:
+                # # for face in self.target_faces:
+                    
+                    # # # Find the first target face that is highlighted
+                    # # if face["ButtonState"]:
+                        
+                        # # # Clear the assignments
+                        # # face["SourceFaceAssignments"] = []
+                        
+                        # # # If a source face is highlighted
+                        # # if self.source_faces[button]["ButtonState"]:
+                            # # # Append new assignment 
+                            # # face["SourceFaceAssignments"].append(button)
+                            # # face['AssignedEmbedding'] = self.source_faces[button]['Embedding']
+  
+
+            # # self.add_action("target_faces", self.target_faces, True, False)
+
+        # # delete all markers
+        # for i in range(len(self.markers)):
+            # self.video_slider_canvas.delete(self.markers[i]['icon_ref'])
+        
+        # self.markers = []
+        # self.add_action("markers", self.markers)
+      
+        # self.stop_marker = []
+        # self.video_slider_canvas.delete(self.stop_image)        
+        
+        
             
     # @profile
     def set_image(self, image, requested):
@@ -1053,9 +1186,14 @@ class GUI(tk.Tk):
             self.parameter_update_from_marker(frame)
 
         image = self.video_image
+        if self.docked: 
+            x1 = float(self.video.winfo_width())
+            y1 = float(self.video.winfo_height())
+        
+        else:
+            x1 = float(self.undock_video.winfo_width())
+            y1 = float(self.undock_video.winfo_height())
 
-        x1 = float(self.x1)        
-        y1 = float(self.y1 )
         x2 = float(image.shape[1])
         y2 = float(image.shape[0])
         
@@ -1077,59 +1215,138 @@ class GUI(tk.Tk):
 
         image = Image.fromarray(image)  
         image = ImageTk.PhotoImage(image)
-        self.video.configure(image=image)
-        self.video.image = image
+        if self.docked:
+            self.undock_video.configure(image='')
+            self.video.configure(image=image)
+            self.video.image = image
+        else:
+            self.video.configure(image='')
+            self.undock_video.configure(image=image)
+            self.undock_video.image = image
+            
     
     # @profile    
     def resize_image(self):
-    
-        image = self.video_image
-
-        x1 = float(self.x1)        
-        y1 = float(self.y1 )
-        x2 = float(image.shape[1])
-        y2 = float(image.shape[0])
         
-        m1 = x1/y1
-        m2 = x2/y2
-        
-        if m2>m1:
-            x2 = x1
-            y2 = x1/m2
-            image = cv2.resize(image, (int(x2), int(y2)))
-            padding = int((y1-y2)/2.0)
-            image = cv2.copyMakeBorder( image, padding, padding, 0, 0, cv2.BORDER_CONSTANT)            
-        else:
-            y2=y1
-            x2=y2*m2
-            image = cv2.resize(image, (int(x2), int(y2)))
-            padding=int((x1-x2)/2.0)
-            image = cv2.copyMakeBorder( image, 0, 0, padding, padding, cv2.BORDER_CONSTANT) 
+        if np.any(self.video_image):
+            image = self.video_image
+            if self.docked: 
+                x1 = float(self.video.winfo_width())
+                y1 = float(self.video.winfo_height())
+            
+            else:
+                # not directly querying winfo since there ia a small delay to create the window
+                x1 = float(self.json_dict['player_geom'][0])
+                y1 = float(self.json_dict['player_geom'][1])
 
-        image = Image.fromarray(image)  
-        image = ImageTk.PhotoImage(image)
-        self.video.configure(image=image)
-        self.video.image = image
+            x2 = float(image.shape[1])
+            y2 = float(image.shape[0])
+            
+ 
+            m1 = x1/y1
+            m2 = x2/y2
+            
+            if m2>m1:
+                x2 = x1
+                y2 = x1/m2
+                image = cv2.resize(image, (int(x2), int(y2)))
+                padding = int((y1-y2)/2.0)
+                image = cv2.copyMakeBorder( image, padding, padding, 0, 0, cv2.BORDER_CONSTANT)            
+            else:
+                y2=y1
+                x2=y2*m2
+                image = cv2.resize(image, (int(x2), int(y2)))
+                padding=int((x1-x2)/2.0)
+                image = cv2.copyMakeBorder( image, 0, 0, padding, padding, cv2.BORDER_CONSTANT) 
+
+            image = Image.fromarray(image)  
+            image = ImageTk.PhotoImage(image)
+            if self.docked:
+                self.undock_video.configure(image='')
+                self.video.configure(image=image)
+                self.video.image = image
+            else:
+                self.video.configure(image='')
+                self.undock_video.configure(image=image)
+                self.undock_video.image = image
+            
         
     # @profile
     def check_for_video_resize(self):
-        if self.video_loaded:
-            if self.x1 != self.video.winfo_width() or self.y1 != self.video.winfo_height():
-                self.x1 = self.video.winfo_width()
-                self.y1 = self.video.winfo_height()
+        if self.docked:
+            win_geom = '%dx%d+%d+%d' % (self.json_dict['dock_win_geom'][0], self.json_dict['dock_win_geom'][1] , self.json_dict['dock_win_geom'][2], self.json_dict['dock_win_geom'][3])
+            
+            if self.winfo_geometry() != win_geom:
+                # Resize image in video window
+                self.resize_image()
+                    
+                # redisplay markers    
+                width = self.video_slider_canvas.winfo_width()-30
+                for i in range(len(self.markers)):
+                    position = 15+int(width*self.markers[i]['frame']/self.video_slider.configure('to')[4])
+                    self.video_slider_canvas.delete(self.markers[i]['icon_ref'])                    
+                    self.markers[i]['icon_ref'] = self.video_slider_canvas.create_image(position, 30, image=self.marker_icon)
                 
-                # redisplay markers
+                if self.stop_marker:
+                    self.video_slider_canvas.delete(self.stop_image)
+                    position = 15+int(width*self.stop_marker/self.video_slider.configure('to')[4]) 
+                    self.stop_image = self.video_slider_canvas.create_image(position, 30, image=self.stop_marker_icon)          
+                
+                # update dict
+                str1 = self.winfo_geometry().split('x')
+                str2 = str1[1].split('+')
+                win_geom = [str1[0], str2[0], str2[1], str2[2]]
+                win_geom = [int(strings) for strings in win_geom]
+                self.json_dict['dock_win_geom'] = win_geom
+                with open("data.json", "w") as outfile:
+                    json.dump(self.json_dict, outfile)            
+
+        else:
+            
+            win_geom = '%dx%d+%d+%d' % (self.json_dict['undock_win_geom'][0], self.json_dict['undock_win_geom'][1] , self.json_dict['undock_win_geom'][2], self.json_dict['undock_win_geom'][3])
+            
+            # update undoc window
+            if self.winfo_geometry() != win_geom:
+            
+                # redisplay markers    
                 width = self.video_slider_canvas.winfo_width()-30
                 for i in range(len(self.markers)):
                     position = 15+int(width*self.markers[i]['frame']/self.video_slider.configure('to')[4])
                     self.video_slider_canvas.delete(self.markers[i]['icon_ref'])
                     self.markers[i]['icon_ref'] = self.video_slider_canvas.create_image(position, 30, image=self.marker_icon)
+
+                if self.stop_marker:
+                    self.video_slider_canvas.delete(self.stop_image)
+                    position = 15+int(width*self.stop_marker/self.video_slider.configure('to')[4]) 
+                    self.stop_image = self.video_slider_canvas.create_image(position, 30, image=self.stop_marker_icon)                       
+                    
+                str1 = self.winfo_geometry().split('x')
+                str2 = str1[1].split('+')
+                win_geom = [str1[0], str2[0], str2[1], str2[2]]
+                win_geom = [int(strings) for strings in win_geom]
+                self.json_dict['undock_win_geom'] = win_geom
+                with open("data.json", "w") as outfile:
+                    json.dump(self.json_dict, outfile)  
+            
+            # update player window 
+            win_geom = '%dx%d+%d+%d' % (self.json_dict['player_geom'][0], self.json_dict['player_geom'][1] , self.json_dict['player_geom'][2], self.json_dict['player_geom'][3])
+            
+            if self.undock_video_window.winfo_geometry() != win_geom:
+            
+                # Resize image in video window
+                self.resize_image()
                 
-                
-                
-                if np.any(self.video_image):
-                    self.resize_image()
-   
+                # update dict
+                str1 = self.undock_video_window.winfo_geometry().split('x')
+                str2 = str1[1].split('+')
+                win_geom = [str1[0], str2[0], str2[1], str2[2]]
+                win_geom = [int(strings) for strings in win_geom]
+                self.json_dict['player_geom'] = win_geom
+                with open("data.json", "w") as outfile:
+                    json.dump(self.json_dict, outfile)
+
+
+        
     def get_action(self):
         action = self.action_q[0]
         self.action_q.pop(0)
@@ -1148,13 +1365,17 @@ class GUI(tk.Tk):
    
     def findCosineDistance(self, vector1, vector2):
 
-        vec1 = vector1.flatten()
-        vec2 = vector2.flatten()
+        # vec1 = vector1.flatten()
+        # vec2 = vector2.flatten()
 
-        a = np.dot(vec1.T, vec2)
-        b = np.dot(vec1.T, vec1)
-        c = np.dot(vec2.T, vec2)
-        return 1 - (a/(np.sqrt(b)*np.sqrt(c)))
+        # a = np.dot(vec1.T, vec2)
+        # b = np.dot(vec1.T, vec1)
+        # c = np.dot(vec2.T, vec2)
+                
+        # 1 - (a/(np.sqrt(b)*np.sqrt(c)))
+
+        return 1 - np.dot(vector1, vector2)/(np.linalg.norm(vector1)*np.linalg.norm(vector2))
+
 
     def CosineSimilarity(self, test_vec, source_vecs):
 
@@ -1166,30 +1387,31 @@ class GUI(tk.Tk):
 
 
     def toggle_play_video(self):
-        if not self.video_loaded:
-            print("Please select video first!")
-            return
-        self.play_video = not self.play_video
-        
-        if self.play_video:
-            if self.rec_video: 
-                if not self.json_dict["saved videos"]:
-                    print("Set saved video folder first!")
-                    self.play_video = False
-                    self.add_action("play_video", "stop")
-                    self.actions['PlayButton'].config(self.inactive_button_style)
-                else:
-                    self.add_action("play_video", "record")
-                    self.actions['PlayButton'].config(self.active_button_style)
-            else:
-                self.add_action("play_video", "play")
-                self.actions['PlayButton'].config(self.active_button_style)
+        if self.actions['ImgVidMode'] == 0:
+            if not self.video_loaded:
+                print("Please select video first!")
+                return
+            self.play_video = not self.play_video
             
-        else:
-            self.add_action("play_video", "stop")
-            self.actions['PlayButton'].config(self.inactive_button_style)
-            if self.rec_video:
-                self.toggle_rec_video()
+            if self.play_video:
+                if self.rec_video: 
+                    if not self.json_dict["saved videos"]:
+                        print("Set saved video folder first!")
+                        self.play_video = False
+                        self.add_action("play_video", "stop")
+                        self.actions['PlayButton'].config(self.inactive_button_style)
+                    else:
+                        self.add_action("play_video", "record")
+                        self.actions['PlayButton'].config(self.active_button_style)
+                else:
+                    self.add_action("play_video", "play")
+                    self.actions['PlayButton'].config(self.active_button_style)
+                
+            else:
+                self.add_action("play_video", "stop")
+                self.actions['PlayButton'].config(self.inactive_button_style)
+                if self.rec_video:
+                    self.toggle_rec_video()
 
     def set_player_buttons_to_inactive(self):
         self.actions['PlayButton'].config(self.inactive_button_style)
@@ -1239,19 +1461,32 @@ class GUI(tk.Tk):
                 self.action_q.append(["get_requested_video_frame_parameters", self.video_slider.get()])
 
     def toggle_dock(self):
-        self.dock = False
-        if not self.dock:
-            # self.video_frame.winfo_width()
-            self.grid_rowconfigure(0, weight = 0)
-            # self.geometry('%dx%d+%d+%d' % (800, 800, self.winfo_screenwidth()/2-400, self.winfo_screenheight()/2-400))            
-            self.geometry('%dx%d' % (self.winfo_width(), 458))         
-            self.resizable(width=True, height=False) 
-
+        if self.docked:
+            self.docked = False
             
-            self.undock = self.wm_manage(self.video_frame) 
-
-            self.video_frame.config(width=1024, height=768)
-            self.video_frame.grid_propagate(0)
+            # make pop up window visible    
+            self.undock_video_window.deiconify()
+            self.undock_video_window.geometry('%dx%d+%d+%d' % (self.json_dict['player_geom'][0], self.json_dict['player_geom'][1] , self.json_dict['player_geom'][2], self.json_dict['player_geom'][3]))  
+            
+            # resize mainwindow
+            self.grid_rowconfigure(0, weight = 0) 
+            self.geometry('%dx%d+%d+%d' % (self.json_dict['undock_win_geom'][0], self.json_dict['undock_win_geom'][1] , self.json_dict['undock_win_geom'][2], self.json_dict['undock_win_geom'][3]))            
+            self.resizable(width=True, height=False) 
+            
+            self.resize_image()
+ 
+        else:
+            self.docked = True
+            
+            # hide pop up window
+            self.undock_video_window.withdraw() 
+            
+            # reshow video in main
+            self.grid_rowconfigure(0, weight = 10)           
+            self.geometry('%dx%d+%d+%d' % (self.json_dict['dock_win_geom'][0], self.json_dict['dock_win_geom'][1] , self.json_dict['dock_win_geom'][2], self.json_dict['dock_win_geom'][3])) 
+            self.resizable(width=True, height=True) 
+            self.resize_image()
+        
     def set_status(self, msg):
         self.status_label.configure(text=str(msg))
         self.status_label.pack()
@@ -1267,29 +1502,33 @@ class GUI(tk.Tk):
         
         self.parameter_update_from_marker(frame)
             
-    def save_selected_source_faces(self, text):
-
-        temp = 0
-        temp_len = 1
-        temp_data = False
-        if text != "":
-            for i in range(len(self.source_faces)):
-                if self.source_faces[i]["ButtonState"]:
-                    temp_data = True
-                    if temp == []:
-                        temp = self.source_faces[i]["Embedding"]
-                    else:
-                        temp += self.source_faces[i]["Embedding"]
-                        temp_len += 1
+    def save_selected_source_faces(self, text):        
+        # get name from text field
+        text = text.get()
+        # get embeddings from all highlightebuttons
+        # iterate through the buttons
+        summed_embeddings = [0]*512
+        num_selected = 0
+        for i in range(len(self.source_faces)):
+            if self.source_faces[i]["ButtonState"]:
+                summed_embeddings += self.source_faces[i]["Embedding"]
+                num_selected += 1
+        
+        # create the average embedding
+        if num_selected != 0:
+            ave_embedding = summed_embeddings/num_selected
             
-            temp /= temp_len
-            
-            if temp_data:
+            if text != "":
                 with open("merged_embeddings.txt", "a") as embedfile:
-                    identifier = "Name: "+text.get()
+                    identifier = "Name: "+text
                     embedfile.write("%s\n" % identifier)
-                    for number in temp:
+                    for number in ave_embedding:
                         embedfile.write("%s\n" % number)
+            else:
+                print('No embedding name specified')
+        else:
+            print('No Source Images selected')
+        
         self.focus()
         self.load_source_faces()
     
@@ -1337,16 +1576,6 @@ class GUI(tk.Tk):
                 if self.source_faces[i]["ButtonState"]and i>0:
                     self.toggle_source_faces_buttons_state(None, i-1)
                     break
-
-    # def toggle_parameter(self, parameter):
-        # self.parameters[parameter] = not self.parameters[parameter]
-        
-        # if self.parameters[parameter]:
-            # self.parameters_buttons[parameter].config(self.active_button_style)
-        # else:
-            # self.parameters_buttons[parameter].config(self.inactive_button_style)
-            
-        # self.add_action_and_update_frame("parameters", self.parameters)
         
     def toggle_ui_button(self, parameter):
         state = parameter+'State'
@@ -1474,7 +1703,7 @@ class GUI(tk.Tk):
         self.populate_target_videos()
         
         self.add_action("parameters", self.parameters)  
-        self.add_action('load_null')
+        # self.add_action('load_null')
         
         # Reset relavent GUI
         if self.actions['SwapFacesState'] == True:
@@ -1484,13 +1713,31 @@ class GUI(tk.Tk):
             self.toggle_play_video()
         
         self.clear_faces()
-        
+        self.video_loaded = False
         # delete all markers
         for i in range(len(self.markers)):
             self.video_slider_canvas.delete(self.markers[i]['icon_ref'])
         
         self.markers = []
-        self.add_action("markers", self.markers)        
+        self.add_action("markers", self.markers)   
+
+    # def toggle_hold_face(self):
+        # if self.actions['HoldFaceMode'] == 0:
+            # self.actions['HoldFaceMode'] = 1
+            # self.actions['HoldFaceButton'].config(self.active_button_style)
+        # elif self.actions['HoldFaceMode'] == 1:
+            # self.actions['HoldFaceMode'] = 0
+            # self.actions['HoldFaceButton'].config(self.inactive_button_style)
+
+    def toggle_perf_test(self):
+        self.actions['PerfTestState'] = not self.actions['PerfTestState']
+        
+        if self.actions['PerfTestState']:
+            self.actions['PerfTestButton'].config(self.active_button_style)
+        else:
+            self.actions['PerfTestButton'].config(self.inactive_button_style)
+
+        self.add_action('perf_test', self.actions['PerfTestState']) 
         
         
     def add_marker(self):
@@ -1738,6 +1985,8 @@ class GUI(tk.Tk):
             self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.select_video_path())
         elif parameter == 'ImgVid':
             self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.toggle_vid_img())
+        # elif parameter == 'HoldFace':
+            # self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', text=self.actions['HoldFaceModes'][0], image=self.actions[icon_holder], anchor='w', command=lambda: self.toggle_hold_face())
             
         elif parameter == 'StartRope':
             self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.load_all())
@@ -1749,6 +1998,9 @@ class GUI(tk.Tk):
         elif parameter == 'VideoQuality':
             self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w')
             self.actions[button].bind("<MouseWheel>", self.change_video_quality) 
+        elif parameter == 'PerfTest':
+            self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', text=self.actions['PerfTestModes'][0], image=self.actions[icon_holder], anchor='w', command=lambda: self.toggle_perf_test())
+
             
         temp = ' '+mode
 
@@ -1776,7 +2028,7 @@ class GUI(tk.Tk):
             # update buttons
             self.update_ui_button('Upscale')
             self.update_ui_button('Diff')
-            self.update_ui_button('Mask')
+            self.update_ui_button('Border')
             self.update_ui_button('MaskView')
             self.update_ui_button('CLIP')
             self.update_ui_button('Occluder')

@@ -14,13 +14,14 @@ from torchvision import transforms
 from rope.external.clipseg import CLIPDensePredT
 from rope.external.insight.face_analysis import FaceAnalysis
 
+resize_delay = 1
+
 # @profile
 def coordinator():
-    global gui, vm, action, frame, r_frame, load_notice
+    global gui, vm, action, frame, r_frame, load_notice, resize_delay
     start = time.time()
-    
-    # print(start)
-    
+
+  
     if gui.get_action_length() > 0:
         action.append(gui.get_action())
     if vm.get_action_length() > 0:
@@ -36,7 +37,6 @@ def coordinator():
     if vm.get_requested_frame_length() > 0:
         r_frame.append(vm.get_requested_frame())    
     if len(r_frame) > 0:
-        # print ("1:", time.time())
         gui.set_image(r_frame[0], True)
         r_frame=[]
  ####################   
@@ -95,12 +95,17 @@ def coordinator():
             action.pop(0) 
         elif action [0][0] == "set_stop":
             vm.stop_marker = action[0][1]
-            action.pop(0)             
-        elif action [0][0] == "load_null":
-            vm.load_null()
-            action.pop(0) 
+            action.pop(0)  
+        elif action [0][0] == "perf_test":
+            vm.perf_test = action[0][1]
+            action.pop(0)               
+        # elif action [0][0] == "load_null":
+            # vm.load_null()
+            # action.pop(0) 
         elif action [0][0] == "parameters":
             if action[0][1]['UpscaleState']:
+                if not vm.resnet_model:
+                    vm.resnet_model = load_resnet_model()  
                 index = action[0][1]['UpscaleMode']
                 if action[0][1]['UpscaleModes'][index] == 'GFPGAN':
                     if not vm.GFPGAN_model:
@@ -155,14 +160,19 @@ def coordinator():
       # start = time.time()
   
 
-    gui.check_for_video_resize()
+    if resize_delay > 5:
+        gui.check_for_video_resize()
+        resize_delay = 0
+    else:
+        resize_delay +=1
+        
     vm.process()
     gui.after(1, coordinator)
     # print(time.time() - start)    
     
 def load_faceapp_model():
     app = FaceAnalysis(name='buffalo_l')
-    app.prepare(ctx_id=0, det_thresh=0.5, det_size=(512, 512))
+    app.prepare(ctx_id=0, det_thresh=0.5, det_size=(640, 640))
     return app
 
 def load_swapper_model():    
@@ -189,6 +199,7 @@ def load_clip_model():
     clip_session.to(device)    
     return clip_session 
 
+
 def load_GFPGAN_model():
 
     GFPGAN_session = onnxruntime.InferenceSession( "./models/GFPGANv1.4.onnx", providers=["CUDAExecutionProvider"])
@@ -211,9 +222,15 @@ def load_face_parser_model():
     ])
     
     return session, to_tensor 
-
+    
+def load_resnet_model():     
+    model = onnxruntime.InferenceSession("./models/res50.onnx", providers=["CUDAExecutionProvider"])
+    return model   
+    
 def run():
-    global gui, vm, action, frame, r_frame
+    global gui, vm, action, frame, r_frame, resize_delay
+
+    
     gui = GUI.GUI()
     vm = VM.VideoManager()
 
