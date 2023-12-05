@@ -54,7 +54,11 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 - (new) Rope can now undock and redock
 - (new) Rope will remember window positions and sizes between sessions, for both docked and undocked views
 - (fixed) Fixed multiple embedding selection bug
-- (fixed) Recvording with one thread works again
+- (fixed) Recording with one thread works again
+
+- ### (2023-12-04) Bug Fixes for Sapphire - Shard: ###
+- (fixed) CV_64F error related to passing float64 to opencv
+- (fixed) Indexerror error related to differences in detection performance between resnet50 and Retinaface
 
 ### Known Bugs: ###
 - Recording starts on the next frame. It's an issue with how the opencv lib is used. In the future, I hope to get around this with another lib or just working directly with ffmpeg.
