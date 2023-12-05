@@ -42,7 +42,6 @@ class VideoManager():
         self.codeformer_model = []
         
         # training ref
-        # self.FFHQ_kps = np.array([[ 192.98138, 239.94708 ], [ 318.90277, 240.1936 ], [ 256.63416, 314.01935 ], [ 201.26117, 371.41043 ], [ 313.08905, 371.15118 ] ])
         
         self.FFHQ_kps = np.array([[ 192.98138, 239.94708 ], [ 318.90277, 240.1936 ], [ 256.63416, 314.01935 ], [ 201.26117, 371.41043 ], [ 313.08905, 371.15118 ] ])
 
@@ -53,6 +52,24 @@ class VideoManager():
         # self.FFHQIM = cv2.invertAffineTransform(self.FFHQM)  
         
         self.scale_4 = cv2.getRotationMatrix2D((0,0), 0, 4.025)
+        
+        # for res50
+        min_sizes = [[16, 32], [64, 128], [256, 512]]
+        steps = [8, 16, 32]
+        image_size = 512
+        feature_maps = [[64, 64], [32, 32], [16, 16]]
+        # print(feature_maps)
+        self.anchors = []
+        for k, f in enumerate(feature_maps):
+            min_size_array = min_sizes[k]
+            for i, j in product(range(f[0]), range(f[1])):
+                for min_size in min_size_array:
+                    s_kx = min_size / image_size
+                    s_ky = min_size / image_size
+                    dense_cx = [x * steps[k] / image_size for x in [j + 0.5]]
+                    dense_cy = [y * steps[k] / image_size for y in [i + 0.5]]
+                    for cy, cx in product(dense_cy, dense_cx):
+                        self.anchors += [cx, cy, s_kx, s_ky]        
         
         #Video related
         self.capture = []                   # cv2 video
@@ -621,7 +638,7 @@ class VideoManager():
             io_binding = self.swapper_model.io_binding()     
 
         for i in range(itex):
-            previous_face = swapped_face
+            previous_face = swapped_face.astype(np.uint8)
             blob = cv2.dnn.blobFromImage(swapped_face, 1.0 / 255.0, self.input_size, (0.0, 0.0, 0.0), swapRB=False)# blob = RGB
 
             # inswapper expects RGB        
@@ -641,15 +658,19 @@ class VideoManager():
             swapped_face = pred.transpose((0,2,3,1))[0]     
             swapped_face = np.clip(255 * swapped_face, 0, 255)
 
-
+        swapped_face = swapped_face.astype(np.float32)
+    
         if parameters['StrengthState']:
             alpha = np.mod(parameters['StrengthAmount'][0], 100)
             alpha = np.multiply(alpha, 0.01)
             if alpha==0:
                 alpha=1
-                
-            swapped_face = np.add(np.multiply(swapped_face, alpha), np.multiply(previous_face, np.subtract(1, alpha)))      
+            alpha = np.float32(alpha)
+
+            previous_face = previous_face.astype(np.float32)
+            swapped_face = np.add(np.multiply(swapped_face, alpha), np.multiply(previous_face, np.subtract(1, alpha)), dtype=np.float32)      
             # swapped_face = swapped_face*alpha + previous_face*(1-alpha)
+
 
         
         # cv2.imwrite('1.png',cv2.cvtColor(swapped_face, cv2.COLOR_RGB2BGR))
@@ -674,8 +695,8 @@ class VideoManager():
         border_mask = cv2.rectangle(border_mask, (sides, top), (127-sides, 127-bottom), 255, -1)/255
         border_mask = cv2.GaussianBlur(border_mask, (blur*2+1,blur*2+1),0)
         img_mask = np.ones((128, 128), dtype=np.float32)  
-        
-        
+
+
         # Codeformer
         if parameters["UpscaleState"] and parameters['UpscaleMode']==1:   
             swapped_face_upscaled = self.func_w_test('codeformer', self.apply_codeformer, swapped_face_upscaled, parameters["UpscaleAmount"][1])
@@ -890,7 +911,10 @@ class VideoManager():
         return out.clip(0,1)
 
     def apply_GFPGAN(self, swapped_face_upscaled, GFPGANAmount):     
-        landmark = self.ret50_landmarks(swapped_face_upscaled)      
+        try:
+            landmark = self.ret50_landmarks(swapped_face_upscaled) 
+        except:
+            return swapped_face_upscaled     
         
         FFHQM = cv2.estimateAffinePartial2D(landmark, self.FFHQ_kps, method = cv2.LMEDS)[0]
         FFHQIM = cv2.invertAffineTransform(FFHQM)   
@@ -944,7 +968,10 @@ class VideoManager():
     
      
     def apply_codeformer(self, swapped_face_upscaled, GFPGANAmount):
-        landmark = self.ret50_landmarks(swapped_face_upscaled)   
+        try:
+            landmark = self.ret50_landmarks(swapped_face_upscaled) 
+        except:
+            return swapped_face_upscaled
         
         FFHQM = cv2.estimateAffinePartial2D(landmark, self.FFHQ_kps, method = cv2.LMEDS)[0]
         FFHQIM = cv2.invertAffineTransform(FFHQM)         
@@ -983,65 +1010,29 @@ class VideoManager():
         
     
 
-        
+    # @profile    
     def ret50_landmarks(self, image):    
-
         image = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
         image = image - [104., 117., 123.]
         image = image.transpose(2, 0, 1)
         image = np.float32(image[np.newaxis,:,:,:])
 
         height, width = (512, 512)
-        scale = torch.tensor([width, height, width, height], dtype=torch.float32, device='cuda')
         tmp = [width, height, width, height, width, height, width, height, width, height]
         scale1 = torch.tensor(tmp, dtype=torch.float32, device='cuda')
         
-        ort_inputs = {"input": image}    
-    
-        loc, conf, landmarks = self.resnet_model.run(None, ort_inputs)
-    
-        loc = torch.from_numpy(loc)
-        loc = loc.to('cuda')
-        
+        ort_inputs = {"input": image}        
+        _, conf, landmarks = self.resnet_model.run(None, ort_inputs)
+
         conf = torch.from_numpy(conf)
-        conf = conf.to('cuda')
+        scores = conf.squeeze(0).numpy()[:, 1]
         
         landmarks = torch.from_numpy(landmarks)
         landmarks = landmarks.to('cuda')        
-        
-        # priors = self.priors(image.shape[2:])
-        
-        min_sizes = [[16, 32], [64, 128], [256, 512]]
-        steps = [8, 16, 32]
-        image_size = image.shape[2:]
-        feature_maps = [[ceil(image_size[0] / step), ceil(image_size[1] / step)] for step in steps]
 
-        anchors = []
-        for k, f in enumerate(feature_maps):
-            min_size_array = min_sizes[k]
-            for i, j in product(range(f[0]), range(f[1])):
-                for min_size in min_size_array:
-                    s_kx = min_size / image_size[1]
-                    s_ky = min_size / image_size[0]
-                    dense_cx = [x * steps[k] / image_size[1] for x in [j + 0.5]]
-                    dense_cy = [y * steps[k] / image_size[0] for y in [i + 0.5]]
-                    for cy, cx in product(dense_cy, dense_cx):
-                        anchors += [cx, cy, s_kx, s_ky]
-
-        # back to torch land
-        priors = torch.Tensor(anchors).view(-1, 4)
+        priors = torch.Tensor(self.anchors).view(-1, 4)
         priors = priors.to('cuda')
 
-        # boxes = self.decode(loc.data.squeeze(0), priors.data)
-        loc = loc.squeeze(0)
-        boxes = torch.cat((priors[:, :2] + loc[:, :2] * 0.1 * priors[:, 2:], priors[:, 2:] * torch.exp(loc[:, 2:] * 0.2)), 1)
-        boxes[:, :2] -= boxes[:, 2:] / 2
-        boxes[:, 2:] += boxes[:, :2]
-        boxes = boxes * scale
-        boxes = boxes.cpu().numpy()
-        
-        scores = conf.squeeze(0).cpu().numpy()[:, 1]
-        
         pre = landmarks.squeeze(0) 
         tmp = (priors[:, :2] + pre[:, :2] * 0.1 * priors[:, 2:], priors[:, :2] + pre[:, 2:4] * 0.1 * priors[:, 2:], priors[:, :2] + pre[:, 4:6] * 0.1 * priors[:, 2:], priors[:, :2] + pre[:, 6:8] * 0.1 * priors[:, 2:], priors[:, :2] + pre[:, 8:10] * 0.1 * priors[:, 2:])
         landmarks = torch.cat(tmp, dim=1)
@@ -1050,17 +1041,92 @@ class VideoManager():
 
         # ignore low scores
         inds = np.where(scores > 0.97)[0]
-        boxes, landmarks, scores = boxes[inds], landmarks[inds], scores[inds]    
+        landmarks, scores = landmarks[inds], scores[inds]    
 
         # sort
         order = scores.argsort()[::-1]
-        boxes, landmarks, scores = boxes[order], landmarks[order], scores[order]  
+        landmarks = landmarks[order][0]
 
-        # do NMS
-        bounding_boxes = np.hstack((boxes, scores[:, np.newaxis])).astype(np.float32, copy=False)
-        keep = list(nms(boxes=torch.Tensor(bounding_boxes[:, :4]), scores=torch.Tensor(bounding_boxes[:, 4]), iou_threshold=0.4))
-        bounding_boxes, landmarks = bounding_boxes[keep, :], landmarks[keep]        
+        return np.array([[landmarks[i], landmarks[i + 1]] for i in range(0,10,2)])
         
-        bbox = np.concatenate((bounding_boxes, landmarks), axis=1)[0]
+    # def ret50_landmarks(self, image):    
+        # image = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
+        # image = image - [104., 117., 123.]
+        # image = image.transpose(2, 0, 1)
+        # image = np.float32(image[np.newaxis,:,:,:])
+
+        # height, width = (512, 512)
+        # scale = torch.tensor([width, height, width, height], dtype=torch.float32, device='cuda')
+        # tmp = [width, height, width, height, width, height, width, height, width, height]
+        # scale1 = torch.tensor(tmp, dtype=torch.float32, device='cuda')
         
-        return np.array([[bbox[i], bbox[i + 1]] for i in range(5, 15, 2)])  
+        # ort_inputs = {"input": image}    
+    
+        # loc, conf, landmarks = self.resnet_model.run(None, ort_inputs)
+    
+        # loc = torch.from_numpy(loc)
+        # loc = loc.to('cuda')
+        
+        # conf = torch.from_numpy(conf)
+        # conf = conf.to('cuda')
+        
+        # landmarks = torch.from_numpy(landmarks)
+        # landmarks = landmarks.to('cuda')        
+        
+        # # priors = self.priors(image.shape[2:])
+        
+        # min_sizes = [[16, 32], [64, 128], [256, 512]]
+        # steps = [8, 16, 32]
+        # image_size = image.shape[2:]
+        # feature_maps = [[ceil(image_size[0] / step), ceil(image_size[1] / step)] for step in steps]
+
+        # anchors = []
+        # for k, f in enumerate(feature_maps):
+            # min_size_array = min_sizes[k]
+            # for i, j in product(range(f[0]), range(f[1])):
+                # for min_size in min_size_array:
+                    # s_kx = min_size / image_size[1]
+                    # s_ky = min_size / image_size[0]
+                    # dense_cx = [x * steps[k] / image_size[1] for x in [j + 0.5]]
+                    # dense_cy = [y * steps[k] / image_size[0] for y in [i + 0.5]]
+                    # for cy, cx in product(dense_cy, dense_cx):
+                        # anchors += [cx, cy, s_kx, s_ky]
+
+        # # back to torch land
+        # priors = torch.Tensor(anchors).view(-1, 4)
+        # priors = priors.to('cuda')
+
+        # # boxes = self.decode(loc.data.squeeze(0), priors.data)
+        # loc = loc.squeeze(0)
+        # boxes = torch.cat((priors[:, :2] + loc[:, :2] * 0.1 * priors[:, 2:], priors[:, 2:] * torch.exp(loc[:, 2:] * 0.2)), 1)
+        # boxes[:, :2] -= boxes[:, 2:] / 2
+        # boxes[:, 2:] += boxes[:, :2]
+        # boxes = boxes * scale
+        # boxes = boxes.cpu().numpy()
+        
+        # scores = conf.squeeze(0).cpu().numpy()[:, 1]
+        
+        # pre = landmarks.squeeze(0) 
+        # tmp = (priors[:, :2] + pre[:, :2] * 0.1 * priors[:, 2:], priors[:, :2] + pre[:, 2:4] * 0.1 * priors[:, 2:], priors[:, :2] + pre[:, 4:6] * 0.1 * priors[:, 2:], priors[:, :2] + pre[:, 6:8] * 0.1 * priors[:, 2:], priors[:, :2] + pre[:, 8:10] * 0.1 * priors[:, 2:])
+        # landmarks = torch.cat(tmp, dim=1)
+        # landmarks = landmarks * scale1
+        # landmarks = landmarks.cpu().numpy()  
+
+        # # ignore low scores
+        # inds = np.where(scores > 0.97)[0]
+        # boxes, landmarks, scores = boxes[inds], landmarks[inds], scores[inds]    
+
+        # # sort
+        # order = scores.argsort()[::-1]
+        # boxes, landmarks, scores = boxes[order], landmarks[order], scores[order]  
+
+        # # do NMS
+        # bounding_boxes = np.hstack((boxes, scores[:, np.newaxis])).astype(np.float32, copy=False)
+        # keep = list(nms(boxes=torch.Tensor(bounding_boxes[:, :4]), scores=torch.Tensor(bounding_boxes[:, 4]), iou_threshold=0.4))
+        
+        # bounding_boxes, landmarks = bounding_boxes[keep, :], landmarks[keep]        
+        
+        # bbox = np.concatenate((bounding_boxes, landmarks), axis=1)
+        # bbox = bbox[0]
+        # #freaem 1046
+        # return np.array([[bbox[i], bbox[i + 1]] for i in range(5, 15, 2)])  
