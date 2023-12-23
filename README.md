@@ -8,6 +8,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 ### [Wiki](https://github.com/Hillobar/Rope/wiki)
 
 ### ${{\color{Goldenrod}{\textsf{Last Updated 2023-12-22 21:42 PST}}}}$ ###
+note: you need to download the latest GFPGAN model for Ruby. Link is in the wiki
 
 ### Features: ###
 * Lightning speed face swapping with all the features
