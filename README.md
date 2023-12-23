@@ -10,10 +10,20 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 ### ${{\color{Goldenrod}{\textsf{Last Updated 2023-12-04 19:00 PST}}}}$ ###
 
 ### Features: ###
-* Incredible features and fast workflow
-* High performance
-* Real-time video player
-* Helpful functions
+* Lightning speed face swapping with all the features
+* Upscalers
+* Likeness modifiers
+* Orientation management
+* Masks: borders, differentials, auto occlusion, face parsers, text-based masking - all with strength adjustments and blending settings
+* Mask view to evaluate masks directly
+* Source face merging and saving
+* Swap images or videos
+* Auto save filename generation
+* Dock/Undock the video player
+* Real-time player
+* Segment recording
+* Fine tune your video ahead of time by creating image setting markers at specific frames.
+* Lightening fast!
 
 ### (2023-11-17) Changelog for Rope - Sapphire: ###
 **Note: Please check the wiki for installation and link to the new models file**
