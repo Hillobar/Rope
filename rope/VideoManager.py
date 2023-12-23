@@ -655,7 +655,6 @@ class VideoManager():
             
         if parameters['StrengthState']:
             alpha = np.mod(parameters['StrengthAmount'][0], 100)*0.01
-            print(alpha)
             if alpha==0:
                 alpha=1
             # Blend the images
