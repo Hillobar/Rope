@@ -25,6 +25,12 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Fine tune your video ahead of time by creating image setting markers at specific frames.
 * Lightening fast!
 
+### Updates for Rope-Ruby: ###
+* Almost double the performance of previous Rope! Twice as fast! Half the time! Most of the effort for Ruby focuses on huge performance gains. Enjoy the speed!
+* Much faster GFPGAN
+* Occluder mask size can now be adjusted
+* Experimental features added to make adjustments to face swap region placement and face scale.
+
 ### Known Bugs: ###
 - When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
 
