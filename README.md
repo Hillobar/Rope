@@ -33,6 +33,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### Known Bugs: ###
 - When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
+- Pressing 'a' at frame 0 will stop playback after a few seconds of play
 
 ### Performance:  ###
 Machine: 3090Ti (24GB), i5-13600K
