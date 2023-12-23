@@ -25,50 +25,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Fine tune your video ahead of time by creating image setting markers at specific frames.
 * Lightening fast!
 
-### (2023-11-17) Changelog for Rope - Sapphire: ###
-**Note: Please check the wiki for installation and link to the new models file**
-- Images! In addition to videos, use Rope to swap images. Seamlessly integrated into the current interface.
-- Timeline markers. Add markers to the timeline that capture the current settings at a specific frame. When playing back or recording, markers control the options when the frame is reached. Add as many markers as you need!
-- Iterations. Apply the swapper model multiple times to a face. It seems to increase likeliness if used carefully.
-- Orientation. Sometimes faces are at a bad orientation, like laying down or upside-down. The face detector has problems with this, so Rope now has an option to tell the detector which way the face is oriented. It is also markerable, so you can set markers for it per frame!
-- Tool tips on (almost) everything. Tips are in the bottom pane.
-- Bug fixes and refactoring
 
-### (2023-11-18) Bug Fixes for Sapphire - Shard: ###
-- (fixed) saving the same image multiple times in a row overwrites it. the time is appended when the image is loaded, not saved, so the time is always the same
-- (fixed) cf is returning weird colors, similar to when the rgm bgr stuff was messed up. try swapping rgp before netering cf
-- (fixed) GFPGAN fp16 might be causing too much harm (going back to original)
-- (fixed) the orientation feature might not be unorienting
-- (fixed) bug (I hope :D) : When clicking on a registered face name (the one of the left) to swap, on the previous version, clicking back to the same face name would delete the choice and unswap the face. Now it's just blocked and I can't "unswap" (unselect) the face. I'm force to select a face or just close and restart the soft.
-- (fixed) update text for all the parser features
-- (fixed) "Switch from one timeline marker to another doesn't properly show the correct features configured. Switch to the next frame (and back the previous one is working too) will fix it and show the correct configuration actually configured on the frame."
-- (fixed) update mask tooltip
-- (fixed) Btw accidentially scrolling Strength below 100% crashed Rope now the third time when CF is enabled. Haven't seen this with GFPGAN yet. I can screenshot the console error if that helps...
-- (new) Added Mask view button, moved mask blur to button above mask view
-- (new) MouthParser scrolls in negative direction to a)only mask the inside of the mouth, and b) grow the inside mouth mask as the amount increases
-- (fixed) GFPGAN and Codeformer will give better results now, especially with details around the eyes and mouth. 
-- (fixed) in some cases, pixel values will be > 255
-- (new) added undock button to image view
-- (new) 'Strength' now has an on/off state
-- (fixed) intermittent play bug
-- (new) Click the mouse on the playback screen to control play/pause
-- (new) Keyboard control with wasd and space 
-- (new) Stop Marker. Sets a frame that will stop the video playing/recording
-
-### (2023-12-02) Bug Fixes for Sapphire - Shard: ###
-- (new) Added performance testing button. Turn on to report some stats in the console. Stats during threaded Play will be jumbled.
-- (fixed) Tooltip fixes
-- (fixed) Fixed bad Rope behavior when losing focus and returning  
-- (fixed) Fixed crashing when using WASD on images
-- (fixed) GFPGAN and Codeformer are now working correctly. This required adding another detection model to these enhancers, so performance is slightly worse now using CF and GFPGAN but the quality is better.
-- (new) Rope can now undock and redock
-- (new) Rope will remember window positions and sizes between sessions, for both docked and undocked views
-- (fixed) Fixed multiple embedding selection bug
-- (fixed) Recording with one thread works again
-
-- ### (2023-12-04) Bug Fixes for Sapphire - Shard: ###
-- (fixed) CV_64F error related to passing float64 to opencv
-- (fixed) Indexerror error related to differences in detection performance between resnet50 and Retinaface
 
 ### Known Bugs: ###
 - Recording starts on the next frame. It's an issue with how the opencv lib is used. In the future, I hope to get around this with another lib or just working directly with ffmpeg.
@@ -93,7 +50,8 @@ Rendering time in seconds:
 | Swap+MouthParser | 13.9 | 12.1 | 5.0 |
 
 ### Preview (from Rope-Crystal): ###
-![image](https://github.com/Hillobar/Rope/assets/63615199/fda0c05f-72a6-4935-a882-dc6d17cfc014)
+![Screenshot 2023-12-22 212639](https://github.com/Hillobar/Rope/assets/63615199/384fd63a-b870-4714-a137-d27e31560433)
+
 
 ### Disclaimer: ###
 Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me.
