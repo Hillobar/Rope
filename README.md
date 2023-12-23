@@ -25,12 +25,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Fine tune your video ahead of time by creating image setting markers at specific frames.
 * Lightening fast!
 
-
-
 ### Known Bugs: ###
-- Recording starts on the next frame. It's an issue with how the opencv lib is used. In the future, I hope to get around this with another lib or just working directly with ffmpeg.
-- Toggling between img/vid leaves a residual frame in the window. I'll clean this up in the future
-- Unfortunately recording is bugged with Threads = 1. I need to change some logic.
 - When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
 
 ### Performance:  ###
