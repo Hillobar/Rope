@@ -37,6 +37,7 @@ note: you need to download the latest GFPGAN model for Ruby. Link is in the wiki
 ### Known Bugs: ###
 - When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
 - Pressing 'a' at frame 0 will stop playback after a few seconds of play
+- Lower resolution videos (less than 512 pixels in one of the directions) will result in only part of the face becoming swapped.
 
 ### Performance:  ###
 Machine: 3090Ti (24GB), i5-13600K
