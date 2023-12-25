@@ -44,6 +44,9 @@ Files changed: Coordinator.py, Dicts.py, GUI.py, VideoManager.py. DL new GPEN mo
 * (feature) Added manual color correction
 * (fixed) Using 'wasd' can no longer go out of bounds
 
+### Changelog for 12/25 11:02 PST: ###
+* (fixed) Couple of bugs related to GPEN
+
 ### Known Bugs: ###
 - When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
 - Starting a mode for the first time while playing will crash Rope. Due to the new performance architecture, this will not be possible. The first time you turn on a model, the video should not be playing.
