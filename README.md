@@ -9,7 +9,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Demo Video](https://www.youtube.com/watch?v=4Y4U0TZ8cWY)
 
-### ${{\color{Goldenrod}{\textsf{Last Updated 2023-12-22 21:42 PST}}}}$ ###
+### ${{\color{Goldenrod}{\textsf{Last Updated 2023-12-25 08:56 PST}}}}$ ###
 note: you need to download the latest GFPGAN model for Ruby. Link is in the wiki
 
 ### Features: ###
@@ -33,6 +33,16 @@ note: you need to download the latest GFPGAN model for Ruby. Link is in the wiki
 * Much faster GFPGAN
 * Occluder mask size can now be adjusted
 * Experimental features added to make adjustments to face swap region placement and face scale.
+
+### Changelog for 2023-12-25 08:56 PST: ###
+Files changed: Coordinator.py, Dicts.py, GUI.py, VideoManager.py
+* (fixed) Adjusted the Brdr default settings to fix some blending lines
+* (fixed) Video loading errors addressed 
+* (feature) Read target videos and images, and source faces from subfolders
+* (fixed) Low resolution videos no longer results in partial face swaps
+* (feature) Added GPEN 256 and GPEN 512
+* (feature) Added manual color correction
+* (fixed) Using 'wasd' can no longer go out of bounds
 
 ### Known Bugs: ###
 - When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
