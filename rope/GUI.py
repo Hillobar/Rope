@@ -628,6 +628,7 @@ class GUI(tk.Tk):
         class empty:
             def __init__(self):
                 self.delta = 0
+                self.num = 0
 
         event = empty()
 
