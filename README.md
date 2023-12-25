@@ -67,7 +67,7 @@ Rendering time in seconds:
 | Swap+Occluder | 7.8 | 7.8 | 4.4 |
 | Swap+MouthParser | 13.9 | 12.1 | 5.0 |
 
-### Preview (from Rope-Crystal): ###
+### Preview: ###
 ![Screenshot 2023-12-22 212639](https://github.com/Hillobar/Rope/assets/63615199/384fd63a-b870-4714-a137-d27e31560433)
 
 
