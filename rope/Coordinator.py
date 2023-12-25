@@ -221,11 +221,11 @@ def load_resnet_model():
     return model   
     
 def load_detection_model():
-    session = onnxruntime.InferenceSession('.\models\det_10g.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    session = onnxruntime.InferenceSession('./models/det_10g.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
     return session
 
 def load_recognition_model():
-    session = onnxruntime.InferenceSession('.\models\w600k_r50.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    session = onnxruntime.InferenceSession('./models/w600k_r50.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
     return session
     
     
