@@ -97,8 +97,8 @@ def coordinator():
             # action.pop(0) 
         elif action [0][0] == "parameters":
             if action[0][1]['UpscaleState']:
-                if not vm.resnet_model:
-                    vm.resnet_model = load_resnet_model()  
+                # if not vm.resnet_model:
+                    # vm.resnet_model = load_resnet_model()  
                 index = action[0][1]['UpscaleMode']
                 if action[0][1]['UpscaleModes'][index] == 'GFPGAN':
                     if not vm.GFPGAN_model:
@@ -106,6 +106,12 @@ def coordinator():
                 elif action[0][1]['UpscaleModes'][index] == 'CF':
                     if not vm.codeformer_model:
                         vm.codeformer_model = load_codeformer_model()
+                elif action[0][1]['UpscaleModes'][index] == 'GPEN256':
+                    if not vm.GPEN_256_model:
+                        vm.GPEN_256_model = load_GPEN_256_model()                
+                elif action[0][1]['UpscaleModes'][index] == 'GPEN512':
+                    if not vm.GPEN_512_model:
+                        vm.GPEN_512_model = load_GPEN_512_model()
             if action[0][1]["CLIPState"]:
                 if not vm.clip_session:
                     vm.clip_session = load_clip_model()
@@ -177,7 +183,7 @@ def load_swapper_model():
     emap = onnx.numpy_helper.to_array(graph.initializer[-1])
     
     sess_options = onnxruntime.SessionOptions()
-    sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_DISABLE_ALL
+    # sess_options.graph_optimization_level = onnxruntime.GraphOptimizationLevel.ORT_DISABLE_ALL
     
     
     
@@ -193,10 +199,17 @@ def load_clip_model():
     clip_session.to(device)    
     return clip_session 
 
+def load_GPEN_512_model():
+    session = onnxruntime.InferenceSession( "./models/GPEN-BFR-512.onnx", providers=["CUDAExecutionProvider", 'CPUExecutionProvider'])
+    return session
+
+def load_GPEN_256_model():
+    session = onnxruntime.InferenceSession( "./models/GPEN-BFR-256.onnx", providers=["CUDAExecutionProvider", 'CPUExecutionProvider'])
+    return session
 
 def load_GFPGAN_model():
-    GFPGAN_session = onnxruntime.InferenceSession( "./models/GFPGANv1.4.onnx", providers=["CUDAExecutionProvider", 'CPUExecutionProvider'])
-    return GFPGAN_session
+    session = onnxruntime.InferenceSession( "./models/GPEN-BFR-512.onnx", providers=["CUDAExecutionProvider", 'CPUExecutionProvider'])
+    return session
     
 def load_codeformer_model():    
     codeformer_session = onnxruntime.InferenceSession( "./models/codeformer_fp16.onnx", providers=["CUDAExecutionProvider", 'CPUExecutionProvider'])
