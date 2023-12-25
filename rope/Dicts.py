@@ -1,8 +1,8 @@
 PARAM_BUTTONS_PARAMS =    {
     'UpscaleState':             False,
     'UpscaleMode':              0,
-    'UpscaleModes':             ['GFPGAN', 'CF'],
-    'UpscaleAmount':            [100, 100],
+    'UpscaleModes':             ['GFPGAN', 'CF', 'GPEN256', 'GPEN512'],
+    'UpscaleAmount':            [100, 100, 100, 100],
     'UpscaleMin':               0,
     'UpscaleMax':               100,
     'UpscaleInc':               5,                            
@@ -16,7 +16,7 @@ PARAM_BUTTONS_PARAMS =    {
     'DiffAmount':               [4],
     'DiffMin':                  0,
     'DiffMax':                  100,
-    'DiffInc':                  1,                                                  
+    'DiffInc':                  2,                                                  
     'DiffUnit':                 '%', 
     'DiffIcon':                 './rope/media/diff.png',
     'DiffMessage':              'DIFFERENCER - Blends between Target Face and Swapped Face based on pixel difference. [LB: on/off, MW: difference threshold]',
@@ -24,7 +24,7 @@ PARAM_BUTTONS_PARAMS =    {
     'BorderState':                False,
     'BorderMode':                 0, 
     'BorderModes':                ['Brdr Top', 'Brdr Sides', 'Brdr Bttm', 'Brdr Blur'],  
-    'BorderAmount':               [5, 5, 5, 10],
+    'BorderAmount':               [10, 10, 10, 10],
     'BorderMin':                  0,
     'BorderMax':                  64,
     'BorderInc':                  1,                                                 
@@ -153,7 +153,16 @@ PARAM_BUTTONS_PARAMS =    {
     'TransformIcon':          './rope/media/construction.png',
     'TransformMessage':       'SCALE - Adjust the scale of the face. Use with Background parser to blend into the image. [LB: on/off, MW: amount]',       
     
-    
+    'ColorState':           False,
+    'ColorMode':            0, 
+    'ColorModes':           ['Red', 'Green', 'Blue'],  
+    'ColorAmount':           [0, 0, 0],
+    'ColorMin':             -100,
+    'ColorMax':             100,
+    'ColorInc':             1,                                                 
+    'ColorUnit':            'i', 
+    'ColorIcon':            './rope/media/construction.png',
+    'ColorMessage':         'SCALE - Adjust the scale of the face. Use with Background parser to blend into the image. [LB: on/off, MW: amount]',       
     
     "CLIPText":                 '',
 

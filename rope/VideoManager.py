@@ -49,6 +49,8 @@ class VideoManager():
         self.face_parsing_model = []
         self.face_parsing_tensor = []   
         self.codeformer_model = []
+        self.GPEN_256_model = []
+        self.GPEN_256_model = []
 
         self.FFHQ_kps = np.array([[ 192.98138, 239.94708 ], [ 318.90277, 240.1936 ], [ 256.63416, 314.01935 ], [ 201.26117, 371.41043 ], [ 313.08905, 371.15118 ] ])
         
@@ -517,7 +519,23 @@ class VideoManager():
         
         # Load frame into VRAM
         img = torch.from_numpy(target_image).to('cuda') #HxWxc
-        img = img.permute(2,0,1)#cxHxW
+        img = img.permute(2,0,1)#cxHxW        
+        
+        #Scale up frame if it is smaller than 512
+        img_x = img.size()[2]
+        img_y = img.size()[1]
+        
+        if img_x<512 and img_y<512:
+            if img_x <= img_y:
+                tscale = v2.Resize((512, 512))
+        
+        elif img_x<512:
+            tscale = v2.Resize((int(512*img_y/img_x), 512))
+            img = tscale(img)
+        
+        elif img_y<512:
+            tscale = v2.Resize((512, int(512*img_x/img_y)))
+            img = tscale(img)        
 
         # Rotate the frame
         if parameters['OrientationState']:
@@ -565,7 +583,15 @@ class VideoManager():
                 img = img.permute(1,2,0)
         
         if self.perf_test:
-            print('------------------------')        
+            print('------------------------')  
+        
+        # Unscale small videos
+        if img_x <512 or img_y < 512:
+            tscale = v2.Resize((img_y, img_x))
+            img = img.permute(2,0,1)
+            img = tscale(img)
+            img = img.permute(1,2,0)
+
         img = img.cpu().numpy()    
         return img.astype(np.uint8)
 
@@ -612,10 +638,11 @@ class VideoManager():
 
         # Grab 512 face from image and create 256 and 128 copys
         original_face_512 = v2.functional.affine(img, tform.rotation*57.2958, (tform.translation[0], tform.translation[1]) , tform.scale, 0, center = (0,0), interpolation=v2.InterpolationMode.BILINEAR ) 
+
         original_face_512 = v2.functional.crop(original_face_512, 0,0, 512, 512)# 3, 512, 512
         original_face_256 = t256(original_face_512)
         original_face_128 = t128(original_face_256)  
-        
+
         # Optional Scaling # change the thransform matrix
         if parameters['TransformState']:
             original_face_128 = v2.functional.affine(original_face_128, 0, (0,0) , 1+parameters['TransformAmount'][0]/100, 0, center = (63,63), interpolation=v2.InterpolationMode.BILINEAR) 
@@ -650,7 +677,7 @@ class VideoManager():
             io_binding.bind_output(name=self.output_names[0], device_type='cuda', device_id=0, element_type=np.float32, shape=tuple(swap.shape), buffer_ptr=swap.data_ptr())
             
             # Sync and run model
-            cpu_syncvec = self.syncvec.cpu()          
+            syncvec = self.syncvec.cpu()          
             self.swapper_model.run_with_iobinding(io_binding)
             
         if parameters['StrengthState']:
@@ -697,8 +724,18 @@ class VideoManager():
 
         # GFPGAN
         if parameters["UpscaleState"] and parameters['UpscaleMode']==0: 
-            swap = self.func_w_test('GFPGAN_onnx', self.apply_GFPGAN, swap, parameters)
+            swap = self.func_w_test('GFPGAN', self.apply_GFPGAN, swap, parameters)
+        
+        # GPEN_256   
+        if parameters["UpscaleState"] and parameters['UpscaleMode']==2: 
+            GPEN_resize = t256(swap)
+            swap = self.func_w_test('GPEN_256', self.apply_GPEN_256, swap, parameters)
+            swap = t512(swap)
 
+        # GPEN_512
+        if parameters["UpscaleState"] and parameters['UpscaleMode']==3: 
+            swap = self.func_w_test('GPEN_512', self.apply_GPEN_512, swap, parameters)
+            
         # Occluder
         if parameters["OccluderState"]:
             mask = self.func_w_test('occluder', self.apply_occlusion , original_face_256, parameters["OccluderAmount"][0])
@@ -733,6 +770,14 @@ class VideoManager():
         gauss = transforms.GaussianBlur(parameters['BlurAmount'][0]*2+1, (parameters['BlurAmount'][0]+1)*0.2)
         swap_mask = gauss(swap_mask)  
         
+        # Apply color corerctions
+        if parameters['ColorState']:
+            swap = swap.permute(1, 2, 0).type(torch.float32)
+            del_color = torch.tensor([parameters['ColorAmount'][0], parameters['ColorAmount'][1], parameters['ColorAmount'][2]], device=device)
+            swap += del_color
+            swap = torch.clamp(swap, min=0., max=255.)
+            swap = swap.permute(2, 0, 1).type(torch.uint8)
+
         # Combine border and swap mask, scale, and apply to swap
         swap_mask = torch.mul(swap_mask, border_mask)
         swap_mask = t512(swap_mask)
@@ -816,8 +861,7 @@ class VideoManager():
         io_binding.bind_output(name='output', device_type='cuda', device_id=0, element_type=np.float32, shape=(1,1,256,256), buffer_ptr=outpred.data_ptr())   
 
         # Sync and run model
-        syncvec = torch.empty((1,1), dtype=torch.float32, device=device)
-        syncvec = syncvec.cpu()       
+        syncvec = self.syncvec.cpu()       
         self.occluder_model.run_with_iobinding(io_binding)    
         
         outpred = torch.squeeze(outpred)
@@ -982,6 +1026,110 @@ class VideoManager():
         return outpred
     
     # @profile
+    def apply_GPEN_256(self, swapped_face_upscaled, parameters):     
+        # Set up Transformation
+        dst = self.arcface_dst * 4.0
+        dst[:,0] += 32.0        
+        tform = trans.SimilarityTransform()   
+
+        t512 = v2.Resize((512, 512), antialias=True)
+        t256 = v2.Resize((256, 256), antialias=True)         
+        
+        # # Select detection approach
+        # if parameters['TestState']:
+            # try:
+                # dst = self.ret50_landmarks(swapped_face_upscaled) 
+            # except:
+                # return swapped_face_upscaled     
+
+        tform.estimate(dst, self.FFHQ_kps)
+
+        # Transform, scale, and normalize
+        temp = v2.functional.affine(swapped_face_upscaled, tform.rotation*57.2958, (tform.translation[0], tform.translation[1]) , tform.scale, 0, center = (0,0) )
+        temp = v2.functional.crop(temp, 0,0, 512, 512)        
+        temp = torch.div(temp, 255)
+        temp = v2.functional.normalize(temp, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=False)
+        temp = t256(temp)
+        temp = torch.unsqueeze(temp, 0)
+
+        # Bindings
+        outpred = torch.empty((1,3,256,256), dtype=torch.float32, device=device).contiguous()
+        io_binding = self.GPEN_256_model.io_binding() 
+        io_binding.bind_input(name='input', device_type='cuda', device_id=0, element_type=np.float32, shape=(1,3,256,256), buffer_ptr=temp.data_ptr())
+        io_binding.bind_output(name='output', device_type='cuda', device_id=0, element_type=np.float32, shape=(1,3,256,256), buffer_ptr=outpred.data_ptr())
+        
+        # Sync and run model
+        syncvec = self.syncvec.cpu()
+        self.GPEN_256_model.run_with_iobinding(io_binding)
+        
+        # Format back to cxHxW @ 255
+        outpred = torch.squeeze(outpred)      
+        outpred = torch.clamp(outpred, -1, 1)
+        outpred = torch.add(outpred, 1)
+        outpred = torch.div(outpred, 2)
+        outpred = torch.mul(outpred, 255)
+        outpred = t512(outpred)
+        
+        # Invert Transform
+        outpred = v2.functional.affine(outpred, tform.inverse.rotation*57.2958, (tform.inverse.translation[0], tform.inverse.translation[1]) , tform.
+        inverse.scale, 0, interpolation=v2.InterpolationMode.BILINEAR, center = (0,0) )
+
+        # Blend
+        alpha = float(parameters["UpscaleAmount"][2])/100.0  
+        outpred = torch.add(torch.mul(outpred, alpha), torch.mul(swapped_face_upscaled, 1-alpha))
+
+        return outpred                   
+             
+                
+    def apply_GPEN_512(self, swapped_face_upscaled, parameters):     
+        # Set up Transformation
+        dst = self.arcface_dst * 4.0
+        dst[:,0] += 32.0        
+        tform = trans.SimilarityTransform()        
+        
+        # # Select detection approach
+        # if parameters['TestState']:
+            # try:
+                # dst = self.ret50_landmarks(swapped_face_upscaled) 
+            # except:
+                # return swapped_face_upscaled     
+
+        tform.estimate(dst, self.FFHQ_kps)
+
+        # Transform, scale, and normalize
+        temp = v2.functional.affine(swapped_face_upscaled, tform.rotation*57.2958, (tform.translation[0], tform.translation[1]) , tform.scale, 0, center = (0,0) )
+        temp = v2.functional.crop(temp, 0,0, 512, 512)        
+        temp = torch.div(temp, 255)
+        temp = v2.functional.normalize(temp, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=False)
+        temp = torch.unsqueeze(temp, 0)
+
+        # Bindings
+        outpred = torch.empty((1,3,512,512), dtype=torch.float32, device=device).contiguous()
+        io_binding = self.GPEN_512_model.io_binding() 
+        io_binding.bind_input(name='input', device_type='cuda', device_id=0, element_type=np.float32, shape=(1,3,512,512), buffer_ptr=temp.data_ptr())
+        io_binding.bind_output(name='output', device_type='cuda', device_id=0, element_type=np.float32, shape=(1,3,512,512), buffer_ptr=outpred.data_ptr())
+        
+        # Sync and run model
+        syncvec = self.syncvec.cpu()
+        self.GPEN_512_model.run_with_iobinding(io_binding)
+        
+        # Format back to cxHxW @ 255
+        outpred = torch.squeeze(outpred)      
+        outpred = torch.clamp(outpred, -1, 1)
+        outpred = torch.add(outpred, 1)
+        outpred = torch.div(outpred, 2)
+        outpred = torch.mul(outpred, 255)
+        
+        # Invert Transform
+        outpred = v2.functional.affine(outpred, tform.inverse.rotation*57.2958, (tform.inverse.translation[0], tform.inverse.translation[1]) , tform.
+        inverse.scale, 0, interpolation=v2.InterpolationMode.BILINEAR, center = (0,0) )
+
+        # Blend
+        alpha = float(parameters["UpscaleAmount"][3])/100.0  
+        outpred = torch.add(torch.mul(outpred, alpha), torch.mul(swapped_face_upscaled, 1-alpha))
+
+        return outpred                
+                
     def apply_GFPGAN(self, swapped_face_upscaled, parameters):     
         # Set up Transformation
         dst = self.arcface_dst * 4.0
@@ -1002,7 +1150,7 @@ class VideoManager():
         temp = v2.functional.crop(temp, 0,0, 512, 512)        
         temp = torch.div(temp, 255)
         temp = v2.functional.normalize(temp, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=False)
-        temp = torch.reshape(temp, (1, 3, 512, 512))#############change to unsqueeze
+        temp = torch.unsqueeze(temp, 0)
 
         # Bindings
         outpred = torch.empty((1,3,512,512), dtype=torch.float32, device=device).contiguous()
@@ -1011,8 +1159,7 @@ class VideoManager():
         io_binding.bind_output(name='output', device_type='cuda', device_id=0, element_type=np.float32, shape=(1,3,512,512), buffer_ptr=outpred.data_ptr())
         
         # Sync and run model
-        syncvec = torch.empty((1,1), dtype=torch.float32, device=device)
-        syncvec = syncvec.cpu()
+        syncvec = self.syncvec.cpu()
         self.GFPGAN_model.run_with_iobinding(io_binding)
         
         # Format back to cxHxW @ 255
@@ -1039,10 +1186,14 @@ class VideoManager():
         diff = swapped_face-original_face
         diff = torch.abs(diff)
         
-        fthresh = DiffAmount/2.0
+        # Find the diffrence between the swap and original, per channel
+        fthresh = DiffAmount*2.55
+        
+        # Bimodal
         diff[diff<fthresh] = 0
         diff[diff>=fthresh] = 1 
         
+        # If any of the channels exceeded the threshhold, them add them to the mask
         diff = torch.sum(diff, dim=2)
         diff = torch.unsqueeze(diff, 2)
         diff[diff>0] = 1
@@ -1082,8 +1233,7 @@ class VideoManager():
         io_binding.bind_output(name='y', device_type='cuda', device_id=0, element_type=np.float32, shape=(1,3,512,512), buffer_ptr=outpred.data_ptr())
         
         # Sync and run model
-        syncvec = torch.empty((1,1), dtype=torch.float32, device=device)
-        syncvec = syncvec.cpu()
+        syncvec = self.syncvec.cpu()
         self.codeformer_model.run_with_iobinding(io_binding)           
 
         # Format back to cxHxW @ 255
@@ -1212,7 +1362,7 @@ class VideoManager():
             io_binding.bind_output(output_names[i], 'cuda') 
         
         # Sync and run model
-        cpu_syncvec = self.syncvec.cpu()     
+        syncvec = self.syncvec.cpu()     
         self.detection_model.run_with_iobinding(io_binding)
         
         net_outs = io_binding.copy_outputs_to_cpu()
@@ -1368,7 +1518,7 @@ class VideoManager():
             io_binding.bind_output(output_names[i], 'cuda') 
         
         # Sync and run model
-        cpu_syncvec = self.syncvec.cpu()
+        syncvec = self.syncvec.cpu()
         self.recognition_model.run_with_iobinding(io_binding)
 
         # Return embedding
@@ -1376,8 +1526,6 @@ class VideoManager():
 
 
                 
-        # # test out
-        # swap = swap.permute(1, 2, 0)
-        # swapped_face = swap.cpu().numpy()
-        # cv2.imwrite('2.jpg', swapped_face)
-        # # test out  
+        # test = swap.permute(1, 2, 0)
+        # test = test.cpu().numpy()
+        # cv2.imwrite('2.jpg', test) 

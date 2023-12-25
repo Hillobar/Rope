@@ -51,6 +51,7 @@ class GUI(tk.Tk):
         self.stop_image = []
         self.marker_icon = []
         self.stop_marker_icon = []
+        self.video_length = []
 
         # self.window_y = []
         # self.window_width = []
@@ -274,7 +275,7 @@ class GUI(tk.Tk):
         self.options_frame_canvas1.grid( row = 1, column = 0, sticky='NEWS', pady = 0 )
 
         # Label Frame 1
-        self.label_frame1 = tk.LabelFrame( self.options_frame_canvas1, self.frame_style, height = 71, width = 1200 )
+        self.label_frame1 = tk.LabelFrame( self.options_frame_canvas1, self.frame_style, height = 71, width = 1400 )
         self.label_frame1.place(x=0, y=0)
         
         column=8
@@ -308,7 +309,10 @@ class GUI(tk.Tk):
         
         column=column+125+x_space
         self.create_ui_button('RefDel', self.label_frame1, column, 8) 
-        self.create_ui_button('Transform', self.label_frame1, column, 37)          
+        self.create_ui_button('Transform', self.label_frame1, column, 37)   
+
+        column=column+125+x_space
+        self.create_ui_button('Color', self.label_frame1, column, 8)         
 
  ######## Target Faces           
         # Frame
@@ -445,28 +449,26 @@ class GUI(tk.Tk):
         # print(event.char, event.keysym, event.keycode)
 
         if self.focus_get() != self.CLIP_name and self.focus_get() != self.me_name and self.actions['ImgVidMode'] == 0:
+            frame = self.video_slider.get()
             if event.char == ' ':
                 self.toggle_play_video()
             elif event.char == 'w':
-                frame = self.video_slider.get()+1
-                self.video_slider.set(frame)
-                self.add_action("get_requested_video_frame", frame)
-                self.parameter_update_from_marker(frame)
+                frame += 1
             elif event.char == 's':
-                frame = self.video_slider.get()-1   
-                self.video_slider.set(frame)
-                self.add_action("get_requested_video_frame", frame)
-                self.parameter_update_from_marker(frame)
+                frame -= 1 
             elif event.char == 'd':
-                frame = self.video_slider.get()+30 
-                self.video_slider.set(frame)
-                self.add_action("get_requested_video_frame", frame)
-                self.parameter_update_from_marker(frame)
+                frame += 30 
             elif event.char == 'a':
-                frame = self.video_slider.get()-30 
-                self.video_slider.set(frame)
-                self.add_action("get_requested_video_frame", frame)
-                self.parameter_update_from_marker(frame)
+                frame -= 30 
+
+            if frame > self.video_length:
+                frame = self.video_length
+            elif frame < 0:
+                frame = 0
+            
+            self.video_slider.set(frame)
+            self.add_action("get_requested_video_frame", frame)
+            self.parameter_update_from_marker(frame)
 
 
     def initialize_gui( self ):
@@ -613,6 +615,8 @@ class GUI(tk.Tk):
         self.update_ui_button('Orientation')
         self.update_ui_button('RefDel')
         self.update_ui_button('Transform')
+        self.update_ui_button('Color')
+
 
         # self.change_video_quality(event)
         self.change_threads_amount(event)    
@@ -717,61 +721,61 @@ class GUI(tk.Tk):
                 pass
 
             directory = self.json_dict["source faces"]
-
-            if directory == None:
-                print("No Sourrce Face directory assigned")
-            
-            else:
-                filenames = os.listdir(directory)
-                
-                faces = []
-                
+            filenames = [os.path.join(dirpath,f) for (dirpath, dirnames, filenames) in os.walk(directory) for f in filenames]         
+            faces = []
+            for file in filenames: # Does not include full path
                 # Find all faces and ad to faces[]
-                for name in filenames: #should check if is an image
-                    try:
-                        temp_file = os.path.join(directory, name)
-                        temp_file = cv2.imread(temp_file)
-                        img = torch.from_numpy(temp_file).to('cuda')
-                        img = img.permute(2,0,1)
-                        kpss = self.detect(img, input_size = (640, 640), max_num=1, metric='default')
-                        ret = []
-                        for i in range(kpss.shape[0]):
-                            if kpss is not None:
-                                face_kps = kpss[i]
+                # Guess File type based on extension
+                try:
+                    file_type = mimetypes.guess_type(file)[0][:5]
+                except:
+                    print('Unrecognized file type:', file)
+                else:
+                    # Its an image
+                    if file_type == 'image':                
+                        try:
+                            img = cv2.imread(file)
+                        except:
+                            print('Bad file', file)   
+                        else:
+                            img = torch.from_numpy(img).to('cuda')
+                            img = img.permute(2,0,1)
+                            kpss = self.detect(img, input_size = (640, 640), max_num=1, metric='default')
+                            ret = []
+                            for i in range(kpss.shape[0]):
+                                if kpss is not None:
+                                    face_kps = kpss[i]
 
-                            face_emb, img_out = self.recognize(img, face_kps)
-                            ret.append([face_kps, face_emb, img_out])
+                                face_emb, img_out = self.recognize(img, face_kps)
+                                ret.append([face_kps, face_emb, img_out])
 
-                        if ret:
-                            crop = cv2.cvtColor(ret[0][2].cpu().numpy(), cv2.COLOR_BGR2RGB)            
-                            crop = cv2.resize( crop, (82, 82))
-                            faces.append([crop, ret[0][1]])
-                            
-                    except:
-                        print('Bad file', name)
-                
-                shift_i_len = len(self.source_faces)
-                
-                # Add faces[] images to buttons
-                for i in range(len(faces)):   
-                    new_source_face = self.source_face.copy()
-                    self.source_faces.append(new_source_face)
-                    
-                    shift_i = i+ shift_i_len
-                
-                    self.source_faces[shift_i]["Image"] = ImageTk.PhotoImage(image=Image.fromarray(faces[i][0]))
-                    self.source_faces[shift_i]["Embedding"] = faces[i][1]
-                    self.source_faces[shift_i]["TKButton"] = tk.Button(self.source_faces_canvas, self.inactive_button_style, image= self.source_faces[shift_i]["Image"], height = 86, width = 86)
-                    self.source_faces[shift_i]["ButtonState"] = False
-                    
-                    self.source_faces[shift_i]["TKButton"].bind("<ButtonRelease-1>", lambda event, arg=shift_i: self.toggle_source_faces_buttons_state(event, arg))
-                    self.source_faces[shift_i]["TKButton"].bind("<Shift-ButtonRelease-1>", lambda event, arg=shift_i: self.toggle_source_faces_buttons_state_shift(event, arg))
-                    self.source_faces[shift_i]["TKButton"].bind("<MouseWheel>", self.source_faces_mouse_wheel)
-                    
-                    self.source_faces_canvas.create_window(((shift_i_len//4)+i+1)*92,8, window = self.source_faces[shift_i]["TKButton"],anchor='nw')
+                            if ret:
+                                crop = cv2.cvtColor(ret[0][2].cpu().numpy(), cv2.COLOR_BGR2RGB)            
+                                crop = cv2.resize( crop, (82, 82))
+                                faces.append([crop, ret[0][1]])
 
-                self.source_faces_canvas.configure(scrollregion = self.source_faces_canvas.bbox("all"))
-                self.source_faces_canvas.xview_moveto(0)
+            shift_i_len = len(self.source_faces)
+            
+            # Add faces[] images to buttons
+            for i in range(len(faces)):   
+                new_source_face = self.source_face.copy()
+                self.source_faces.append(new_source_face)
+                
+                shift_i = i+ shift_i_len
+            
+                self.source_faces[shift_i]["Image"] = ImageTk.PhotoImage(image=Image.fromarray(faces[i][0]))
+                self.source_faces[shift_i]["Embedding"] = faces[i][1]
+                self.source_faces[shift_i]["TKButton"] = tk.Button(self.source_faces_canvas, self.inactive_button_style, image= self.source_faces[shift_i]["Image"], height = 86, width = 86)
+                self.source_faces[shift_i]["ButtonState"] = False
+                
+                self.source_faces[shift_i]["TKButton"].bind("<ButtonRelease-1>", lambda event, arg=shift_i: self.toggle_source_faces_buttons_state(event, arg))
+                self.source_faces[shift_i]["TKButton"].bind("<Shift-ButtonRelease-1>", lambda event, arg=shift_i: self.toggle_source_faces_buttons_state_shift(event, arg))
+                self.source_faces[shift_i]["TKButton"].bind("<MouseWheel>", self.source_faces_mouse_wheel)
+                
+                self.source_faces_canvas.create_window(((shift_i_len//4)+i+1)*92,8, window = self.source_faces[shift_i]["TKButton"],anchor='nw')
+
+            self.source_faces_canvas.configure(scrollregion = self.source_faces_canvas.bbox("all"))
+            self.source_faces_canvas.xview_moveto(0)
         
     def find_faces(self, scope):
         try:
@@ -935,55 +939,32 @@ class GUI(tk.Tk):
         self.add_action("target_faces", self.target_faces, True, False)
     
     def populate_target_videos(self):
+        # Recursively read all media files from directory
         directory =  self.json_dict["source videos"]
-        filenames = os.listdir(directory)        
+        filenames = [os.path.join(dirpath,f) for (dirpath, dirnames, filenames) in os.walk(directory) for f in filenames]         
         
         videos = []
-        images = []
+        images = []        
         self.target_media = []
         self.target_media_buttons = []
         self.target_media_canvas.delete("all")  
         
-        for name in filenames: # Does not include full path
+        for file in filenames: # Does not include full path
             # Guess File type based on extension
-            file_type = mimetypes.guess_type(name)[0][:5]
-            
-            # Load as a object
-            file_path = os.path.join(directory, name)
-
-            # Its an image
-            if file_type == 'image':
-                image = cv2.imread(file_path)
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
-                ratio = float(image.shape[0]) / image.shape[1]
-
-                if ratio>1:
-                    new_height = 82
-                    new_width = int(new_height / ratio)
-                else:
-                    new_width = 82
-                    new_height = int(new_width * ratio)
-                
-                det_scale = float(new_height) / image.shape[0]
-                image = cv2.resize(image, (new_width, new_height))
-                
-                det_img = np.zeros( (82, 82, 3), dtype=np.uint8 )
-                image[:new_height, :new_width, :] = image
-                images.append([image, file_path]) 
-            
-            # Its a video
-            elif file_type == 'video':
-                video = cv2.VideoCapture(file_path)
-                
-                if video.isOpened():     
-                    # Grab a frame from the middle for a thumbnail
-                    video.set(cv2.CAP_PROP_POS_FRAMES, int(video.get(cv2.CAP_PROP_FRAME_COUNT)/2))
-                    success, video_frame = video.read()
-                    
-                    if success:
-                        video_frame = cv2.cvtColor(video_frame, cv2.COLOR_BGR2RGB)   
-
-                        ratio = float(video_frame.shape[0]) / video_frame.shape[1]
+            try:
+                file_type = mimetypes.guess_type(file)[0][:5]
+            except:
+                print('Unrecognized file type:', file)
+            else:
+                # Its an image
+                if file_type == 'image':
+                    try:
+                        image = cv2.imread(file)
+                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    except:
+                        print('Trouble reading file:', file)
+                    else: 
+                        ratio = float(image.shape[0]) / image.shape[1]
 
                         if ratio>1:
                             new_height = 82
@@ -992,24 +973,53 @@ class GUI(tk.Tk):
                             new_width = 82
                             new_height = int(new_width * ratio)
                         
-                        det_scale = float(new_height) / video_frame.shape[0]
-                        video_frame = cv2.resize(video_frame, (new_width, new_height))
+                        det_scale = float(new_height) / image.shape[0]
+                        image = cv2.resize(image, (new_width, new_height))
                         
                         det_img = np.zeros( (82, 82, 3), dtype=np.uint8 )
-                        video_frame[:new_height, :new_width, :] = video_frame
-
-                        videos.append([video_frame, file_path])
-                        video.release()
-                    
-                    else:
-                        print("Couldn't read:", file_path)
+                        image[:new_height, :new_width, :] = image
+                        images.append([image, file]) 
                 
-                else:
-                    print("Couldn't open:", file_path)
-            
-            # Don't know what it is
-            else:
-                print('Unrecognized file type:', file_path)
+                # Its a video
+                elif file_type == 'video':
+                    try:
+                        video = cv2.VideoCapture(file)
+                    except:
+                        print('Trouble reading file:', file)
+                    else:
+                        if video.isOpened(): 
+   
+                            # Grab a frame from the middle for a thumbnail
+                            video.set(cv2.CAP_PROP_POS_FRAMES, int(video.get(cv2.CAP_PROP_FRAME_COUNT)/2))
+                            success, video_frame = video.read()
+                            
+                            if success:
+                                video_frame = cv2.cvtColor(video_frame, cv2.COLOR_BGR2RGB)   
+
+                                ratio = float(video_frame.shape[0]) / video_frame.shape[1]
+
+                                if ratio>1:
+                                    new_height = 82
+                                    new_width = int(new_height / ratio)
+                                else:
+                                    new_width = 82
+                                    new_height = int(new_width * ratio)
+                                
+                                det_scale = float(new_height) / video_frame.shape[0]
+                                video_frame = cv2.resize(video_frame, (new_width, new_height))
+                                
+                                det_img = np.zeros( (82, 82, 3), dtype=np.uint8 )
+                                video_frame[:new_height, :new_width, :] = video_frame
+
+                                videos.append([video_frame, file])
+                                video.release()
+                            
+                            else:
+                                print('Trouble reading file:', file)
+                        else:
+                            print('Trouble opening file:', file)
+                
+
 
         if self.actions['ImgVidMode'] == 1:
             for i in range(len(images)):
@@ -1040,6 +1050,7 @@ class GUI(tk.Tk):
 
         if media_type == 'Videos':
             self.video_slider.set(0)
+            self.video_length = []
             self.add_action("load_target_video", media_file, False)
             
 
@@ -1261,6 +1272,7 @@ class GUI(tk.Tk):
 
         
     def set_video_slider_length(self, video_length):
+        self.video_length = video_length
         self.video_slider.configure(to=video_length)
 
     def set_slider_position(self, position):
