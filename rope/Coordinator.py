@@ -208,7 +208,7 @@ def load_GPEN_256_model():
     return session
 
 def load_GFPGAN_model():
-    session = onnxruntime.InferenceSession( "./models/GPEN-BFR-512.onnx", providers=["CUDAExecutionProvider", 'CPUExecutionProvider'])
+    session = onnxruntime.InferenceSession( "./models/GFPGANv1.4.onnx", providers=["CUDAExecutionProvider", 'CPUExecutionProvider'])
     return session
     
 def load_codeformer_model():    
