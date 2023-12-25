@@ -9,7 +9,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Demo Video](https://www.youtube.com/watch?v=4Y4U0TZ8cWY)
 
-### ${{\color{Goldenrod}{\textsf{Last Updated 2023-12-25 08:56 PST}}}}$ ###
+### ${{\color{Goldenrod}{\textsf{Last Updated 2023-12-25 11:02 PST}}}}$ ###
 note: you need to download the latest GFPGAN model for Ruby. Link is in the wiki
 
 ### Features: ###
@@ -45,7 +45,7 @@ Files changed: Coordinator.py, Dicts.py, GUI.py, VideoManager.py. DL new GPEN mo
 * (fixed) Using 'wasd' can no longer go out of bounds
 
 ### Changelog for 12/25 11:02 PST: ###
-* (fixed) Couple of bugs related to GPEN
+* (fixed) Couple of bugs related to GPEN. Redownload Coordinator and VideoManger
 
 ### Known Bugs: ###
 - When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
