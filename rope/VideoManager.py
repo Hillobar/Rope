@@ -50,7 +50,7 @@ class VideoManager():
         self.face_parsing_tensor = []   
         self.codeformer_model = []
         self.GPEN_256_model = []
-        self.GPEN_256_model = []
+        self.GPEN_512_model = []
 
         self.FFHQ_kps = np.array([[ 192.98138, 239.94708 ], [ 318.90277, 240.1936 ], [ 256.63416, 314.01935 ], [ 201.26117, 371.41043 ], [ 313.08905, 371.15118 ] ])
         
