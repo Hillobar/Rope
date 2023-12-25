@@ -13,6 +13,8 @@ from torchvision import transforms
 
 from rope.external.clipseg import CLIPDensePredT
 
+from platform import system
+
 onnxruntime.set_default_logger_severity(4)
 
 resize_delay = 1
@@ -234,11 +236,17 @@ def load_resnet_model():
     return model   
     
 def load_detection_model():
-    session = onnxruntime.InferenceSession('./models/det_10g.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    if system() == 'Linux':
+        session = onnxruntime.InferenceSession('./models/det_10g.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    else:
+        session = onnxruntime.InferenceSession('.\models\det_10g.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
     return session
 
 def load_recognition_model():
-    session = onnxruntime.InferenceSession('./models/w600k_r50.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    if system() == 'Linux':
+        session = onnxruntime.InferenceSession('./models/w600k_r50.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    else:
+        session = onnxruntime.InferenceSession('.\models\w600k_r50.onnx', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
     return session
     
     
