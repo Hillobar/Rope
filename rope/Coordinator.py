@@ -72,6 +72,10 @@ def coordinator():
             if not vm.swapper_model:
                 swapper, emap = load_swapper_model()
                 vm.set_swapper_model(swapper, emap)
+                if not vm.detection_model:
+                    vm.detection_model = load_detection_model()
+                    vm.recognition_model = load_recognition_model()
+
             vm.swap = action[0][1]
             action.pop(0)
         elif action[0][0] == "target_faces":
@@ -97,8 +101,8 @@ def coordinator():
             # action.pop(0) 
         elif action [0][0] == "parameters":
             if action[0][1]['UpscaleState']:
-                # if not vm.resnet_model:
-                    # vm.resnet_model = load_resnet_model()  
+                if not vm.resnet_model:
+                    vm.resnet_model = load_resnet_model()  
                 index = action[0][1]['UpscaleMode']
                 if action[0][1]['UpscaleModes'][index] == 'GFPGAN':
                     if not vm.GFPGAN_model:
@@ -141,6 +145,12 @@ def coordinator():
         elif action [0][0] == "load_models":
             gui.populate_target_videos()
             gui.load_source_faces()
+            action.pop(0)  
+        elif action[0][0] == "function":
+            eval(action[0][1])
+            action.pop(0)
+        elif action [0][0] == "clear_mem":
+            vm.clear_mem()
             action.pop(0)    
 
             

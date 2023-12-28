@@ -15,6 +15,7 @@ import torchvision
 torchvision.disable_beta_transforms_warning()
 from torchvision.transforms import v2
 import mimetypes
+import webbrowser
 #import inspect print(inspect.currentframe().f_back.f_code.co_name, 'resize_image')
 
 from  rope.Dicts import PARAM_BUTTONS_PARAMS, ACTIONS, PARAM_BUTTONS_CONSTANT
@@ -25,7 +26,7 @@ class GUI(tk.Tk):
         super().__init__()
         # Adding a title to the self
         # self.call('tk', 'scaling', 0.5)
-        self.title('Rope-Ruby')
+        self.title('Rope-Ruby-03')
         self.pixel = []
         self.parameters = PARAM_BUTTONS_PARAMS
         self.actions = ACTIONS
@@ -58,6 +59,10 @@ class GUI(tk.Tk):
         # self.window_height = []
         self.detection_model = []
         self.recognition_model = []
+
+        self.window_last_change = []
+
+
         
         self.arcface_dst = np.array( [[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366], [41.5493, 92.3655], [70.7299, 92.2041]], dtype=np.float32)   
 
@@ -266,6 +271,7 @@ class GUI(tk.Tk):
         # Image Save
         self.create_ui_button_2('ImgDock', self.image_control_canvas, 8, 2, width=15, height=36)
         self.create_ui_button_2('SaveImage', self.image_control_canvas, 31, 2, width=36, height=36)
+        self.create_ui_button_2('AutoSwap', self.image_control_canvas, 65, 2, width=36, height=36)
 
         
         # Options Area
@@ -308,11 +314,12 @@ class GUI(tk.Tk):
         self.create_ui_button('MaskView', self.label_frame1, column, 37)
         
         column=column+125+x_space
-        self.create_ui_button('RefDel', self.label_frame1, column, 8) 
+        self.create_ui_button('Color', self.label_frame1, column, 8)
         self.create_ui_button('Transform', self.label_frame1, column, 37)   
 
         column=column+125+x_space
-        self.create_ui_button('Color', self.label_frame1, column, 8)         
+        self.create_ui_button('RefDel', self.label_frame1, column, 8)
+         
 
  ######## Target Faces           
         # Frame
@@ -425,14 +432,30 @@ class GUI(tk.Tk):
         # self.create_ui_button_2('VideoQuality', self.program_options_label, column, 8,width = 125, height = 26)
         column=column+125+x_space
         self.create_ui_button_2('PerfTest', self.program_options_label, column, 8,width = 125, height = 26)
+        column=column+125+x_space
+        self.create_ui_button_2('Clearmem', self.program_options_label, column, 8,width = 125, height = 26)
         
         # Status
-        self.status_frame = tk.Frame( self, bg='grey20', height = 15)
+        self.status_frame = tk.Frame( self, bg='grey40', height = 15)
         self.status_frame.grid( row = 6, column = 0, sticky='NEWS', pady = 2 )
         
+        self.status_frame.grid_rowconfigure( 0, weight = 1 )          
+        self.status_frame.grid_columnconfigure( 0, weight=1 ) 
+        self.status_frame.grid_columnconfigure( 1, weight = 1 )
+        self.status_frame.grid_columnconfigure( 2, weight=1 )
+        
+        self.status_left_label = tk.Label(self.status_frame, fg="white", bg='grey20')
+        self.status_left_label.grid( row = 0, column = 0, sticky='NEWS')
+        
         self.status_label = tk.Label(self.status_frame, fg="white", bg='grey20')
-        self.status_label.pack()
-
+        self.status_label.grid( row = 0, column = 1, sticky='NEWS')
+        
+        self.donate_label = tk.Label(self.status_frame, fg="light goldenrod", bg='grey20', text="Donate! (Paypal)  ", anchor='e')
+        self.donate_label.grid( row = 0, column = 2, sticky='NEWS')
+        self.donate_label.bind("<Button-1>", lambda e: self.callback("https://www.paypal.com/donate/?hosted_button_id=Y5SB9LSXFGRF2"))
+    
+    def callback(self, url):
+        webbrowser.open_new_tab(url)
  
     def target_faces_mouse_wheel(self, event):
         self.found_faces_canvas.xview_scroll(1*int(event.delta/120.0), "units") 
@@ -454,26 +477,35 @@ class GUI(tk.Tk):
                 self.toggle_play_video()
             elif event.char == 'w':
                 frame += 1
+                if frame > self.video_length:
+                    frame = self.video_length
+                self.video_slider.set(frame)
+                self.add_action("get_requested_video_frame", frame)
+                self.parameter_update_from_marker(frame)
             elif event.char == 's':
                 frame -= 1 
+                if frame < 0:
+                    frame = 0   
+                self.video_slider.set(frame)
+                self.add_action("get_requested_video_frame", frame)
+                self.parameter_update_from_marker(frame)
             elif event.char == 'd':
                 frame += 30 
+                if frame > self.video_length:
+                    frame = self.video_length  
+                self.video_slider.set(frame)
+                self.add_action("get_requested_video_frame", frame)
+                self.parameter_update_from_marker(frame)
             elif event.char == 'a':
                 frame -= 30 
-
-            if frame > self.video_length:
-                frame = self.video_length
-            elif frame < 0:
-                frame = 0
-            
-            self.video_slider.set(frame)
-            self.add_action("get_requested_video_frame", frame)
-            self.parameter_update_from_marker(frame)
+                if frame < 0:
+                    frame = 0                  
+                self.video_slider.set(frame)
+                self.add_action("get_requested_video_frame", frame)
+                self.parameter_update_from_marker(frame)
 
 
     def initialize_gui( self ):
-
-
         # check if data.json exists, if not then create it 
         try:
             save_file = open("data.json", "r")
@@ -553,10 +585,6 @@ class GUI(tk.Tk):
             self.json_dict["player_geom"] = json_object["player_geom"]
         except:
             self.json_dict["player_geom"] = self.json_dict["player_geom"]              
-       
-
-
-
 
         self.bind('<Key>', lambda event: self.key_event(event))
         self.bind('<space>', lambda event: self.key_event(event))
@@ -568,10 +596,18 @@ class GUI(tk.Tk):
         self.configure(bg='grey10')
         self.resizable(width=True, height=True) 
         
-
- 
+        # Initialize the window sizes and positions
         self.geometry('%dx%d+%d+%d' % (self.json_dict['dock_win_geom'][0], self.json_dict['dock_win_geom'][1] , self.json_dict['dock_win_geom'][2], self.json_dict['dock_win_geom'][3]))
+        self.window_last_change = self.winfo_geometry()
+        # Since the undock window hasnt bee created yet, need to set this directly from json
+        self.undock_video_window.geometry('%dx%d+%d+%d' % (self.json_dict['player_geom'][0], self.json_dict['player_geom'][1] , self.json_dict['player_geom'][2], self.json_dict['player_geom'][3])) 
+        self.undock_video_last_change = self.undock_video_window.winfo_geometry()
+        
 
+         
+        
+     
+        
         self.undock_video_window.grid_columnconfigure(0, weight = 1)  
         self.undock_video_window.grid_rowconfigure(0, weight = 10)
 
@@ -733,11 +769,9 @@ class GUI(tk.Tk):
                 else:
                     # Its an image
                     if file_type == 'image':                
-                        try:
-                            img = cv2.imread(file)
-                        except:
-                            print('Bad file', file)   
-                        else:
+                        img = cv2.imread(file)
+                        
+                        if img is not None:     
                             img = torch.from_numpy(img).to('cuda')
                             img = img.permute(2,0,1)
                             kpss = self.detect(img, input_size = (640, 640), max_num=1, metric='default')
@@ -753,7 +787,8 @@ class GUI(tk.Tk):
                                 crop = cv2.cvtColor(ret[0][2].cpu().numpy(), cv2.COLOR_BGR2RGB)            
                                 crop = cv2.resize( crop, (82, 82))
                                 faces.append([crop, ret[0][1]])
-
+                        else:
+                            print('Bad file', file) 
             shift_i_len = len(self.source_faces)
             
             # Add faces[] images to buttons
@@ -791,7 +826,7 @@ class GUI(tk.Tk):
                 ret.append([face_kps, face_emb, img_out])            
 
         except Exception:
-            print(" No video selected")
+            print(" No media selected")
         
         else:   
             # Find all faces and add to target_faces[]
@@ -899,13 +934,14 @@ class GUI(tk.Tk):
 
             self.add_action("target_faces", self.target_faces, True, False)
 
-    def toggle_source_faces_buttons_state_shift(self, event, button):  
+    def toggle_source_faces_buttons_state_shift(self, event, button=-1):  
         # Set all Source Face buttons to False 
         for face in self.source_faces:      
             face["TKButton"].config(self.inactive_button_style)
 
         # Toggle the selected Source Face
-        self.source_faces[button]["ButtonState"] = not self.source_faces[button]["ButtonState"]
+        if button != -1:
+            self.source_faces[button]["ButtonState"] = not self.source_faces[button]["ButtonState"]
         
         # Highlight all True buttons
         for face in self.source_faces:  
@@ -1045,9 +1081,31 @@ class GUI(tk.Tk):
 
             self.target_media_canvas.configure(scrollregion = self.target_media_canvas.bbox("all"))
 
+    def auto_swap(self):
+            # Reselect Target Image
+            try:    
+                self.find_faces('current')
+                self.target_faces[0]["ButtonState"] = True
+                self.target_faces[0]["TKButton"].config(self.button_highlight_style) 
+                
+                # Reselct Source images
+                self.toggle_source_faces_buttons_state_shift(None, button=-1)
+                
+                self.toggle_swapper(True)
+            except:
+                pass
+    def toggle_auto_swap(self):
+        self.actions['AutoSwapState'] = not self.actions['AutoSwapState']
+        
+        if self.actions['AutoSwapState']:
+            self.actions['AutoSwapButton'].config(self.active_button_style)
+        else:
+            self.actions['AutoSwapButton'].config(self.inactive_button_style)
+    
     def load_target(self, button, media_file, media_type):
         self.video_loaded = True
-
+        self.clear_faces()
+       
         if media_type == 'Videos':
             self.video_slider.set(0)
             self.video_length = []
@@ -1059,13 +1117,11 @@ class GUI(tk.Tk):
             self.image_file_name = os.path.splitext(os.path.basename(media_file))
             
             # # find faces
-            # self.find_faces('current')
+            if self.actions['AutoSwapState']:
+                self.add_action('function', "gui.auto_swap()")
+
             
-            # self.toggle_found_faces_buttons_state(0)
-            # # select source face
-            # # hit swap
-            
-        self.clear_faces()
+        
         self.set_status(media_file) 
         for i in range(len(self.target_media_buttons)):
             self.target_media_buttons[i].config(self.inactive_button_style)
@@ -1097,64 +1153,30 @@ class GUI(tk.Tk):
             self.set_slider_position(frame)
             self.parameter_update_from_marker(frame)
 
-        image = self.video_image
-        if self.docked: 
-            x1 = float(self.video.winfo_width())
-            y1 = float(self.video.winfo_height())
-        
-        else:
-            x1 = float(self.undock_video.winfo_width())
-            y1 = float(self.undock_video.winfo_height())
-
-        x2 = float(image.shape[1])
-        y2 = float(image.shape[0])
-        
-        m1 = x1/y1
-        m2 = x2/y2
-        
-        if m2>m1:
-            x2 = x1
-            y2 = x1/m2
-            image = cv2.resize(image, (int(x2), int(y2)))
-            padding = int((y1-y2)/2.0)
-            image = cv2.copyMakeBorder( image, padding, padding, 0, 0, cv2.BORDER_CONSTANT)            
-        else:
-            y2=y1
-            x2=y2*m2
-            image = cv2.resize(image, (int(x2), int(y2)))
-            padding=int((x1-x2)/2.0)
-            image = cv2.copyMakeBorder( image, 0, 0, padding, padding, cv2.BORDER_CONSTANT) 
-
-        if self.docked:
-            self.undock_video.configure(image='')            
-            image = Image.fromarray(image)  
-            self.video.image = ImageTk.PhotoImage(image)
-            self.video.configure(image=self.video.image)
-
-        else:
-            self.video.configure(image='')        
-            image = Image.fromarray(image)  
-            self.video.image = ImageTk.PhotoImage(image)
-            self.undock_video.configure(image=self.video.image)
+        self.resize_image()
 
     # @profile    
     def resize_image(self):
-        
-        try:
-            image = self.video_image
+        image = self.video_image
+
+        if len(image) != 0:
             if self.docked: 
                 x1 = float(self.video.winfo_width())
                 y1 = float(self.video.winfo_height())
-            
-            else:
-                # not directly querying winfo since there ia a small delay to create the window
-                x1 = float(self.json_dict['player_geom'][0])
-                y1 = float(self.json_dict['player_geom'][1])
 
+            else:
+
+                x1 = float(self.undock_video.winfo_width())
+                y1 = float(self.undock_video.winfo_height())
+                if x1==1.0 or y1==1.0:
+                    # not directly querying winfo since there ia a small delay to create the window
+                    x1 = float(self.json_dict['player_geom'][0])
+                    y1 = float(self.json_dict['player_geom'][1])
+                    
             x2 = float(image.shape[1])
             y2 = float(image.shape[0])
             
- 
+
             m1 = x1/y1
             m2 = x2/y2
             
@@ -1172,95 +1194,107 @@ class GUI(tk.Tk):
                 image = cv2.copyMakeBorder( image, 0, 0, padding, padding, cv2.BORDER_CONSTANT) 
 
             image = Image.fromarray(image)  
-            image = ImageTk.PhotoImage(image)
             if self.docked:
-                self.undock_video.configure(image='')
-                self.video.configure(image=image)
-                self.video.image = image
+                self.undock_video.configure(image='')            
+                self.video.image = ImageTk.PhotoImage(image)
+                self.video.configure(image=self.video.image)
+
             else:
-                self.video.configure(image='')
-                self.undock_video.configure(image=image)
-                self.undock_video.image = image
-        except:
-            pass
-            
+                self.video.configure(image='')        
+                self.undock_video.image = ImageTk.PhotoImage(image)
+                self.undock_video.configure(image=self.undock_video.image)
+
+    def redisplay_markers(self):
+        width = self.video_slider_canvas.winfo_width()-30
+        for i in range(len(self.markers)):
+            position = 15+int(width*self.markers[i]['frame']/self.video_slider.configure('to')[4])
+            self.video_slider_canvas.delete(self.markers[i]['icon_ref'])                    
+            self.markers[i]['icon_ref'] = self.video_slider_canvas.create_image(position, 30, image=self.marker_icon)
         
-    # @profile
+        if self.stop_marker:
+            self.video_slider_canvas.delete(self.stop_image)
+            position = 15+int(width*self.stop_marker/self.video_slider.configure('to')[4]) 
+            self.stop_image = self.video_slider_canvas.create_image(position, 30, image=self.stop_marker_icon)  
+
+ 
     def check_for_video_resize(self):
         if self.docked:
-            win_geom = '%dx%d+%d+%d' % (self.json_dict['dock_win_geom'][0], self.json_dict['dock_win_geom'][1] , self.json_dict['dock_win_geom'][2], self.json_dict['dock_win_geom'][3])
             
+            # Read the geometry from the last time json was updated. json only updates once the window ahs stopped changing
+            win_geom = '%dx%d+%d+%d' % (self.json_dict['dock_win_geom'][0], self.json_dict['dock_win_geom'][1] , self.json_dict['dock_win_geom'][2], self.json_dict['dock_win_geom'][3])
+           
+           # window has started changing
             if self.winfo_geometry() != win_geom:
                 # Resize image in video window
                 self.resize_image()
                     
                 # redisplay markers    
-                width = self.video_slider_canvas.winfo_width()-30
-                for i in range(len(self.markers)):
-                    position = 15+int(width*self.markers[i]['frame']/self.video_slider.configure('to')[4])
-                    self.video_slider_canvas.delete(self.markers[i]['icon_ref'])                    
-                    self.markers[i]['icon_ref'] = self.video_slider_canvas.create_image(position, 30, image=self.marker_icon)
+                self.redisplay_markers()
                 
-                if self.stop_marker:
-                    self.video_slider_canvas.delete(self.stop_image)
-                    position = 15+int(width*self.stop_marker/self.video_slider.configure('to')[4]) 
-                    self.stop_image = self.video_slider_canvas.create_image(position, 30, image=self.stop_marker_icon)          
-                
-                # update dict
-                str1 = self.winfo_geometry().split('x')
-                str2 = str1[1].split('+')
-                win_geom = [str1[0], str2[0], str2[1], str2[2]]
-                win_geom = [int(strings) for strings in win_geom]
-                self.json_dict['dock_win_geom'] = win_geom
-                with open("data.json", "w") as outfile:
-                    json.dump(self.json_dict, outfile)            
+                # Check if window has stopped changing
+                if self.winfo_geometry() != self.window_last_change:
+                    self.window_last_change = self.winfo_geometry()
+
+                # The window has stopped changing
+                else:
+                    # Update json
+                    str1 = self.winfo_geometry().split('x')
+                    str2 = str1[1].split('+')
+                    win_geom = [str1[0], str2[0], str2[1], str2[2]]
+                    win_geom = [int(strings) for strings in win_geom]
+                    self.json_dict['dock_win_geom'] = win_geom
+                    with open("data.json", "w") as outfile:
+                        json.dump(self.json_dict, outfile)            
 
         else:
-            
+            # Control window
+            # Read the geometry from the last time json was updated. json only updates once the window ahs stopped changing
             win_geom = '%dx%d+%d+%d' % (self.json_dict['undock_win_geom'][0], self.json_dict['undock_win_geom'][1] , self.json_dict['undock_win_geom'][2], self.json_dict['undock_win_geom'][3])
             
-            # update undoc window
+            # window has started changing
             if self.winfo_geometry() != win_geom:
-            
-                # redisplay markers    
-                width = self.video_slider_canvas.winfo_width()-30
-                for i in range(len(self.markers)):
-                    position = 15+int(width*self.markers[i]['frame']/self.video_slider.configure('to')[4])
-                    self.video_slider_canvas.delete(self.markers[i]['icon_ref'])
-                    self.markers[i]['icon_ref'] = self.video_slider_canvas.create_image(position, 30, image=self.marker_icon)
-
-                if self.stop_marker:
-                    self.video_slider_canvas.delete(self.stop_image)
-                    position = 15+int(width*self.stop_marker/self.video_slider.configure('to')[4]) 
-                    self.stop_image = self.video_slider_canvas.create_image(position, 30, image=self.stop_marker_icon)                       
+                # redisplay markers      
+                self.redisplay_markers()          
+                
+                # Check if window has stopped changing
+                if self.winfo_geometry() != self.window_last_change:
+                    self.window_last_change = self.winfo_geometry()
                     
-                str1 = self.winfo_geometry().split('x')
-                str2 = str1[1].split('+')
-                win_geom = [str1[0], str2[0], str2[1], str2[2]]
-                win_geom = [int(strings) for strings in win_geom]
-                self.json_dict['undock_win_geom'] = win_geom
-                with open("data.json", "w") as outfile:
-                    json.dump(self.json_dict, outfile)  
-            
-            # update player window 
+                # The window has stopped changing
+                else:
+                    # update json
+                    str1 = self.winfo_geometry().split('x')
+                    str2 = str1[1].split('+')
+                    win_geom = [str1[0], str2[0], str2[1], str2[2]]
+                    win_geom = [int(strings) for strings in win_geom]
+                    self.json_dict['undock_win_geom'] = win_geom
+                    with open("data.json", "w") as outfile:
+                        json.dump(self.json_dict, outfile)   
+
+            # Preview window 
+            # Read the geometry from the last time json was updated. json only updates once the window ahs stopped changing
             win_geom = '%dx%d+%d+%d' % (self.json_dict['player_geom'][0], self.json_dict['player_geom'][1] , self.json_dict['player_geom'][2], self.json_dict['player_geom'][3])
             
+            # window has started changing
             if self.undock_video_window.winfo_geometry() != win_geom:
-            
                 # Resize image in video window
                 self.resize_image()
-                
-                # update dict
-                str1 = self.undock_video_window.winfo_geometry().split('x')
-                str2 = str1[1].split('+')
-                win_geom = [str1[0], str2[0], str2[1], str2[2]]
-                win_geom = [int(strings) for strings in win_geom]
-                self.json_dict['player_geom'] = win_geom
-                with open("data.json", "w") as outfile:
-                    json.dump(self.json_dict, outfile)
-
-
-        
+            
+                # Check if window has stopped changing
+                if self.undock_video_window.winfo_geometry() != self.undock_video_last_change:            
+                    self.undock_video_last_change = self.undock_video_window.winfo_geometry()
+                    
+                # The window has stopped changing
+                else:
+                    # update json
+                    str1 = self.undock_video_window.winfo_geometry().split('x')
+                    str2 = str1[1].split('+')
+                    win_geom = [str1[0], str2[0], str2[1], str2[2]]
+                    win_geom = [int(strings) for strings in win_geom]
+                    self.json_dict['player_geom'] = win_geom
+                    with open("data.json", "w") as outfile:
+                        json.dump(self.json_dict, outfile) 
+       
     def get_action(self):
         action = self.action_q[0]
         self.action_q.pop(0)
@@ -1317,8 +1351,11 @@ class GUI(tk.Tk):
         self.play_video = False
     
     
-    def toggle_swapper(self):
-        self.actions['SwapFacesState'] = not self.actions['SwapFacesState']
+    def toggle_swapper(self, toggle_value=-1):
+        if toggle_value == -1:
+            self.actions['SwapFacesState'] = not self.actions['SwapFacesState']
+        else:
+            self.actions['SwapFacesState'] = toggle_value
         
         if not self.actions['SwapFacesState']:
             self.actions['SwapFacesButton'].config(self.inactive_button_style)
@@ -1368,7 +1405,8 @@ class GUI(tk.Tk):
             self.resizable(width=True, height=False) 
             
             self.resize_image()
- 
+            self.redisplay_markers()
+
         else:
             self.docked = True
             
@@ -1383,7 +1421,7 @@ class GUI(tk.Tk):
         
     def set_status(self, msg):
         self.status_label.configure(text=str(msg))
-        self.status_label.pack()
+        # self.status_label.pack()
         
     def mouse_wheel(self, event, frame):    
         if event.delta > 0: 
@@ -1471,11 +1509,14 @@ class GUI(tk.Tk):
                     self.toggle_source_faces_buttons_state(None, i-1)
                     break
         
-    def toggle_ui_button(self, parameter):
+    def toggle_ui_button(self, parameter, toggle_value=-1):
         state = parameter+'State'
         button = parameter+'Button'
         
-        self.parameters[state] = not self.parameters[state]
+        if toggle_value == -1:
+            self.parameters[state] = not self.parameters[state]
+        else:
+            self.parameters[state] = toggle_value
         
         if self.parameters[state]:
             self.param_const[button].config(self.active_button_style)
@@ -1483,6 +1524,8 @@ class GUI(tk.Tk):
             self.param_const[button].config(self.inactive_button_style)
             
         self.add_action("parameters", self.parameters, True)   
+        
+ 
  
     
     # update ui button states
@@ -1615,13 +1658,6 @@ class GUI(tk.Tk):
         self.markers = []
         self.add_action("markers", self.markers)   
 
-    # def toggle_hold_face(self):
-        # if self.actions['HoldFaceMode'] == 0:
-            # self.actions['HoldFaceMode'] = 1
-            # self.actions['HoldFaceButton'].config(self.active_button_style)
-        # elif self.actions['HoldFaceMode'] == 1:
-            # self.actions['HoldFaceMode'] = 0
-            # self.actions['HoldFaceButton'].config(self.inactive_button_style)
 
     def toggle_perf_test(self):
         self.actions['PerfTestState'] = not self.actions['PerfTestState']
@@ -1833,7 +1869,11 @@ class GUI(tk.Tk):
         elif parameter == 'SaveImage':   
             resized_image= img.resize((30,30), Image.ANTIALIAS)
             self.actions[icon_holder] = ImageTk.PhotoImage(resized_image)
-            self.actions[button] = tk.Button( root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.save_image())            
+            self.actions[button] = tk.Button( root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.save_image())    
+        elif parameter == 'AutoSwap':   
+            resized_image= img.resize((30,30), Image.ANTIALIAS)
+            self.actions[icon_holder] = ImageTk.PhotoImage(resized_image)
+            self.actions[button] = tk.Button( root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w', command=lambda: self.toggle_auto_swap())               
        
         elif parameter == 'Play':
             resized_image= img.resize((30,30), Image.ANTIALIAS)
@@ -1894,6 +1934,8 @@ class GUI(tk.Tk):
             # self.actions[button].bind("<MouseWheel>", self.change_video_quality) 
         elif parameter == 'PerfTest':
             self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', text=self.actions['PerfTestModes'][0], image=self.actions[icon_holder], anchor='w', command=lambda: self.toggle_perf_test())
+        elif parameter == 'Clearmem':
+            self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', text=self.actions['ClearmemModes'][0], image=self.actions[icon_holder], anchor='w', command=lambda: self.clear_mem())            
 
             
         temp = ' '+mode
@@ -1904,6 +1946,15 @@ class GUI(tk.Tk):
         # Status Text
         self.actions[button].bind('<Enter>', lambda event: self.set_status(self.actions[message]))
         self.actions[button].bind('<Leave>', lambda event: self.set_status(''))
+        
+    def clear_mem(self):
+        self.toggle_swapper(False)
+        self.toggle_ui_button('Upscale', False)
+        self.toggle_ui_button('Upscale', False)
+        self.toggle_ui_button('CLIP', False)
+        self.toggle_ui_button('Occluder', False)
+        self.toggle_ui_button('FaceParser', False)
+        self.add_action('clear_mem', None)
         
     def parameter_update_from_marker(self, frame):
     

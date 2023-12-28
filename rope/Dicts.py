@@ -8,7 +8,7 @@ PARAM_BUTTONS_PARAMS =    {
     'UpscaleInc':               5,                            
     'UpscaleUnit':              '%', 
     'UpscaleIcon':              './rope/media/gfpgan_logo.png',
-    'UpscaleMessage':           'UPSCALER - Upscales faces. [LB: on/off, RB: GFPGAN/Codeformer, MW: amount]',  
+    'UpscaleMessage':           'UPSCALER - Upscales faces. [LB: on/off, RB: GFPGAN/Codeformer/GPEN256/GPEN512, MW: amount]',  
     
     'DiffState':                False,
     'DiffMode':                 0, 
@@ -52,7 +52,7 @@ PARAM_BUTTONS_PARAMS =    {
     'CLIPInc':                  1,                                                  
     'CLIPUnit':                 '%', 
     'CLIPIcon':                 './rope/media/CLIP.png',
-    'CLIPMessage':              'CLIP - Text based occluder. Occluded objects are visible in the final image (occluded from the mask). [LB: on/off, MW: amount]',                              
+    'CLIPMessage':              'CLIP - Text based occluder. Occluded objects are visible in the final image (occluded from the mask). [LB: on/off, MW: strength]',                              
 
     'OccluderState':            False,
     'OccluderMode':             0, 
@@ -63,7 +63,7 @@ PARAM_BUTTONS_PARAMS =    {
     'OccluderInc':              1,                                                 
     'OccluderUnit':             '%', 
     'OccluderIcon':             './rope/media/occluder.png',
-    'OccluderMessage':          'OCCLUDER - Automatic occluder. Any object in the face region is occluded. [LB: on/off]', 
+    'OccluderMessage':          'OCCLUDER - Automatic occluder. Any object in the face region is occluded. [LB: on/off, MW: additional size]', 
     
     'FaceParserState':          False,
     'FaceParserMode':           0, 
@@ -120,16 +120,7 @@ PARAM_BUTTONS_PARAMS =    {
     'OrientationIcon':          './rope/media/orient.png',
     'OrientationMessage':       'ORIENTATION - Rotate the face detector to better detect faces at different angles. [MW: angle]',          
 
-    'EnhancerRefState':         False,
-    'EnhancerRefMode':          0, 
-    'EnhancerRefModes':         ['Adjust'],  
-    'EnhancerRefAmount':        [0.0, 0.0, 0.0, 0.0],
-    'EnhancerRefMin':           0,
-    'EnhancerRefMax':           100,
-    'EnhancerRefInc':           10,                                                 
-    'EnhancerRefUnit':          '%', 
-    'EnhancerRefIcon':          './rope/media/orient.png',
-    'EnhancerRefMessage':       'ORIENTATION - Rotate the face detector to better detect faces at different angles. [MW: angle]',      
+
     
     'RefDelState':         False,
     'RefDelMode':          0, 
@@ -137,7 +128,7 @@ PARAM_BUTTONS_PARAMS =    {
     'RefDelAmount':        [0, 0, 0],
     'RefDelMin':           -100,
     'RefDelMax':           100,
-    'RefDelInc':           2,                                                 
+    'RefDelInc':           1,                                                 
     'RefDelUnit':          '%', 
     'RefDelIcon':          './rope/media/construction.png',
     'RefDelMessage':       'REFERENCE DELTA - Modify the reference points. Turn on mask preview to see adjustments. [LB: on/off, RB: translate x/y, and scale, MW: amount]',      
@@ -146,11 +137,11 @@ PARAM_BUTTONS_PARAMS =    {
     'TransformMode':          0, 
     'TransformModes':         ['Scale'],  
     'TransformAmount':        [0],
-    'TransformMin':           -100,
-    'TransformMax':           100,
-    'TransformInc':           2,                                                 
+    'TransformMin':           -20,
+    'TransformMax':           20,
+    'TransformInc':           1,                                                 
     'TransformUnit':          '%', 
-    'TransformIcon':          './rope/media/construction.png',
+    'TransformIcon':          './rope/media/scale.png',
     'TransformMessage':       'SCALE - Adjust the scale of the face. Use with Background parser to blend into the image. [LB: on/off, MW: amount]',       
     
     'ColorState':           False,
@@ -161,8 +152,8 @@ PARAM_BUTTONS_PARAMS =    {
     'ColorMax':             100,
     'ColorInc':             1,                                                 
     'ColorUnit':            'i', 
-    'ColorIcon':            './rope/media/construction.png',
-    'ColorMessage':         'SCALE - Adjust the scale of the face. Use with Background parser to blend into the image. [LB: on/off, MW: amount]',       
+    'ColorIcon':            './rope/media/rgb.png',
+    'ColorMessage':         'RGB ADJUSTMENT - Fine-tune the RGB color values of the swap. [LB: on/off, RB: Red/Green/Blue, MW: amount]',       
     
     "CLIPText":                 '',
 
@@ -178,7 +169,7 @@ ACTIONS =   {
     'DockMode':                 0, 
     'DockModes':                [''],                         
     'DockIcon':                 './rope/media/dock.png',
-    'DockMessage':              'UNDOCK WINDOW - Undocks the wimdow area. Cannot be re-docked.', 
+    'DockMessage':              'DOCK/UNDOCK WINDOW - Undocks and docks the preview wimdow area.', 
     'DockButton':               [],
     'DockIconHolder':           [],
 
@@ -186,7 +177,7 @@ ACTIONS =   {
     'ImgDockMode':                 0, 
     'ImgDockModes':                [''],                         
     'ImgDockIcon':                 './rope/media/dock.png',
-    'ImgDockMessage':              'UNDOCK WINDOW - Undocks the wimdow area. Cannot be re-docked.', 
+    'ImgDockMessage':              'DOCK/UNDOCK WINDOW - Undocks and docks the preview wimdow area.', 
     'ImgDockButton':               [],
     'ImgDockIconHolder':           [],    
     
@@ -197,6 +188,14 @@ ACTIONS =   {
     'SaveImageMessage':              'SAVE IMAGE - Save image to output folder', 
     'SaveImageButton':               [],
     'SaveImageIconHolder':           [],
+    
+    'AutoSwapState':           False,
+    'AutoSwapMode':            0, 
+    'AutoSwapModes':           ['Auto'],                         
+    'AutoSwapIcon':            './rope/media/construction.png',
+    'AutoSwapMessage':         'AUTO SWAP - Automatically swaps the first person in an image to the selcted source faces [LB: Turn on/off]', 
+    'AutoSwapButton':          [],
+    'AutoSwapIconHolder':      [],    
     
     'PlayState':                False,
     'PlayMode':                 0, 
@@ -336,7 +335,7 @@ ACTIONS =   {
     'ThreadsMode':            0, 
     'ThreadsModes':           [''],                         
     'ThreadsIcon':            './rope/media/threads.png',
-    'ThreadsMessage':         'THREADS - Set number of execution threads. Once PLAY is pressed, reducing the number of threads will not release memory.', 
+    'ThreadsMessage':         'THREADS - Set number of execution threads. [MW: set number of threads]', 
     'ThreadsButton':          [],
     'ThreadsIconHolder':      [],  
 
@@ -352,9 +351,17 @@ ACTIONS =   {
     'PerfTestMode':            0, 
     'PerfTestModes':           ['Perf Test'],                         
     'PerfTestIcon':            './rope/media/test.png',
-    'PerfTestMessage':         '()', 
+    'PerfTestMessage':         'PERFORMANCE DATA - Displays timing data in the console for critical Rope functions. [LB: on/off]', 
     'PerfTestButton':          [],
-    'PerfTestIconHolder':      [],     
+    'PerfTestIconHolder':      [], 
+
+    'ClearmemState':           False,
+    'ClearmemMode':            0, 
+    'ClearmemModes':           ['Clear'],                         
+    'ClearmemIcon':            './rope/media/clear_mem.png',
+    'ClearmemMessage':         'CLEAR VRAM - Clears all models from VRAM [LB: Clear]', 
+    'ClearmemButton':          [],
+    'ClearmemIconHolder':      [],      
 
     # 'State':           False,
     # 'Mode':            0, 

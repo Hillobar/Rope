@@ -132,7 +132,7 @@ class VideoManager():
         self.is_image_loaded = False
         self.stop_marker = -1
         self.perf_test = False
-        # self.GFPGAN_pth = []
+
         self.resnet_model = []
         self.detection_model = []
         self.recognition_model = []
@@ -153,7 +153,7 @@ class VideoManager():
                             }   
         self.rec_qs = []
 
-        self.clip_transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), transforms.Resize((352, 352))])
+
 
     def load_target_video( self, file ):
         # If we already have a video loaded, release it
@@ -526,16 +526,21 @@ class VideoManager():
         img_y = img.size()[1]
         
         if img_x<512 and img_y<512:
+            # if x is smaller, set x to 512
             if img_x <= img_y:
-                tscale = v2.Resize((512, 512))
-        
+                tscale = v2.Resize((int(512*img_y/img_x), 512), antialias=True)
+            else:
+                tscale = v2.Resize((512, int(512*img_x/img_y)), antialias=True)
+
+            img = tscale(img)
+            
         elif img_x<512:
-            tscale = v2.Resize((int(512*img_y/img_x), 512))
+            tscale = v2.Resize((int(512*img_y/img_x), 512), antialias=True)
             img = tscale(img)
         
         elif img_y<512:
-            tscale = v2.Resize((512, int(512*img_x/img_y)))
-            img = tscale(img)        
+            tscale = v2.Resize((512, int(512*img_x/img_y)), antialias=True)
+            img = tscale(img)    
 
         # Rotate the frame
         if parameters['OrientationState']:
@@ -587,7 +592,7 @@ class VideoManager():
         
         # Unscale small videos
         if img_x <512 or img_y < 512:
-            tscale = v2.Resize((img_y, img_x))
+            tscale = v2.Resize((img_y, img_x), antialias=True)
             img = img.permute(2,0,1)
             img = tscale(img)
             img = img.permute(1,2,0)
@@ -898,7 +903,11 @@ class VideoManager():
       
     def apply_neg_CLIPs(self, img, CLIPText, CLIPAmount):
         clip_mask = np.ones((352, 352))
-        CLIPimg = self.clip_transform(img).unsqueeze(0)
+        
+        transform = transforms.Compose([transforms.ToTensor(),
+                                        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]), 
+                                        transforms.Resize((352, 352))])
+        CLIPimg = transform(img).unsqueeze(0)
         
         if CLIPText != "":
             prompts = CLIPText.split(',')
@@ -1035,12 +1044,11 @@ class VideoManager():
         t512 = v2.Resize((512, 512), antialias=True)
         t256 = v2.Resize((256, 256), antialias=True)         
         
-        # # Select detection approach
-        # if parameters['TestState']:
-            # try:
-                # dst = self.ret50_landmarks(swapped_face_upscaled) 
-            # except:
-                # return swapped_face_upscaled     
+        if self.is_image_loaded:
+            try:
+                dst = self.ret50_landmarks(swapped_face_upscaled) 
+            except:
+                return swapped_face_upscaled       
 
         tform.estimate(dst, self.FFHQ_kps)
 
@@ -1087,12 +1095,11 @@ class VideoManager():
         dst[:,0] += 32.0        
         tform = trans.SimilarityTransform()        
         
-        # # Select detection approach
-        # if parameters['TestState']:
-            # try:
-                # dst = self.ret50_landmarks(swapped_face_upscaled) 
-            # except:
-                # return swapped_face_upscaled     
+        if self.is_image_loaded:
+            try:
+                dst = self.ret50_landmarks(swapped_face_upscaled) 
+            except:
+                return swapped_face_upscaled       
 
         tform.estimate(dst, self.FFHQ_kps)
 
@@ -1136,12 +1143,11 @@ class VideoManager():
         dst[:,0] += 32.0        
         tform = trans.SimilarityTransform()        
         
-        # # Select detection approach
-        # if parameters['TestState']:
-            # try:
-                # dst = self.ret50_landmarks(swapped_face_upscaled) 
-            # except:
-                # return swapped_face_upscaled     
+        if self.is_image_loaded:
+            try:
+                dst = self.ret50_landmarks(swapped_face_upscaled) 
+            except:
+                return swapped_face_upscaled       
 
         tform.estimate(dst, self.FFHQ_kps)
 
@@ -1209,11 +1215,11 @@ class VideoManager():
         tform = trans.SimilarityTransform()        
         
         # # Select detection approach
-        # if parameters['TestState']:
-            # try:
-                # dst = self.ret50_landmarks(swapped_face_upscaled) 
-            # except:
-                # return swapped_face_upscaled     
+        if self.is_image_loaded:
+            try:
+                dst = self.ret50_landmarks(swapped_face_upscaled) 
+            except:
+                return swapped_face_upscaled     
 
         tform.estimate(dst, self.FFHQ_kps)        
  
@@ -1523,8 +1529,29 @@ class VideoManager():
 
         # Return embedding
         return np.array(io_binding.copy_outputs_to_cpu()).flatten()      
-
-
+    
+    def clear_mem(self):
+        del self.swapper_model
+        del self.GFPGAN_model
+        del self.occluder_model
+        del self.face_parsing_model
+        del self.codeformer_model
+        del self.GPEN_256_model
+        del self.GPEN_512_model
+        del self.resnet_model
+        del self.detection_model
+        del self.recognition_model
+        
+        self.swapper_model = []  
+        self.GFPGAN_model = []
+        self.occluder_model = []
+        self.face_parsing_model = []
+        self.codeformer_model = []
+        self.GPEN_256_model = []
+        self.GPEN_512_model = []
+        self.resnet_model = []
+        self.detection_model = []
+        self.recognition_model = []
                 
         # test = swap.permute(1, 2, 0)
         # test = test.cpu().numpy()
