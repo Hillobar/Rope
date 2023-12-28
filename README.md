@@ -45,11 +45,26 @@ Files changed: Coordinator.py, Dicts.py, GUI.py, VideoManager.py. DL new GPEN mo
 * (fixed) Using 'wasd' can no longer go out of bounds
 
 ### Changelog for 12/25 11:02 PST: ###
-* (fixed) Couple of bugs related to GPEN. Redownload Coordinator and VideoManger
+* (fixed) Couple of bugs related to GPEN. 
+
+### Changelog for 12/28 14:22 PST: ###
+Version Rope-Ruby-03. If you have updated to Ruby, then delete your old 'rope' subdirectory and replace it with the github version.
+
+* (fixed) More file error handling improvements
+* (fixed) bug related to small videos
+* (fixed) bug related to spacebar playing
+* (fixed, kinda) markers will behave better when resizing windows, but still stick when docking/undocking. Just nudge the window to get them in the right place.
+* (fixed) Difference function now properly scales to 100%
+* (feature) Clear VRAM button. Clears all models from VRAM, including the swapper. 
+* (feature) Auto swap ability for images. Set up a face swap as usual and toggle the auto swap to 'on'. Selecting another Target image will automatically swap your previously selected sources and apply all of your settings. This only works for the first face in the Target Faces. You will find this button next to the save button in the image mode.
+* (fixed) I made some updates to the CLIP library since I'd like to eventually convert it to onnx. Unfortunately it seemd to break it. I'm rolling back the changes for now. 
+* (feature) Reference detector is now used by the upscalers on images. For videos, a faster more time stable detector is used.
 
 ### Known Bugs: ###
-- When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
-- Starting a mode for the first time while playing will crash Rope. Due to the new performance architecture, this will not be possible. The first time you turn on a model, the video should not be playing.
+* When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
+* Starting a mode for the first time while playing will crash Rope. Due to the new performance architecture, this will not be possible. The first time you turn on a model, the video should not be playing.
+* Going from undocked->docked will results in a small image in the preview window. Just nudge the window to get it to the right size.
+* Sometimes the view mask will show a stretched image
 
 ### Performance:  ###
 Machine: 3090Ti (24GB), i5-13600K
