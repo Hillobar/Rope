@@ -169,7 +169,7 @@ ACTIONS =   {
     'DockMode':                 0, 
     'DockModes':                [''],                         
     'DockIcon':                 './rope/media/dock.png',
-    'DockMessage':              'DOCK/UNDOCK WINDOW - Undocks and docks the preview wimdow area.', 
+    'DockMessage':              'DOCK/UNDOCK WINDOW - Undocks and docks the preview window area.', 
     'DockButton':               [],
     'DockIconHolder':           [],
 
@@ -177,7 +177,7 @@ ACTIONS =   {
     'ImgDockMode':                 0, 
     'ImgDockModes':                [''],                         
     'ImgDockIcon':                 './rope/media/dock.png',
-    'ImgDockMessage':              'DOCK/UNDOCK WINDOW - Undocks and docks the preview wimdow area.', 
+    'ImgDockMessage':              'DOCK/UNDOCK WINDOW - Undocks and docks the preview window area.', 
     'ImgDockButton':               [],
     'ImgDockIconHolder':           [],    
     
@@ -217,7 +217,7 @@ ACTIONS =   {
     'AddMarkerMode':            0, 
     'AddMarkerModes':           [''],                         
     'AddMarkerIcon':            './rope/media/add.png',
-    'AddMarkerMessage':         'ADD MARKER - Attaaches a parameter marker to the current frame. Markers copy all parameter settings and apply them to all future frames, or until another marker is encountered.', 
+    'AddMarkerMessage':         'ADD MARKER - Attaches a parameter marker to the current frame. Markers copy all parameter settings and apply them to all future frames, or until another marker is encountered.', 
     'AddMarkerButton':          [],
     'AddMarkerIconHolder':      [],  
 
