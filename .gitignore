@@ -1,5 +1,6 @@
 models/*
 !models/place_model_files_here 
+data.json
 
 ### https://github.com/github/gitignore/blob/main/Python.gitignore
 
