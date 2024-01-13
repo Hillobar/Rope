@@ -22,6 +22,22 @@ from  rope.Dicts import PARAM_BUTTONS_PARAMS, ACTIONS, PARAM_BUTTONS_CONSTANT
 last_frame = 0
 
 class GUI(tk.Tk):
+
+    def mouse_wheel_cross_platform(self, event):
+        if event is not None:
+            # respond to num events (Linux)
+            if hasattr(event, 'num'):
+                if event.num == 5:
+                    return -1
+                if event.num == 4:
+                    return 1
+            # respond to delta events (Windows)
+            elif hasattr(event, 'delta'):
+                if event.delta == -120:
+                    return -1
+                if event.delta == 120:
+                    return 1
+        return 0
     def __init__( self):  
         super().__init__()
         # Adding a title to the self
@@ -199,6 +215,10 @@ class GUI(tk.Tk):
         self.undock_video = tk.Label( self.undock_video_frame, self.label_style, bg='black')
         self.undock_video.grid( row = 0, column = 0, sticky='NEWS', pady =0 )
         self.undock_video.bind("<MouseWheel>", self.iterate_through_merged_embeddings)
+        # Adding functionality for Linux mouse scroll
+        self.undock_video.bind("<Button-4>", self.iterate_through_merged_embeddings)
+        self.undock_video.bind("<Button-5>", self.iterate_through_merged_embeddings)
+        # EOL for Linux mouse scroll
         self.undock_video.bind("<ButtonRelease-1>", lambda event: self.toggle_play_video())
         
 
@@ -214,6 +234,10 @@ class GUI(tk.Tk):
         self.video = tk.Label( self.video_frame, self.label_style, bg='black')
         self.video.grid( row = 0, column = 0, sticky='NEWS', pady =0 )
         self.video.bind("<MouseWheel>", self.iterate_through_merged_embeddings)
+        # Adding functionality for Linux mouse scroll
+        self.video.bind("<Button-4>", self.iterate_through_merged_embeddings)
+        self.video.bind("<Button-5>", self.iterate_through_merged_embeddings)
+        # EOL for Linux mouse scroll
         self.video.bind("<ButtonRelease-1>", lambda event: self.toggle_play_video())
         
  ######### Options 
@@ -250,6 +274,10 @@ class GUI(tk.Tk):
         self.video_slider.bind("<ButtonRelease-1>", lambda event: self.slider_move('release', self.video_slider.get()))
         self.video_slider.bind("<ButtonRelease-3>", lambda event: self.slider_move('motion', self.video_slider.get()))
         self.video_slider.bind("<MouseWheel>", lambda event: self.mouse_wheel(event, self.video_slider.get()))
+        # Adding functionality for Linux mouse scroll
+        self.video_slider.bind("<Button-4>", lambda event: self.mouse_wheel(event, self.video_slider.get()))
+        self.video_slider.bind("<Button-5>", lambda event: self.mouse_wheel(event, self.video_slider.get()))
+        # EOL for Linux mouse scroll
         self.video_slider.pack(fill=tk.X)
 
         # Marker canvas
@@ -342,6 +370,10 @@ class GUI(tk.Tk):
         self.found_faces_canvas = tk.Canvas( self.found_faces_frame, self.canvas_style1, height = 100 )
         self.found_faces_canvas.grid( row = 0, column = 1, sticky='NEWS')
         self.found_faces_canvas.bind("<MouseWheel>", self.target_faces_mouse_wheel)
+        # Adding functionality for Linux mouse scroll
+        self.found_faces_canvas.bind("<Button-4>", self.target_faces_mouse_wheel)
+        self.found_faces_canvas.bind("<Button-5>", self.target_faces_mouse_wheel)
+        # EOL for Linux mouse scroll
         self.found_faces_canvas.create_text(8, 45, anchor='w', fill='grey25', font=("Arial italic", 50), text=" Target Faces")
         
    
@@ -374,6 +406,10 @@ class GUI(tk.Tk):
         self.source_faces_canvas = tk.Canvas( self.source_faces_frame, self.canvas_style1, height = 100)
         self.source_faces_canvas.grid( row = 0, column = 1, sticky='NEWS')
         self.source_faces_canvas.bind("<MouseWheel>", self.source_faces_mouse_wheel)
+        # Adding functionality for Linux mouse scroll
+        self.source_faces_canvas.bind("<Button-4>", self.source_faces_mouse_wheel)
+        self.source_faces_canvas.bind("<Button-5>", self.source_faces_mouse_wheel)
+        # EOL for Linux mouse scroll
         self.source_faces_canvas.create_text(8, 45, anchor='w', fill='grey25', font=("Arial italic", 50), text=' Source Faces')
 
 
@@ -400,6 +436,10 @@ class GUI(tk.Tk):
         self.target_media_canvas = tk.Canvas( self.target_videos_frame, self.canvas_style1, height = 100)
         self.target_media_canvas.grid( row = 0, column = 1, sticky='NEWS')
         self.target_media_canvas.bind("<MouseWheel>", self.target_videos_mouse_wheel)
+        # Adding functionality for Linux mouse scroll
+        self.target_media_canvas.bind("<Button-4>", self.target_videos_mouse_wheel)
+        self.target_media_canvas.bind("<Button-5>", self.target_videos_mouse_wheel)
+        # EOL for Linux mouse scroll
         self.target_media_canvas.create_text(8, 45, anchor='w', fill='grey25', font=("Arial italic", 50), text=' Target Videos')
 
         
@@ -458,15 +498,15 @@ class GUI(tk.Tk):
         webbrowser.open_new_tab(url)
  
     def target_faces_mouse_wheel(self, event):
-        self.found_faces_canvas.xview_scroll(1*int(event.delta/120.0), "units") 
+        self.found_faces_canvas.xview_scroll(1*int(self.mouse_wheel_cross_platform(event)), "units") 
    
 
     def source_faces_mouse_wheel(self, event):
-        self.source_faces_canvas.xview_scroll(1*int(event.delta/120.0), "units")
+        self.source_faces_canvas.xview_scroll(1*int(self.mouse_wheel_cross_platform(event)), "units")
 
    
     def target_videos_mouse_wheel(self, event):
-        self.target_media_canvas.xview_scroll(1*int(event.delta/120.0), "units")
+        self.target_media_canvas.xview_scroll(1*int(self.mouse_wheel_cross_platform(event)), "units")
     # focus_get()
     def key_event(self, event):
         # print(event.char, event.keysym, event.keycode)
@@ -750,6 +790,10 @@ class GUI(tk.Tk):
                     self.source_faces[j]["TKButton"].bind("<ButtonRelease-1>", lambda event, arg=j: self.toggle_source_faces_buttons_state(event, arg))
                     self.source_faces[j]["TKButton"].bind("<Shift-ButtonRelease-1>", lambda event, arg=j: self.toggle_source_faces_buttons_state_shift(event, arg))
                     self.source_faces[j]["TKButton"].bind("<MouseWheel>", self.source_faces_mouse_wheel)
+                    # Adding functionality for Linux mouse scroll
+                    self.source_faces[j]["TKButton"].bind("<Button-4>", self.source_faces_mouse_wheel)
+                    self.source_faces[j]["TKButton"].bind("<Button-5>", self.source_faces_mouse_wheel)
+                    # EOL for Linux mouse scroll
                     
                     self.source_faces_canvas.create_window((j//4)*92,8+(22*(j%4)), window = self.source_faces[j]["TKButton"],anchor='nw')            
                     # print((j//4)*92,8+(22*(j%4)))
@@ -806,6 +850,10 @@ class GUI(tk.Tk):
                 self.source_faces[shift_i]["TKButton"].bind("<ButtonRelease-1>", lambda event, arg=shift_i: self.toggle_source_faces_buttons_state(event, arg))
                 self.source_faces[shift_i]["TKButton"].bind("<Shift-ButtonRelease-1>", lambda event, arg=shift_i: self.toggle_source_faces_buttons_state_shift(event, arg))
                 self.source_faces[shift_i]["TKButton"].bind("<MouseWheel>", self.source_faces_mouse_wheel)
+                # Adding functionality for Linux mouse scroll
+                self.source_faces[shift_i]["TKButton"].bind("<Button-4>", self.source_faces_mouse_wheel)
+                self.source_faces[shift_i]["TKButton"].bind("<Button-5>", self.source_faces_mouse_wheel)
+                # EOL for Linux mouse scroll
                 
                 self.source_faces_canvas.create_window(((shift_i_len//4)+i+1)*92,8, window = self.source_faces[shift_i]["TKButton"],anchor='nw')
 
@@ -857,6 +905,10 @@ class GUI(tk.Tk):
 
                         self.target_faces[last_index]["TKButton"] = tk.Button(self.found_faces_canvas, self.inactive_button_style, height = 86, width = 86)
                         self.target_faces[last_index]["TKButton"].bind("<MouseWheel>", self.target_faces_mouse_wheel)
+                        # Adding functionality for Linux mouse scroll
+                        self.target_faces[last_index]["TKButton"].bind("<Button-4>", self.target_faces_mouse_wheel)
+                        self.target_faces[last_index]["TKButton"].bind("<Button-5>", self.target_faces_mouse_wheel)
+                        # EOL for Linux mouse scroll
                         self.target_faces[last_index]["ButtonState"] = False           
                         self.target_faces[last_index]["Image"] = ImageTk.PhotoImage(image=Image.fromarray(crop))
                         self.target_faces[last_index]["Embedding"] = face[1]
@@ -1065,6 +1117,10 @@ class GUI(tk.Tk):
                 self.target_media.append(ImageTk.PhotoImage(image=rgb_video))            
                 self.target_media_buttons[i].config( image = self.target_media[i],  command=lambda i=i: self.load_target(i, images[i][1], self.actions['ImgVidModes'][self.actions['ImgVidMode']]))
                 self.target_media_buttons[i].bind("<MouseWheel>", self.target_videos_mouse_wheel)
+                # Adding functionality for Linux mouse scroll
+                self.target_media_buttons[i].bind("<Button-4>", self.target_videos_mouse_wheel)
+                self.target_media_buttons[i].bind("<Button-5>", self.target_videos_mouse_wheel)
+                # EOL for Linux mouse scroll
                 self.target_media_canvas.create_window(i*92, 8, window = self.target_media_buttons[i], anchor='nw')
 
             self.target_media_canvas.configure(scrollregion = self.target_media_canvas.bbox("all"))
@@ -1077,6 +1133,10 @@ class GUI(tk.Tk):
                 self.target_media.append(ImageTk.PhotoImage(image=rgb_video))            
                 self.target_media_buttons[i].config( image = self.target_media[i],  command=lambda i=i: self.load_target(i, videos[i][1], self.actions['ImgVidModes'][self.actions['ImgVidMode']]))
                 self.target_media_buttons[i].bind("<MouseWheel>", self.target_videos_mouse_wheel)
+                # Adding functionality for Linux mouse scroll
+                self.target_media_buttons[i].bind("<Button-4>", self.target_videos_mouse_wheel)
+                self.target_media_buttons[i].bind("<Button-5>", self.target_videos_mouse_wheel)
+                # EOL for Linux mouse scroll
                 self.target_media_canvas.create_window(i*92, 8, window = self.target_media_buttons[i], anchor='nw')
 
             self.target_media_canvas.configure(scrollregion = self.target_media_canvas.bbox("all"))
@@ -1540,7 +1600,7 @@ class GUI(tk.Tk):
     
     def parameter_amount(self, event, parameter, parameter_amount, increment, maximum, minimum=0, unit='%' ):
         if parameter_amount != '':        
-            self.parameters[parameter_amount] += increment*int(event.delta/120.0)
+            self.parameters[parameter_amount] += increment*int(self.mouse_wheel_cross_platform(event))
             if self.parameters[parameter_amount] > maximum:
                 self.parameters[parameter_amount] = maximum
             if self.parameters[parameter_amount] < minimum :
@@ -1568,7 +1628,7 @@ class GUI(tk.Tk):
           
 
     def change_video_quality(self, event): 
-        self.video_quality += (1*int(event.delta/120.0))
+        self.video_quality += (1*int(self.mouse_wheel_cross_platform(event)))
         
         if self.video_quality > 50:
             self.video_quality = 50
@@ -1584,7 +1644,7 @@ class GUI(tk.Tk):
         self.add_action("vid_qual",int(self.video_quality))
 
     def change_threads_amount(self, event): 
-        self.num_threads += (1*int(event.delta/120.0))
+        self.num_threads += (1*int(self.mouse_wheel_cross_platform(event)))
         
         if self.num_threads > 10:
             self.num_threads = 10
@@ -1774,6 +1834,10 @@ class GUI(tk.Tk):
         
         # Mousewheel function - adjust parameter
         self.param_const[button].bind("<MouseWheel>", lambda event: self.update_parameter_data(event, parameter))
+        # Adding functionality for Linux mouse scroll
+        self.param_const[button].bind("<Button-4>", lambda event: self.update_parameter_data(event, parameter))
+        self.param_const[button].bind("<Button-5>", lambda event: self.update_parameter_data(event, parameter))
+        # EOL for Linux mouse scroll
         
         # Status Text
         self.param_const[button].bind('<Enter>', lambda event: self.set_status(self.parameters[message]))
@@ -1802,7 +1866,7 @@ class GUI(tk.Tk):
         maximum = self.parameters[parameter+'Max']
         increment = self.parameters[parameter+'Inc']
   
-        self.parameters[amount][index] += increment*int(event.delta/120.0)
+        self.parameters[amount][index] += increment*int(self.mouse_wheel_cross_platform(event))
         if self.parameters[amount][index] > maximum:
             self.parameters[amount][index] = maximum
         if self.parameters[amount][index] < minimum:
@@ -1929,9 +1993,17 @@ class GUI(tk.Tk):
         elif parameter == 'Threads':
             self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w')
             self.actions[button].bind("<MouseWheel>", self.change_threads_amount)  
+            # Adding functionality for Linux mouse scroll
+            self.actions[button].bind("<Button-4>", self.change_threads_amount)  
+            self.actions[button].bind("<Button-5>", self.change_threads_amount)  
+            # EOL for Linux mouse scroll
         # elif parameter == 'VideoQuality':
             # self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', image=self.actions[icon_holder], anchor='w')
             # self.actions[button].bind("<MouseWheel>", self.change_video_quality) 
+            # Adding functionality for Linux mouse scroll
+            # self.actions[button].bind("<Button-4>", self.change_video_quality) 
+            # self.actions[button].bind("<Button-5>", self.change_video_quality) 
+            # EOL for Linux mouse scroll
         elif parameter == 'PerfTest':
             self.actions[button] = tk.Button(root, self.inactive_button_style, compound='left', text=self.actions['PerfTestModes'][0], image=self.actions[icon_holder], anchor='w', command=lambda: self.toggle_perf_test())
         elif parameter == 'Clearmem':
@@ -2196,5 +2268,4 @@ class GUI(tk.Tk):
 
     
 
-        
         
