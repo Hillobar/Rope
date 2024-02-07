@@ -1193,7 +1193,8 @@ class GUI(tk.Tk):
                 # Its an image
                 if file_type == 'image':
                     try:
-                        image = cv2.imread(file)
+                        image = cv2.imdecode(np.fromfile(file,dtype=np.uint8), -1)  # BGR
+                        # image = cv2.imread(file)
                         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     except:
                         print('Trouble reading file:', file)
