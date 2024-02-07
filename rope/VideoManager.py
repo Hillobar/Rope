@@ -195,7 +195,8 @@ class VideoManager():
         self.frame_q = []            
         self.r_frame_q = [] 
         self.target_facess = []
-        self.image = cv2.imread(file) # BGR
+        self.image = cv2.imdecode(np.fromfile(file,dtype=np.uint8), -1)  # BGR
+        # self.image = cv2.imread(file) # BGR
         self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB) # RGB
         temp = [self.image, False]
         self.frame_q.append(temp)
