@@ -62,7 +62,7 @@ Machine: 3090Ti (24GB), i5-13600K
 File: benchmark/target-1080p.mp4, 2048x1080, 269 frames, 25 fps, 10s
 Rendering time in seconds:
 | Option | Crystal | Sapphire | Ruby | Opal |
-| --- | --- | --- | --- |
+| --- | --- | --- | --- | --- |
 | Only Swap | 7.3 | 7.5 | 4.4 | 4.3 |
 | Swap+GFPGAN | 10.7 | 11.0 | 9.0 | 9.8 |
 | Swap+Codeformer | 12.4 | 13.5 | 11.1 | 11.1 |
