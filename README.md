@@ -65,10 +65,10 @@ Rendering time in seconds:
 | --- | --- | --- | --- |
 | Only Swap | 7.3 | 7.5 | 4.4 | 4.3 |
 | Swap+GFPGAN | 10.7 | 11.0 | 9.0 | 9.8 |
-| Swap+Codeformer | 12.4 | 13.5 | 11.1 | 11.1
-| Swap+one word CLIP | 10.4 | 11.2 | 9.1 |
-| Swap+Occluder | 7.8 | 7.8 | 4.4 |
-| Swap+MouthParser | 13.9 | 12.1 | 5.0 |
+| Swap+Codeformer | 12.4 | 13.5 | 11.1 | 11.1 |
+| Swap+one word CLIP | 10.4 | 11.2 | 9.1 | 9.3 |
+| Swap+Occluder | 7.8 | 7.8 | 4.4 | 4.7 |
+| Swap+MouthParser | 13.9 | 12.1 | 5.0 | 4.9 |
 
 ### Disclaimer: ###
 Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me.
