@@ -11,7 +11,8 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-10 11:42 AM PST}}}}$ ###
 ### ${{\color{Goldenrod}{\textsf{Welcome to Rope-Opal!}}}}$ ###
-Please grab the latest yoloface model from the linkn in the wiki!
+### ${{\color{Red}{\textsf{Please grab the latest yoloface model from the link in the wiki!}}}}$ ###
+
 ![Screenshot 2024-02-10 104718](https://github.com/Hillobar/Rope/assets/63615199/4b2ee574-c91e-4db2-ad66-5b775a049a6b)
 
 ### Features: ###
