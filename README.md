@@ -1,4 +1,4 @@
-![Screenshot 2023-12-22 211725](https://github.com/Hillobar/Rope/assets/63615199/97a57957-fb30-4329-b8f6-adbfa96203ab)
+![Screenshot 2024-02-10 091752](https://github.com/Hillobar/Rope/assets/63615199/dd8ab00b-d55f-4196-a50b-f2a326fba83a)
 
 Rope implements the insightface inswapper_128 model with a helpful GUI.
 ### [Discord](https://discord.gg/EcdVAFJzqp)
@@ -7,10 +7,11 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Wiki](https://github.com/Hillobar/Rope/wiki)
 
-### [Demo Video](https://www.youtube.com/watch?v=4Y4U0TZ8cWY)
+### [Demo Video (Rope-Ruby)](https://www.youtube.com/watch?v=4Y4U0TZ8cWY)
 
-### ${{\color{Goldenrod}{\textsf{Last Updated 2023-12-25 11:02 PST}}}}$ ###
-note: you need to download the latest GFPGAN model for Ruby. Link is in the wiki
+### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-10 11:42 AM PST}}}}$ ###
+### ${{\color{Goldenrod}{\textsf{Welcome to Rope-Opal!}}}}$ ###
+![Screenshot 2024-02-10 104718](https://github.com/Hillobar/Rope/assets/63615199/4b2ee574-c91e-4db2-ad66-5b775a049a6b)
 
 ### Features: ###
 * Lightning speed face swapping with all the features
@@ -28,43 +29,30 @@ note: you need to download the latest GFPGAN model for Ruby. Link is in the wiki
 * Fine tune your video ahead of time by creating image setting markers at specific frames.
 * Lightening fast!
 
-### Updates for Rope-Ruby: ###
-* Almost double the performance of previous Rope! Twice as fast! Half the time! Most of the effort for Ruby focuses on huge performance gains. Enjoy the speed!
-* Much faster GFPGAN
-* Occluder mask size can now be adjusted
-* Experimental features added to make adjustments to face swap region placement and face scale.
+### Updates for Rope-Opal: ###
+* This next version focuses on the UI. It's completely overhauled and finally looks more like a modern app. Lots of useability improvements and room to add new features.
+* Can now set strength to zero. This effectively turns off the swapper in the render pipeline so you can apply the rest of the options to the original image (e.g., upscale the original face w/o swapping)
+* Recording library can be set to FFMPEG or OPENCV
+* Real-time audio is now available while previewing. Performace that renders slower than the frame rate will cause audio lag
+* The Differencing fuction has been reworked into the pipeline to produce better results. Consequently it currently does not show up in the mask preview.
+* Wrestled back some VRAM from the Ruby upgrades
+* Faster loading of some models. Upcoming releases will do furhter optimizations
+* Adjusted the use of filtering and antialiasing
+* Yolov8 added as a face detection model selection. FF is having good results with it, so looking forward to hearing your thoughts on its behavior in Rope
+* Scrollbars!
+* Save/load paramters, and reset to defaults. Rope will auto-load your saved paramters when launched.
+* Restorers (GFPGAN, etc) now have option to choose the detection alignment method. You can trade speed vs fidelity vs texture. This includes the original Rope method that, although flawed, maintain the face textures.
+* Detection score. Adjust how aggressive Rope is at finding faces.
+* Added detailed help text in the lower left when hovering over UI elements.
+* Added reverse, forward and beginning to timeline control.
 
-### Changelog for 2023-12-25 08:56 PST: ###
-Files changed: Coordinator.py, Dicts.py, GUI.py, VideoManager.py. DL new GPEN models
-* (fixed) Adjusted the Brdr default settings to fix some blending lines
-* (fixed) Video loading errors addressed 
-* (feature) Read target videos and images, and source faces from subfolders
-* (fixed) Low resolution videos no longer results in partial face swaps
-* (feature) Added GPEN 256 and GPEN 512
-* (feature) Added manual color correction
-* (fixed) Using 'wasd' can no longer go out of bounds
-
-### Changelog for 12/25 11:02 PST: ###
-* (fixed) Couple of bugs related to GPEN. 
-
-### Changelog for 12/28 14:22 PST: ###
-Version Rope-Ruby-03. If you have updated to Ruby, then delete your old 'rope' subdirectory and replace it with the github version.
-
-* (fixed) More file error handling improvements
-* (fixed) bug related to small videos
-* (fixed) bug related to spacebar playing
-* (fixed, kinda) markers will behave better when resizing windows, but still stick when docking/undocking. Just nudge the window to get them in the right place.
-* (fixed) Difference function now properly scales to 100%
-* (feature) Clear VRAM button. Clears all models from VRAM, including the swapper. 
-* (feature) Auto swap ability for images. Set up a face swap as usual and toggle the auto swap to 'on'. Selecting another Target image will automatically swap your previously selected sources and apply all of your settings. This only works for the first face in the Target Faces. You will find this button next to the save button in the image mode.
-* (fixed) I made some updates to the CLIP library since I'd like to eventually convert it to onnx. Unfortunately it seemd to break it. I'm rolling back the changes for now. 
-* (feature) Reference detector is now used by the upscalers on images. For videos, a faster more time stable detector is used.
-
-### Known Bugs: ###
-* When using Markers, the frames before the first marker will use parameters from the the last settings in your options. Not sure if it is a true bug, but best way to deal with this is to create a marker at the first frame.
-* Starting a mode for the first time while playing will crash Rope. Due to the new performance architecture, this will not be possible. The first time you turn on a model, the video should not be playing.
-* Going from undocked->docked will results in a small image in the preview window. Just nudge the window to get it to the right size.
-* Sometimes the view mask will show a stretched image
+### Some Feature Still need to be re-implmented from Rope-Ruby. They'll be added back in the next updates. ###
+* Image swapping
+* Stop markers
+* Framerate stats while playing
+* Global hotkeys for moving the timeline
+* Clear memory
+* Ongoing interface maturation
 
 ### Performance:  ###
 Machine: 3090Ti (24GB), i5-13600K
@@ -75,16 +63,12 @@ File: benchmark/target-1080p.mp4, 2048x1080, 269 frames, 25 fps, 10s
 Rendering time in seconds:
 | Option | Crystal | Sapphire | Ruby |
 | --- | --- | --- | --- |
-| Only Swap | 7.3 | 7.5 | 4.4 |
+| Only Swap | 7.3 | 7.5 | 4.4 | 4.3 |
 | Swap+GFPGAN | 10.7 | 11.0 | 9.0 |
 | Swap+Codeformer | 12.4 | 13.5 | 11.1 |
 | Swap+one word CLIP | 10.4 | 11.2 | 9.1 |
 | Swap+Occluder | 7.8 | 7.8 | 4.4 |
 | Swap+MouthParser | 13.9 | 12.1 | 5.0 |
-
-### Preview: ###
-![Screenshot 2023-12-22 212639](https://github.com/Hillobar/Rope/assets/63615199/384fd63a-b870-4714-a137-d27e31560433)
-
 
 ### Disclaimer: ###
 Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me.
