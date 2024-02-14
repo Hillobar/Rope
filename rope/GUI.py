@@ -569,16 +569,16 @@ class GUI(tk.Tk):
         row += bottom_border_delta           
 
         # Cats and Dogs
-        self.widget['ThreadsSlider'] = GE.Slider2(parameters_canvas, 'ThreadsSlider', 'Threads', 3, self.update_data, 'control', 398, 20, 1, row, 0.62)
+        self.widget['ThreadsSlider'] = GE.Slider2(parameters_canvas, 'ThreadsSlider', 'Threads', 3, self.update_data, 'parameter', 398, 20, 1, row, 0.62)
 
         row += row_delta 
         self.widget['DetectTypeTextSel'] = GE.TextSelection(parameters_canvas, 'DetectTypeTextSel', 'Detection Type', 3, self.update_data, 'parameter', 'parameter', 398, 20, 1, row, 0.62)
         row += row_delta 
         self.widget['DetectScoreSlider'] = GE.Slider2(parameters_canvas, 'DetectScoreSlider', 'Detect Score', 3, self.update_data, 'parameter', 398, 20, 1, row, 0.62)
         row += row_delta 
-        self.widget['RecordTypeTextSel'] = GE.TextSelection(parameters_canvas, 'RecordTypeTextSel', 'Record Type', 3, self.update_data, 'control', 'control', 398, 20, 1, row, 0.62)
+        self.widget['RecordTypeTextSel'] = GE.TextSelection(parameters_canvas, 'RecordTypeTextSel', 'Record Type', 3, self.update_data, 'parameter', 'parameter', 398, 20, 1, row, 0.62)
         row += row_delta 
-        self.widget['VideoQualSlider'] = GE.Slider2(parameters_canvas, 'VideoQualSlider', 'FFMPEG Quality', 3, self.update_data, 'control', 398, 20, 1, row, 0.62)
+        self.widget['VideoQualSlider'] = GE.Slider2(parameters_canvas, 'VideoQualSlider', 'FFMPEG Quality', 3, self.update_data, 'parameter', 398, 20, 1, row, 0.62)
         row += row_delta 
         self.widget['MergeTextSel'] = GE.TextSelection(parameters_canvas, 'MergeTextSel', 'Merge Math', 3, self.update_data, 'control', 'control', 398, 20, 1, row, 0.62)            
         

@@ -276,7 +276,7 @@ class VideoManager():
             self.frame_timer = time.time()
             
             # Create reusable queue based on number of threads
-            for i in range(self.control['ThreadsSlider']):
+            for i in range(self.parameters['ThreadsSlider']):
                     new_process_q = self.process_q.copy()
                     self.process_qs.append(new_process_q)
                     
@@ -343,7 +343,7 @@ class VideoManager():
             self.process_qs = []
             self.capture.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
             
-            for i in range(self.control['ThreadsSlider']):
+            for i in range(self.parameters['ThreadsSlider']):
                     new_process_q = self.process_q.copy()
                     self.process_qs.append(new_process_q)
 
@@ -360,7 +360,7 @@ class VideoManager():
             self.output = os.path.join(self.saved_video_path, base_filename)
             self.temp_file = self.output+"_temp"+self.file_name[1]  
             
-            if self.control['RecordTypeTextSel']=='FFMPEG':
+            if self.parameters['RecordTypeTextSel']=='FFMPEG':
                 args =  ["ffmpeg", 
                         '-hide_banner',
                         '-loglevel',    'error',
@@ -370,14 +370,14 @@ class VideoManager():
                         # '-g',           '25',
                         "-vf",          "format=yuvj420p",
                         "-c:v",         "libx264",
-                        "-crf",         str(self.control['VideoQualSlider']),
+                        "-crf",         str(self.parameters['VideoQualSlider']),
                         "-r",           str(self.fps),
                         "-s",           str(frame_width)+"x"+str(frame_height),
                         self.temp_file]  
 
                 self.sp = subprocess.Popen(args, stdin=subprocess.PIPE)
             
-            elif self.control['RecordTypeTextSel']=='OPENCV':    
+            elif self.parameters['RecordTypeTextSel']=='OPENCV':    
                 size = (frame_width, frame_height)
                 self.sp = cv2.VideoWriter(self.temp_file,  cv2.VideoWriter_fourcc(*'mp4v') , self.fps, size) 
       
@@ -439,11 +439,11 @@ class VideoManager():
                 if self.process_qs[index]['Status'] == 'finished':
                     image = self.process_qs[index]['ProcessedFrame']  
                     
-                    if self.control['RecordTypeTextSel']=='FFMPEG':
+                    if self.parameters['RecordTypeTextSel']=='FFMPEG':
                         pil_image = Image.fromarray(image)
                         pil_image.save(self.sp.stdin, 'BMP')   
                     
-                    elif self.control['RecordTypeTextSel']=='OPENCV':
+                    elif self.parameters['RecordTypeTextSel']=='OPENCV':
                         self.sp.write(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 
                     temp = [image, self.process_qs[index]['FrameNumber']]
@@ -456,10 +456,10 @@ class VideoManager():
                         if stop_time == 0:
                             stop_time = float(self.video_frame_total) / float(self.fps)
                         
-                        if self.control['RecordTypeTextSel']=='FFMPEG':
+                        if self.parameters['RecordTypeTextSel']=='FFMPEG':
                             self.sp.stdin.close()
                             self.sp.wait()
-                        elif self.control['RecordTypeTextSel']=='OPENCV':    
+                        elif self.parameters['RecordTypeTextSel']=='OPENCV':    
                             self.sp.release()
 
                         orig_file = self.target_video
