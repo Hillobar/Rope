@@ -32,6 +32,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Lightening fast!
 
 ### Updates for Rope-Opal-01: ###
+### To update from Opal, just need to replace the .py file in /rope. You'll seem them 'Rope-Opal-01' in the comment column ###
 * (Fixed) Reverted to previous model load parameters. Some people were having issues with the new settings.
 * (Fixed) Markers now clear propoerly when changing videos
 * (Fixed)Input Face loading errors are now handled gracefully
