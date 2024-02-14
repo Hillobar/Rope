@@ -9,7 +9,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Demo Video (Rope-Ruby)](https://www.youtube.com/watch?v=4Y4U0TZ8cWY)
 
-### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-10 11:42 AM PST}}}}$ ###
+### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-13 19:36 PST}}}}$ ###
 ### ${{\color{Goldenrod}{\textsf{Welcome to Rope-Opal!}}}}$ ###
 ### ${{\color{Red}{\textsf{Please grab the latest yoloface model from the link in the wiki!}}}}$ ###
 
@@ -30,6 +30,12 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Segment recording
 * Fine tune your video ahead of time by creating image setting markers at specific frames.
 * Lightening fast!
+
+### Updates for Rope-Opal-01: ###
+* (Fixed) Reverted to previous model load parameters. Some people were having issues with the new settings.
+* (Fixed) Markers now clear propoerly when changing videos
+* (Fixed)Input Face loading errors are now handled gracefully
+* (Feature) Added option to select Mean or Median when multi-selecting input faces
 
 ### Updates for Rope-Opal: ###
 * This next version focuses on the UI. It's completely overhauled and finally looks more like a modern app. Lots of useability improvements and room to add new features.
