@@ -29,7 +29,7 @@ class GUI(tk.Tk):
         super().__init__()
 
         self.models = models
-        self.title('Rope-Opal-00')
+        self.title('Rope-Opal-01')
         self.target_media = []
         self.target_video_file = []
         self.action_q = []
@@ -419,7 +419,7 @@ class GUI(tk.Tk):
         canvas = tk.Canvas(r_frame, style.canvas_frame_label_3, bd=0, width=width)
         canvas.grid(row=1, column=0, sticky='NEWS', pady=0, padx=0)
         
-        parameters_canvas = tk.Frame(canvas, style.canvas_frame_label_3, bd=0, width=width, height=970)
+        parameters_canvas = tk.Frame(canvas, style.canvas_frame_label_3, bd=0, width=width, height=1000)
         parameters_canvas.grid(row=0, column=0, sticky='NEWS', pady=0, padx=0)  
 
        
@@ -569,16 +569,18 @@ class GUI(tk.Tk):
         row += bottom_border_delta           
 
         # Cats and Dogs
-        self.widget['ThreadsSlider'] = GE.Slider2(parameters_canvas, 'ThreadsSlider', 'Threads', 3, self.update_data, 'parameter', 398, 20, 1, row, 0.62)
+        self.widget['ThreadsSlider'] = GE.Slider2(parameters_canvas, 'ThreadsSlider', 'Threads', 3, self.update_data, 'control', 398, 20, 1, row, 0.62)
 
         row += row_delta 
         self.widget['DetectTypeTextSel'] = GE.TextSelection(parameters_canvas, 'DetectTypeTextSel', 'Detection Type', 3, self.update_data, 'parameter', 'parameter', 398, 20, 1, row, 0.62)
         row += row_delta 
         self.widget['DetectScoreSlider'] = GE.Slider2(parameters_canvas, 'DetectScoreSlider', 'Detect Score', 3, self.update_data, 'parameter', 398, 20, 1, row, 0.62)
         row += row_delta 
-        self.widget['RecordTypeTextSel'] = GE.TextSelection(parameters_canvas, 'RecordTypeTextSel', 'Record Type', 3, self.update_data, 'parameter', 'parameter', 398, 20, 1, row, 0.62)
+        self.widget['RecordTypeTextSel'] = GE.TextSelection(parameters_canvas, 'RecordTypeTextSel', 'Record Type', 3, self.update_data, 'control', 'control', 398, 20, 1, row, 0.62)
         row += row_delta 
-        self.widget['VideoQualSlider'] = GE.Slider2(parameters_canvas, 'VideoQualSlider', 'FFMPEG Quality', 3, self.update_data, 'parameter', 398, 20, 1, row, 0.62)
+        self.widget['VideoQualSlider'] = GE.Slider2(parameters_canvas, 'VideoQualSlider', 'FFMPEG Quality', 3, self.update_data, 'control', 398, 20, 1, row, 0.62)
+        row += row_delta 
+        self.widget['MergeTextSel'] = GE.TextSelection(parameters_canvas, 'MergeTextSel', 'Merge Math', 3, self.update_data, 'control', 'control', 398, 20, 1, row, 0.62)            
         
     ### Other
         self.layer['tooltip_frame'] = tk.Frame(r_frame, style.canvas_frame_label_3, height=80)
@@ -964,23 +966,23 @@ class GUI(tk.Tk):
                     img = cv2.imread(file)                    
                     
                     if img is not None:     
-                        img = torch.from_numpy(img).to('cuda')
+                        img = torch.from_numpy(img.astype('uint8')).to('cuda')
                         img = img.permute(2,0,1)
-                        kpss = self.models.run_detect(img, max_num=1)[0] # Just one face here
-
-                        ret = []
-    
-                        if kpss is not None:
+                        try: 
+                            kpss = self.models.run_detect(img, max_num=1)[0] # Just one face here
+                        except IndexError:
+                            print('Image cropped too close:', file) 
+                        else:
                             face_emb, cropped_image = self.models.run_recognize(img, kpss)
-                            ret.append([kpss, face_emb, cropped_image])
-
-                        if ret:
-                            crop = cv2.cvtColor(ret[0][2].cpu().numpy(), cv2.COLOR_BGR2RGB)            
+                            crop = cv2.cvtColor(cropped_image.cpu().numpy(), cv2.COLOR_BGR2RGB)            
                             crop = cv2.resize(crop, (85, 85))
-                            faces.append([crop, ret[0][1]])
+                            faces.append([crop, face_emb])
+                            pass
+                        
                     else:
                         print('Bad file', file) 
 
+                    
         # Add faces[] images to buttons
         delx, dely = 100, 100
         
@@ -1160,7 +1162,10 @@ class GUI(tk.Tk):
                         temp_holder.append(self.source_faces[j]['Embedding'])
                 
                 if temp_holder:
-                    tface['AssignedEmbedding'] = np.median(temp_holder,0)
+                    if self.widget['MergeTextSel'].get()=='Median':
+                        tface['AssignedEmbedding'] = np.median(temp_holder,0)
+                    elif self.widget['MergeTextSel'].get()=='Mean':
+                        tface['AssignedEmbedding'] = np.mean(temp_holder,0)    
 
                 break
             
@@ -1319,8 +1324,8 @@ class GUI(tk.Tk):
 
         
         # delete all markers
-        for i in range(len(self.markers)):
-            self.video_slider_canvas.delete('all')
+
+        self.markers_canvas.delete('all')
         
         self.markers = []
         self.stop_marker = []
@@ -1547,16 +1552,18 @@ class GUI(tk.Tk):
         text = text.get()
         # get embeddings from all highlightebuttons
         # iterate through the buttons
-        summed_embeddings = [0]*512
-        num_selected = 0
-        for i in range(len(self.source_faces)):
-            if self.source_faces[i]["ButtonState"]:
-                summed_embeddings += self.source_faces[i]["Embedding"]
-                num_selected += 1
+ 
+        temp_holder = []    
+
+        for button in self.source_faces:
+            if button["ButtonState"]:
+                temp_holder.append(button['Embedding'])
         
-        # create the average embedding
-        if num_selected != 0:
-            ave_embedding = summed_embeddings/num_selected
+        if temp_holder:
+            if self.widget['MergeTextSel'].get()=='Median':
+                ave_embedding = np.median(temp_holder,0)
+            elif self.widget['MergeTextSel'].get()=='Mean':
+                ave_embedding = np.mean(temp_holder,0)    
             
             if text != "":
                 with open("merged_embeddings.txt", "a") as embedfile:

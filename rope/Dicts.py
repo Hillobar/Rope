@@ -287,7 +287,7 @@ DEFAULT_DATA = {
 # Text Selection
 'DetectTypeTextSelInfoText':        'FACE DETECTION MODEL:\nSelect the face detection model. Mostly only subtle differences, but can significant differences when the face is at extreme angles or covered.',
 'DetectTypeTextSelMode':            'Retinaface',
-'DetectTypeTextSelModes':           ['Retinaface', 'Yolov8'],
+'DetectTypeTextSelModes':           ['Retinaface', 'Yolov8', 'SCRDF'],
 'PreviewModeTextSelInfoText':       '',
 'PreviewModeTextSelMode':           'Video',
 'PreviewModeTextSelModes':          ['Video', 'Image'],
@@ -300,6 +300,9 @@ DEFAULT_DATA = {
 'RestorerTypeTextSelInfoText':      'RESTORER TYPE:\nSelect the Restorer type.\nSpeed: GPEN256>GFPGAN>CF>GPEN512',
 'RestorerTypeTextSelMode':          'GFPGAN',
 'RestorerTypeTextSelModes':         ['GFPGAN', 'CF', 'GPEN256', 'GPEN512'],
+'MergeTextSelInfoText':      'INPUT FACES MERGE MATH:\nWhen shift-clicking face for merging, determines how the embedding vectors are combined.',
+'MergeTextSelMode':          'Mean',
+'MergeTextSelModes':         ['Mean', 'Median'],
 
 
 # Text Entry
