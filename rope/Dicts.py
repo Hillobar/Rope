@@ -137,7 +137,22 @@ DEFAULT_DATA = {
 'TLRightIconOn':                    './rope/media/tl_right_on.png',
 'TLRightInfoText':                  'TIMELEFT NUDGE RIGHT:\nMove the timeline handle to the RIGHT 30 frames.',
 'TLRightState':                     False,
-        
+
+'SaveImageButtonDisplay':                   'text',   
+'SaveImageButtonInfoText':                  'TIMELEFT NUDGE RIGHT:\nMove the timeline handle to the RIGHT 30 frames.',
+'SaveImageButtonState':                     False,
+'SaveImageButtonText':             'Save Image',
+
+'AutoSwapButtonDisplay':                   'text',   
+'AutoSwapButtonInfoText':                  'TIMELEFT NUDGE RIGHT:\nMove the timeline handle to the RIGHT 30 frames.',
+'AutoSwapButtonState':                     False,
+'AutoSwapButtonText':             'Auto Swap',
+ 
+'ClearVramButtonDisplay':                   'text',   
+'ClearVramButtonInfoText':                  'TIMELEFT NUDGE RIGHT:\nMove the timeline handle to the RIGHT 30 frames.',
+'ClearVramButtonState':                     False,
+'ClearVramButtonText':             'Clear VRAM',
+ 
 #Switches       
 'ColorSwitchInfoText':              'RGB ADJUSTMENT:\nFine-tune the RGB color values of the swap.',
 'ColorSwitchState':                 False,

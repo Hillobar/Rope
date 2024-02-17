@@ -161,6 +161,8 @@ class VideoManager():
             self.capture.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
     
     def load_target_image(self, file):
+        if self.capture:
+            self.capture.release()
         self.is_video_loaded = False
         self.play = False 
         self.frame_q = []            
@@ -205,8 +207,9 @@ class VideoManager():
         return len(self.r_frame_q)          
     
 
-    def get_requested_video_frame(self, frame):  
-        if self.is_video_loaded == True:
+    def get_requested_video_frame(self, frame, marker=True):  
+        temp = []
+        if self.is_video_loaded:
         
             if self.play == True:            
                 self.play_video("stop")
@@ -216,42 +219,25 @@ class VideoManager():
 
             self.capture.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
             success, target_image = self.capture.read() #BGR
-            # self.current_frame += 1
+
             if success:
                 target_image = cv2.cvtColor(target_image, cv2.COLOR_BGR2RGB) #RGB 
                 if not self.control['SwapFacesButton']:   
                     temp = [target_image, self.current_frame] #temp = RGB
                 else:  
-                    temp = [self.swap_video(target_image, self.current_frame, False), self.current_frame] # temp = RGB
+                    temp = [self.swap_video(target_image, self.current_frame, marker), self.current_frame] # temp = RGB
 
                 self.r_frame_q.append(temp)  
-    
-    # Here we want to make adjustments to the parameters without the swap reading from existing markers
-    def get_requested_video_frame_parameters(self, frame):  
-        temp = []
-        if self.is_video_loaded == True:
-
-            self.current_frame = int(frame)
-            self.capture.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
-            success, target_image = self.capture.read() #BGR
-            # self.current_frame += 1
-            if success:
-                target_image = cv2.cvtColor(target_image, cv2.COLOR_BGR2RGB) #RGB 
-                if not self.control['SwapFacesButton']:   
-                    temp = [target_image, self.current_frame] #temp = RGB
-                else:  
-                    temp = [self.swap_video(target_image, self.current_frame, True), self.current_frame] # temp = RGB
-
-                self.r_frame_q.append(temp)  
+        
         elif self.is_image_loaded == True:
             if not self.control['SwapFacesButton']:   
                 temp = [self.image, self.current_frame] # image = RGB
         
             else:  
-                temp2 = self.swap_video(self.image, self.current_frame, True)
-                temp = [temp2, self.current_frame] # image = RGB
+                temp = [self.swap_video(self.image, self.current_frame, False), self.current_frame] # image = RGB
             
             self.r_frame_q.append(temp)  
+
 
     def find_lowest_frame(self, queues):
         min_frame=999999999
@@ -417,7 +403,6 @@ class VideoManager():
                     if len(self.fps_average) >= floor(self.fps):
                         fps = round(np.average(self.fps_average), 2)
                         msg = "%s fps, %s process time" % (fps, round(self.process_qs[index]['ThreadTime'], 4))
-                        self.add_action("send_msg", msg)
                         self.fps_average = []
 
                     if self.process_qs[index]['FrameNumber'] >= self.video_frame_total-1 or self.process_qs[index]['FrameNumber'] == self.stop_marker:
@@ -464,7 +449,7 @@ class VideoManager():
 
                         orig_file = self.target_video
                         final_file = self.output+self.file_name[1]
-                        self.add_action("send_msg", "adding audio...")    
+                        print("adding audio...")    
                         args = ["ffmpeg",
                                 '-hide_banner',
                                 '-loglevel',    'error',
@@ -480,9 +465,10 @@ class VideoManager():
 
                         timef= time.time() - self.timer 
                         self.record = False
+                        print('Video saved as:', final_file)
                         msg = "Total time: %s s." % (round(timef,1))
                         print(msg)
-                        self.add_action("send_msg", msg) 
+
                         
                     self.total_thread_time = []
                     self.process_qs[index]['Status'] = 'clear'
@@ -500,7 +486,7 @@ class VideoManager():
                 temp = [target_image, frame_number]
             
             else:
-                temp = [self.swap_video(target_image, frame_number, False), frame_number]
+                temp = [self.swap_video(target_image, frame_number, True), frame_number]
             
             for item in self.process_qs:
                 if item['FrameNumber'] == frame_number:
@@ -513,13 +499,13 @@ class VideoManager():
 
 
     # @profile
-    def swap_video(self, target_image, frame_number, change_parameters):   
+    def swap_video(self, target_image, frame_number, use_markers):   
         # Grab a local copy of the parameters to prevent threading issues
         parameters = self.parameters.copy()
         control = self.control.copy()
         
         # Find out if the frame is in a marker zone and copy the parameters if true
-        if self.markers and not change_parameters:
+        if self.markers and use_markers:
             temp=[]
             for i in range(len(self.markers)):
                 temp.append(self.markers[i]['frame'])
@@ -1035,10 +1021,10 @@ class VideoManager():
                 dst[:,0] += 32.0        
 
             elif parameters['RestorerDetTypeTextSel'] == 'Reference':
-                # try:
-                dst = self.models.resnet50(swapped_face_upscaled) 
-                # except:
-                    # return swapped_face_upscaled       
+                try:
+                    dst = self.models.resnet50(swapped_face_upscaled, score=parameters['DetectScoreSlider']/100.0) 
+                except:
+                    return swapped_face_upscaled       
             
             tform = trans.SimilarityTransform()
             tform.estimate(dst, self.FFHQ_kps)
