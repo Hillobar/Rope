@@ -139,17 +139,17 @@ DEFAULT_DATA = {
 'TLRightState':                     False,
 
 'SaveImageButtonDisplay':                   'text',   
-'SaveImageButtonInfoText':                  'TIMELEFT NUDGE RIGHT:\nMove the timeline handle to the RIGHT 30 frames.',
+'SaveImageButtonInfoText':                  'SAVE IMAGE:\nSaves the current image to your Output Folder.',
 'SaveImageButtonState':                     False,
 'SaveImageButtonText':             'Save Image',
 
 'AutoSwapButtonDisplay':                   'text',   
-'AutoSwapButtonInfoText':                  'TIMELEFT NUDGE RIGHT:\nMove the timeline handle to the RIGHT 30 frames.',
+'AutoSwapButtonInfoText':                  'AUTOSWAP:\nAutomatcially applies your currently selected Input Face to new images.',
 'AutoSwapButtonState':                     False,
 'AutoSwapButtonText':             'Auto Swap',
  
 'ClearVramButtonDisplay':                   'text',   
-'ClearVramButtonInfoText':                  'TIMELEFT NUDGE RIGHT:\nMove the timeline handle to the RIGHT 30 frames.',
+'ClearVramButtonInfoText':                  'CLEAR VRAM:\nClears models from your VRAM.',
 'ClearVramButtonState':                     False,
 'ClearVramButtonText':             'Clear VRAM',
  
@@ -294,7 +294,7 @@ DEFAULT_DATA = {
 
 'CLIPSliderAmount':                 50,
 'CLIPSliderInc':                    1,
-'CLIPSliderInfoText':               'TEXT MASKING THRESHHOLD:\nIncrease to strengthen the effect.',
+'CLIPSliderInfoText':               'TEXT MASKING STENGTH:\nIncrease to strengthen the effect.',
 'CLIPSliderMax':                    100,
 'CLIPSliderMin':                    0,
 
