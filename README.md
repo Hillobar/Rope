@@ -9,7 +9,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Demo Video (Rope-Ruby)](https://www.youtube.com/watch?v=4Y4U0TZ8cWY)
 
-### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-13 19:36 PST}}}}$ ###
+### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-16}}}}$ ###
 ### ${{\color{Goldenrod}{\textsf{Welcome to Rope-Opal!}}}}$ ###
 ### ${{\color{Red}{\textsf{Please grab the latest yoloface model from the link in the wiki!}}}}$ ###
 
@@ -31,6 +31,15 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Fine tune your video ahead of time by creating image setting markers at specific frames.
 * Lightening fast!
 
+### Updates for Rope-Opal-02: ###
+### To update from Opal-01, just need to replace the .py files in /rope. You'll seem them 'Rope-Opal-02' in the comment column ###
+* (feature) Auto-pads input faces to increase the chance of detection
+* (feature) Update console messages for more information
+* (feature) Reimplimented images
+* (fixed) Adressed error with Reference detection alignment in Restorer
+* (feature) Added a VRAM monitor
+* (feature) Reimplemented the VRAM clear
+   
 ### Updates for Rope-Opal-01: ###
 ### To update from Opal, just need to replace the .py file in /rope. You'll seem them 'Rope-Opal-01' in the comment column ###
 * (Fixed) Reverted to previous model load parameters. Some people were having issues with the new settings.
@@ -56,11 +65,9 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Added reverse, forward and beginning to timeline control.
 
 ### Some Feature Still need to be re-implmented from Rope-Ruby. They'll be added back in the next updates. ###
-* Image swapping
 * Stop markers
 * Framerate stats while playing
 * Global hotkeys for moving the timeline
-* Clear memory
 * Ongoing interface maturation
 
 ### Performance:  ###
