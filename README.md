@@ -35,7 +35,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 ### To update from Opal-01, just need to replace the .py files in /rope. You'll seem them 'Rope-Opal-02' in the comment column ###
 * (feature) Auto-pads input faces to increase the chance of detection
 * (feature) Update console messages for more information
-* (feature) Reimplimented images
+* (feature) Reimplemented images
 * (fixed) Adressed error with Reference detection alignment in Restorer
 * (feature) Added a VRAM monitor
 * (feature) Reimplemented the VRAM clear
