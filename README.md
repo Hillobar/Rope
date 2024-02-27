@@ -9,7 +9,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Demo Video (Rope-Ruby)](https://www.youtube.com/watch?v=4Y4U0TZ8cWY)
 
-### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-26}}}}$ ###
+### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-27}}}}$ ###
 ### ${{\color{Goldenrod}{\textsf{Welcome to Rope-Opal!}}}}$ ###
 ### ${{\color{Red}{\textsf{Please grab the latest yoloface model from the link in the wiki!}}}}$ ###
 
