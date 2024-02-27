@@ -32,7 +32,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Lightening fast!
 
 ### Updates for Rope-Opal-03a: ###
-### To update from Opal-03, just need to replace the GUI.py file in /rope.###
+### To update from Opal-03, just need to replace the GUI.py file in /rope.
 * (fixed) Image swapping bug
 * (fixed) Error on clearing VRAM
 
