@@ -31,6 +31,11 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Fine tune your video ahead of time by creating image setting markers at specific frames.
 * Lightening fast!
 
+### Updates for Rope-Opal-03a: ###
+### To update from Opal-03, just need to replace the GUI.py file in /rope.###
+* (fixed) Image swapping bug
+* (fixed) Error on clearing VRAM
+
 ### Updates for Rope-Opal-03: ###
 ### To update from Opal-02, just need to replace the .py files in /rope. You'll seem them 'Rope-Opal-03' in the comment column ###
 * (fixed) Input Videos/Images scrollbar bug
