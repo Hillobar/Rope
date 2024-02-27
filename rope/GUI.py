@@ -13,6 +13,7 @@ import torchvision
 torchvision.disable_beta_transforms_warning()
 import mimetypes
 import webbrowser
+import pickle
 
 
 import rope.GUIElements as GE
@@ -21,17 +22,12 @@ import rope.Styles as style
 
 import inspect #print(inspect.currentframe().f_back.f_code.co_name, 'resize_image')
 
-
-
-
-last_frame = 0
-
 class GUI(tk.Tk):
     def __init__(self, models):  
         super().__init__()
 
         self.models = models
-        self.title('Rope-Opal-02')
+        self.title('Rope-Opal-03')
         self.target_media = []
         self.target_video_file = []
         self.action_q = []
@@ -298,8 +294,9 @@ class GUI(tk.Tk):
         self.layer['preview_frame'].grid_rowconfigure(1, weight=0) 
 
         # Left Side
-        leftplay_frame = tk.Frame(self.layer['preview_frame'], style.canvas_frame_label_2, height=30, width=100 )
-        leftplay_frame.grid(row=0, column=0, sticky='NEWS', pady=0)   
+        self.layer['play_controls_left'] = tk.Frame(self.layer['preview_frame'], style.canvas_frame_label_2, height=30, width=100 )
+        self.layer['play_controls_left'].grid(row=0, column=0, sticky='NEWS', pady=0)
+        self.widget['SaveImageButton'] = GE.Button(self.layer['play_controls_left'], 'SaveImageButton', 2, self.save_image, None, 'control', x=10, y=5, width=100)
         
         # Center
         cente_frame = tk.Frame(self.layer['preview_frame'], style.canvas_frame_label_2, height=30, )
@@ -519,19 +516,14 @@ class GUI(tk.Tk):
         row += top_border_delta
         self.static_widget['10'] = GE.Separator_x(parameters_canvas, 0, row)      
         row += bottom_border_delta   
-        
-        # FaceParser - Mouth
-        self.widget['MouthParserSwitch'] = GE.Switch2(parameters_canvas, 'MouthParserSwitch', 'Mouth Parser', 3, self.update_data, 'parameter', 398, 20, 1, row)
-        row += switch_delta
-        self.widget['MouthParserSlider'] = GE.Slider2(parameters_canvas, 'MouthParserSlider', 'Amount', 3, self.update_data, 'parameter', 398, 20, 1, row, 0.62)
-        row += top_border_delta
-        self.static_widget['11'] = GE.Separator_x(parameters_canvas, 0, row)      
-        row += bottom_border_delta  
+
         
         # FaceParser - Face
         self.widget['FaceParserSwitch'] = GE.Switch2(parameters_canvas, 'FaceParserSwitch', 'Face Parser', 3, self.update_data, 'parameter', 398, 20, 1, row)
         row += switch_delta
-        self.widget['FaceParserSlider'] = GE.Slider2(parameters_canvas, 'FaceParserSlider', 'Amount', 3, self.update_data, 'parameter', 398, 20, 1, row, 0.62)
+        self.widget['FaceParserSlider'] = GE.Slider2(parameters_canvas, 'FaceParserSlider', 'Background', 3, self.update_data, 'parameter', 398, 20, 1, row, 0.62)
+        row += row_delta
+        self.widget['MouthParserSlider'] = GE.Slider2(parameters_canvas, 'MouthParserSlider', 'Mouth', 3, self.update_data, 'parameter', 398, 20, 1, row, 0.62)
         row += top_border_delta
         self.static_widget['12'] = GE.Separator_x(parameters_canvas, 0, row)      
         row += bottom_border_delta          
@@ -665,7 +657,7 @@ class GUI(tk.Tk):
         # Center of visible canvas as a percentage of the entire canvas
         center = (self.target_media_canvas.yview()[1]-self.target_media_canvas.yview()[0])/2
         center = center+self.target_media_canvas.yview()[0]
-        self.static_widget['input_faces_scrollbar'].set(center)       
+        self.static_widget['input_videos_scrollbar'].set(center)       
         
         
     def parameters_mouse_wheel(self, event):
@@ -893,7 +885,6 @@ class GUI(tk.Tk):
         self.source_faces = []
         self.merged_faces_canvas.delete("all")
         self.source_faces_canvas.delete("all")
-        
 
         # First load merged embeddings
         try:
@@ -905,8 +896,6 @@ class GUI(tk.Tk):
                     to = [temp[i][6:], np.array(temp[i+1:i+513], dtype='float32')]
                     temp0.append(to)
 
-
-            
             for j in range(len(temp0)):
                 new_source_face = self.source_face.copy()
                 self.source_faces.append(new_source_face)
@@ -920,18 +909,23 @@ class GUI(tk.Tk):
                 self.source_faces[j]["TKButton"].bind("<MouseWheel>", lambda event: self.merged_faces_canvas.xview_scroll(-int(event.delta/120.0), "units"))
                 
                 self.merged_faces_canvas.create_window((j//4)*92,8+(22*(j%4)), window = self.source_faces[j]["TKButton"],anchor='nw')            
+            
             self.merged_faces_canvas.configure(scrollregion = self.merged_faces_canvas.bbox("all"))
             self.merged_faces_canvas.xview_moveto(0)
+        
         except:
             pass
+        
         shift_i_len = len(self.source_faces)
         
         # Next Load images
         directory = self.json_dict["source faces"]
         filenames = [os.path.join(dirpath,f) for (dirpath, dirnames, filenames) in os.walk(directory) for f in filenames]
 
-       
         faces = []
+
+        # torch.cuda.memory._record_memory_history(True, trace_alloc_max_entries=100000, trace_alloc_record_context=True)
+
         for file in filenames: # Does not include full path
             # Find all faces and ad to faces[]
             # Guess File type based on extension
@@ -958,11 +952,7 @@ class GUI(tk.Tk):
                         height_start = int(img.size()[0]*pad_scale/2)
                         height_end = height_start+int(img.size()[0])
 
-                        
                         padding[height_start:height_end, width_start:width_end,  :] = img
-                        
-
-                        
                         img = padding
                         
                         img = img.permute(2,0,1)
@@ -972,14 +962,18 @@ class GUI(tk.Tk):
                             print('Image cropped too close:', file) 
                         else:
                             face_emb, cropped_image = self.models.run_recognize(img, kpss)
-                            crop = cv2.cvtColor(cropped_image.cpu().numpy(), cv2.COLOR_BGR2RGB)            
+                            crop = cv2.cvtColor(cropped_image.cpu().numpy(), cv2.COLOR_BGR2RGB)
                             crop = cv2.resize(crop, (85, 85))
                             faces.append([crop, face_emb])
-                            pass
-                        
-                    else:
-                        print('Bad file', file) 
 
+                    else:
+                        print('Bad file', file)
+
+        # snapshot = torch.cuda.memory._snapshot()
+        # with open(f"snapshot.pickle", "wb") as f:
+        #     pickle.dump(snapshot, f)
+
+        torch.cuda.empty_cache()
                     
         # Add faces[] images to buttons
         delx, dely = 100, 100
@@ -1269,7 +1263,7 @@ class GUI(tk.Tk):
                 self.target_faces[0]["ButtonState"] = True
                 self.target_faces[0]["TKButton"].config(style.media_button_on_3) 
                 
-                # Reselct Source images
+                # Reselect Source images
                 self.toggle_source_faces_buttons_state_shift(None, button=-1)
                 
                 self.toggle_swapper(True)
@@ -1280,17 +1274,21 @@ class GUI(tk.Tk):
 
     
     def load_target(self, button, media_file, media_type):
-        self.video_loaded = True
+        # Make sure the video stops playing
+        self.toggle_play_video('stop')
+
         self.clear_faces()
-       
+
         if media_type == 'Video':
             self.video_slider.set(0)
             self.add_action("load_target_video", media_file)
-            
+            self.media_file_name = os.path.splitext(os.path.basename(media_file))
+            self.video_loaded = True
+
 
         elif media_type == 'Image':
             self.add_action("load_target_image", media_file)
-            self.image_file_name = os.path.splitext(os.path.basename(media_file))
+            self.media_file_name = os.path.splitext(os.path.basename(media_file))
             
             # # find faces
             if self.widget['AutoSwapButton'].get():
@@ -1303,16 +1301,9 @@ class GUI(tk.Tk):
             self.target_media_buttons[i].config(style.media_button_off_3)
         
         self.target_media_buttons[button].config(style.media_button_on_3)
-        
-        
-        if self.widget['TLPlayButton'].get() == True:
-            self.toggle_play_video()
 
-        
         # delete all markers
-
         self.layer['markers_canvas'].delete('all')
-        
         self.markers = []
         self.stop_marker = []
         self.add_action("markers", self.markers)
@@ -1430,10 +1421,7 @@ class GUI(tk.Tk):
 
     def toggle_play_video(self, set_value='toggle'):
         if self.widget['PreviewModeTextSel'].get()=='Video':
-            if not self.video_loaded:
-                print("Please select video first!")
-                return
-                
+
             # Update button    
             if set_value == 'toggle':
                 self.widget['TLPlayButton'].toggle_button()
@@ -1444,18 +1432,22 @@ class GUI(tk.Tk):
             
             # If play
             if self.widget['TLPlayButton'].get():
-                # and record
-                if self.widget['TLRecButton'].get(): 
-                    if not self.json_dict["saved videos"]:
-                        print("Set saved video folder first!")
-                        self.add_action("play_video", "stop_from_gui")
-
-                    else:
-                        self.add_action("play_video", "record")
-
-                # only play
+                if not self.video_loaded:
+                    print("Please select video first!")
+                    return
                 else:
-                    self.add_action("play_video", "play")
+                    # and record
+                    if self.widget['TLRecButton'].get():
+                        if not self.json_dict["saved videos"]:
+                            print("Set saved video folder first!")
+                            self.add_action("play_video", "stop_from_gui")
+
+                        else:
+                            self.add_action("play_video", "record")
+
+                    # only play
+                    else:
+                        self.add_action("play_video", "play")
      
             else:
                 self.add_action("play_video", "stop_from_gui")
@@ -1510,12 +1502,7 @@ class GUI(tk.Tk):
                 self.widget['TLRecButton'].disable_button()
 
  
-    def update_CLIP_text(self, text):
-        self.parameters['CLIPText'] = text.get()
-        self.add_action("parameters", self.parameters)
-        self.add_action('get_requested_video_frame_without_markers', self.video_slider.get())
-        self.focus()
-        
+
     def add_action(self, action, parameter=None): # 
         # print(inspect.currentframe().f_back.f_code.co_name, '->add_action: '+action)
 
@@ -1614,12 +1601,7 @@ class GUI(tk.Tk):
                 if self.source_faces[i]["ButtonState"]and i>0:
                     self.toggle_source_faces_buttons_state(None, i-1)
                     break
-     
-          
 
-
-
-        
     def set_view(self, a,b):
     
         self.clear_faces()
@@ -1730,20 +1712,21 @@ class GUI(tk.Tk):
 
   
     def save_image(self):
-        filename =  self.image_file_name[0]+"_"+str(time.time())[:10]
+        filename =  self.media_file_name[0]+"_"+str(time.time())[:10]
         filename = os.path.join(self.json_dict["saved videos"], filename)
-        cv2.imwrite(filename+'.jpg', cv2.cvtColor(self.video_image, cv2.COLOR_BGR2RGB))
-        print('Image saved as:', filename+'.jpg')
+        cv2.imwrite(filename+'.png', cv2.cvtColor(self.video_image, cv2.COLOR_BGR2RGB))
+        print('Image saved as:', filename+'.png')
    
     def clear_mem(self):
-    
         self.widget['RestorerSwitch'].set(False)
         self.widget['OccluderSwitch'].set(False)
         self.widget['MouthParserSwitch'].set(False)
         self.widget['FaceParserSwitch'].set(False)
         self.widget['CLIPSwitch'].set(False)
+        self.widget['SwapFacesButton'].set(False)
 
         self.models.delete_models()
+        torch.cuda.empty_cache()
 
         
         

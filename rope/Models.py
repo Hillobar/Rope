@@ -86,10 +86,13 @@ class Models():
     
     def delete_models(self):
 
+        self.retinaface_model = []
         self.yoloface_model = []
         self.scrdf_model = []
-        self.resnet50_model=[]
+        self.resnet50_model = []
         self.insight106_model = []
+        self.recognition_model = []
+        self.swapper_model = []
         self.GFPGAN_model = []
         self.GPEN_256_model = []
         self.GPEN_512_model = []
@@ -214,6 +217,7 @@ class Models():
     
         
     def detect_retinaface(self, img, max_num, score):
+
         # Resize image to fit within the input_size
         input_size = (640, 640)
         im_ratio = torch.div(img.size()[1], img.size()[2])
@@ -262,7 +266,9 @@ class Models():
         # Sync and run model
         self.syncvec.cpu()        
         self.retinaface_model.run_with_iobinding(io_binding)
-        
+
+
+
         net_outs = io_binding.copy_outputs_to_cpu()
 
         input_height = det_img.shape[2]

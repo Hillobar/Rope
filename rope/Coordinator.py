@@ -49,7 +49,7 @@ def coordinator():
             vm.play_video(action[0][1])
             action.pop(0)
         elif action[0][0] == "get_requested_video_frame":
-            vm.get_requested_video_frame(action[0][1], marker=False)
+            vm.get_requested_video_frame(action[0][1], marker=True)
             action.pop(0)
         elif action[0][0] == "get_requested_video_frame_without_markers":
             vm.get_requested_video_frame(action[0][1], marker=False)
