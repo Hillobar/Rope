@@ -1719,7 +1719,6 @@ class GUI(tk.Tk):
     def clear_mem(self):
         self.widget['RestorerSwitch'].set(False)
         self.widget['OccluderSwitch'].set(False)
-        self.widget['MouthParserSwitch'].set(False)
         self.widget['FaceParserSwitch'].set(False)
         self.widget['CLIPSwitch'].set(False)
         self.widget['SwapFacesButton'].set(False)
