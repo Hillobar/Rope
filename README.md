@@ -9,7 +9,7 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Demo Video (Rope-Ruby)](https://www.youtube.com/watch?v=4Y4U0TZ8cWY)
 
-### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-16}}}}$ ###
+### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-26}}}}$ ###
 ### ${{\color{Goldenrod}{\textsf{Welcome to Rope-Opal!}}}}$ ###
 ### ${{\color{Red}{\textsf{Please grab the latest yoloface model from the link in the wiki!}}}}$ ###
 
@@ -30,6 +30,16 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * Segment recording
 * Fine tune your video ahead of time by creating image setting markers at specific frames.
 * Lightening fast!
+
+### Updates for Rope-Opal-03: ###
+### To update from Opal-02, just need to replace the .py files in /rope. You'll seem them 'Rope-Opal-03' in the comment column ###
+* (fixed) Input Videos/Images scrollbar bug
+* (fixed) Sometime the playbar would get out of sync when selecting a video while playing
+* (fixed) The battle of memory managers has been resolved. Rope will now use less VRAM.
+* (fixed) Mousewheel and manually dragging the timeline slider were not respecting the markers
+* (feature) Save frames from the video preview window
+* (fixed) Rotation is back to 90 deg increments
+* (fixed) Adjusted some defaults for better out of the box results
 
 ### Updates for Rope-Opal-02: ###
 ### To update from Opal-01, just need to replace the .py files in /rope. You'll seem them 'Rope-Opal-02' in the comment column ###
