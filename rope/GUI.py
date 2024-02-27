@@ -27,12 +27,13 @@ class GUI(tk.Tk):
         super().__init__()
 
         self.models = models
-        self.title('Rope-Opal-03')
+        self.title('Rope-Opal-03a')
         self.target_media = []
         self.target_video_file = []
         self.action_q = []
         self.video_image = []
         self.video_loaded = False
+        self.image_loaded = False
         self.image_file_name = []
         self.stop_marker = []
         self.stop_image = []
@@ -632,9 +633,8 @@ class GUI(tk.Tk):
             if use_markers:
                 self.add_action('get_requested_video_frame', self.video_slider.get())
             else:
-                self.add_action('get_requested_video_frame_without_markers', self.video_slider.get())       
-        
-        
+                self.add_action('get_requested_video_frame_without_markers', self.video_slider.get())
+
     def callback(self, url):
         webbrowser.open_new_tab(url)
  
@@ -1276,7 +1276,8 @@ class GUI(tk.Tk):
     def load_target(self, button, media_file, media_type):
         # Make sure the video stops playing
         self.toggle_play_video('stop')
-
+        self.image_loaded = False
+        self.video_loaded = False
         self.clear_faces()
 
         if media_type == 'Video':
@@ -1289,6 +1290,7 @@ class GUI(tk.Tk):
         elif media_type == 'Image':
             self.add_action("load_target_image", media_file)
             self.media_file_name = os.path.splitext(os.path.basename(media_file))
+            self.image_loaded = True
             
             # # find faces
             if self.widget['AutoSwapButton'].get():
@@ -1469,13 +1471,7 @@ class GUI(tk.Tk):
                 self.widget['SwapFacesButton'].enable_button()
             else:
                 self.widget['SwapFacesButton'].disable_button()
-                
-        
-        if self.widget['SwapFacesButton'].get():
-            self.widget['SwapFacesButton'].enable_button()
-        else:
-            self.widget['SwapFacesButton'].disable_button()
-        
+
         if self.widget['PreviewModeTextSel'].get()=='Video':
             self.update_data('control', 'SwapFacesButton', use_markers=True)
         elif self.widget['PreviewModeTextSel'].get()=='Image':    
@@ -1512,6 +1508,9 @@ class GUI(tk.Tk):
 
         # Only do requests when the video is not playing - (moving the timeline or changing parameters)
         elif self.video_loaded and not self.widget['TLPlayButton'].get():
+            self.action_q.append([action, parameter])
+
+        elif self.image_loaded:
             self.action_q.append([action, parameter])
 
     def update_vram_indicator(self):
