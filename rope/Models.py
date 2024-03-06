@@ -12,6 +12,7 @@ import onnx
 from itertools import product as product
 import subprocess as sp
 onnxruntime.set_default_logger_severity(4)
+from platform import system
 
 class Models():
     def __init__(self): 
@@ -57,20 +58,29 @@ class Models():
         
         if detect_mode=='Retinaface':
             if not self.retinaface_model:
-                self.retinaface_model = onnxruntime.InferenceSession('.\models\det_10g.onnx', providers=self.providers)
+                if system() == 'Linux':
+                    self.retinaface_model = onnxruntime.InferenceSession('./models/det_10g.onnx', providers=self.providers)
+                else:
+                    self.retinaface_model = onnxruntime.InferenceSession('.\models\det_10g.onnx', providers=self.providers)
                 
             kpss = self.detect_retinaface(img, max_num=max_num, score=score)
             
         elif detect_mode=='SCRDF':
             if not self.scrdf_model:
-                self.scrdf_model = onnxruntime.InferenceSession('.\models\scrfd_2.5g_bnkps.onnx', providers=self.providers)
+                if system() == 'Linux':
+                    self.scrdf_model = onnxruntime.InferenceSession('./models/scrfd_2.5g_bnkps.onnx', providers=self.providers)
+                else:
+                    self.scrdf_model = onnxruntime.InferenceSession('.\models\scrfd_2.5g_bnkps.onnx', providers=self.providers)
                 
             kpss = self.detect_scrdf(img, max_num=max_num, score=score)
             
         
         elif detect_mode=='Yolov8':
             if not self.yoloface_model:
-                self.yoloface_model = onnxruntime.InferenceSession('.\models\yoloface_8n.onnx', providers=self.providers)
+                if system() == 'Linux':
+                    self.yoloface_model = onnxruntime.InferenceSession('./models/yoloface_8n.onnx', providers=self.providers)
+                else:
+                    self.yoloface_model = onnxruntime.InferenceSession('.\models\yoloface_8n.onnx', providers=self.providers)
         
             kpss = self.detect_yoloface(img, max_num=max_num, score=score)
         
@@ -80,7 +90,10 @@ class Models():
         points = []
 
         if not self.insight106_model:
-            self.insight106_model = onnxruntime.InferenceSession('.\models\2d106det.onnx', providers=self.providers)
+            if system() == 'Linux':
+                self.insight106_model = onnxruntime.InferenceSession('./models/2d106det.onnx', providers=self.providers)
+            else:
+                self.insight106_model = onnxruntime.InferenceSession('.\models\2d106det.onnx', providers=self.providers)
             
         points = self.detect_insight106(img)   
     
@@ -102,7 +115,10 @@ class Models():
             
     def run_recognize(self, img, kps):
         if not self.recognition_model:
-            self.recognition_model = onnxruntime.InferenceSession('.\models\w600k_r50.onnx', providers=self.providers)
+            if system() == 'Linux':
+                self.recognition_model = onnxruntime.InferenceSession('./models/w600k_r50.onnx', providers=self.providers)
+            else:
+                self.recognition_model = onnxruntime.InferenceSession('.\models\w600k_r50.onnx', providers=self.providers)
         
         embedding, cropped_image = self.recognize(img, kps)
         return embedding, cropped_image

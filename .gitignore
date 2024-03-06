@@ -1,0 +1,8 @@
+**/__pycache__/**
+
+models/*.ckpt
+models/*.pth
+models/*.onnx
+saved_parameters.json
+data.json
+merged_embeddings.txt
