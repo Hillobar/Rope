@@ -570,7 +570,7 @@ class TextSelection():
                 self.textselect_label[mode].configure(self.sel_on_style)
                 self.selection = mode
                 if request_frame:
-                    self.function(self.argument, self.name, use_markers=False)
+                    self.function(self.argument, self.name)
 
             else:
                 self.textselect_label[mode].configure(self.sel_off_style)  
@@ -599,7 +599,7 @@ class TextSelection():
 
     def load_default(self):
         self.set(self.default_data[self.name+'Mode'])           
-        
+ 
 
 class Switch2():
     def __init__(self, parent, name, display_text, style_level, function, argument, width, height, x, y):
@@ -974,4 +974,78 @@ class Text_Entry():
 
     def load_default(self):
         pass
-        # self.set(self.default_data[self.name+'Mode'])  
+        # self.set(self.default_data[self.name+'Mode']) 
+        
+class VRAM_Indicator():
+    def __init__(self, parent, style_level, width, height, x, y):
+        self.parent = parent
+        self.width = width
+        self.height = height
+        self.x = x
+        self.y = y
+        self.blank = tk.PhotoImage()
+        
+        self.used = 0
+        self.total = 1
+        
+        if style_level == 3:
+            self.frame_style = style.canvas_frame_label_3 
+            self.text_style = style.text_3
+            self.sel_off_style = style.text_selection_off_3
+            self.sel_on_style = style.text_selection_on_3
+        
+        if style_level == 2:
+            self.frame_style = style.canvas_frame_label_2
+            self.text_style = style.text_2
+            self.sel_off_style = style.text_selection_off_2
+            self.sel_on_style = style.text_selection_on_2
+        
+        if style_level == 1:
+            self.frame_style = style.canvas_frame_label_1
+
+        self.frame = tk.Frame(self.parent, self.frame_style, width=self.width, height=self.height)
+        self.frame.place(x=self.x, y=self.y)
+        
+        self.label_name = tk.Label(self.frame, self.frame_style, image=self.blank, compound='c', fg='#b1b1b2', font=("Segoe UI", 9), width=50, text='VRAM', height=self.height)
+        self.label_name.place(x=0, y=0)
+
+        
+        # self.label_value = tk.Label(self.frame, self.frame_style, bg='yellow', image=self.blank, compound='c', fg='#D0D0D0', font=("Segoe UI", 9), justify='right', width=100, text='VRAM', height=self.height)
+        # self.label_value.place(x=200, y=0)
+        
+        
+        self.canvas = tk.Canvas(self.frame, self.frame_style, highlightthickness =2, highlightbackground='#b1b1b2', width=self.width-60, height=self.height-4)
+        self.canvas.place(x=50, y=0)
+        
+    def update_display(self):
+        self.canvas.delete('all')
+        width = self.canvas.winfo_width()
+
+        try:
+            ratio = self.used/self.total
+        except ZeroDivisionError:
+            ratio = 1
+        
+        if ratio>0.9:
+            color = '#d10303'
+        else:
+            color = '#b1b1b2'
+        width = ratio*width
+        
+        self.canvas.create_rectangle(0, 0, width, self.height, fill=color)
+        
+        # text = str(self.used)+' / '+str(self.total)+' MB'        
+        # self.label_value.configure(text=text)
+    
+    def set(self, used, total):
+        self.used = used
+        self.total = total
+        
+        self.update_display()
+        
+    def hide(self):
+        pass
+ 
+    def unhide(self):
+        pass  
+        

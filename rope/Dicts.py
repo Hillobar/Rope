@@ -4,7 +4,7 @@ DEFAULT_DATA = {
 'AddMarkerButtonIconHover':            './rope/media/add_marker_hover.png',    
 'AddMarkerButtonIconOff':              './rope/media/add_marker_off.png',
 'AddMarkerButtonIconOn':               './rope/media/add_marker_off.png',
-'AddMarkerButtonInfoText':             'ADD MARKER:\nAttaaches a parameter marker to the current frame. Markers copy all parameter settings and apply them to all future frames, or until another marker is encountered.',
+'AddMarkerButtonInfoText':             'ADD MARKER:\nAttaches a parameter marker to the current frame. Markers copy all parameter settings and apply them to all future frames, or until another marker is encountered.',
 'AddMarkerButtonState':           False,
 'AudioDisplay':             'text', 
 'AudioInfoText':             'ENABLE REAL-TIME AUDIO:\nAdds audio from the input video during preview playback. If you are unable to maintain the input video frame rate, the audio will lag.',   
@@ -137,7 +137,22 @@ DEFAULT_DATA = {
 'TLRightIconOn':                    './rope/media/tl_right_on.png',
 'TLRightInfoText':                  'TIMELEFT NUDGE RIGHT:\nMove the timeline handle to the RIGHT 30 frames.',
 'TLRightState':                     False,
-        
+
+'SaveImageButtonDisplay':                   'text',   
+'SaveImageButtonInfoText':                  'SAVE IMAGE:\nSaves the current image to your Output Folder.',
+'SaveImageButtonState':                     False,
+'SaveImageButtonText':             'Save Image',
+
+'AutoSwapButtonDisplay':                   'text',   
+'AutoSwapButtonInfoText':                  'AUTOSWAP:\nAutomatcially applies your currently selected Input Face to new images.',
+'AutoSwapButtonState':                     False,
+'AutoSwapButtonText':             'Auto Swap',
+ 
+'ClearVramButtonDisplay':                   'text',   
+'ClearVramButtonInfoText':                  'CLEAR VRAM:\nClears models from your VRAM.',
+'ClearVramButtonState':                     False,
+'ClearVramButtonText':             'Clear VRAM',
+ 
 #Switches       
 'ColorSwitchInfoText':              'RGB ADJUSTMENT:\nFine-tune the RGB color values of the swap.',
 'ColorSwitchState':                 False,
@@ -247,7 +262,7 @@ DEFAULT_DATA = {
 'OccluderSliderMax':                100,
 'OccluderSliderMin':                -100,
 'OrientSliderAmount':               0,
-'OrientSliderInc':                  45,    
+'OrientSliderInc':                  90,
 'OrientSliderInfoText':             'ORIENTATION ANGLE:\nSet this to the angle of the input face angle to help with laying down/upside down/etc. Angles are read clockwise.',
 'OrientSliderMax':                  270,
 'OrientSliderMin':                  0,
@@ -279,7 +294,7 @@ DEFAULT_DATA = {
 
 'CLIPSliderAmount':                 50,
 'CLIPSliderInc':                    1,
-'CLIPSliderInfoText':               'TEXT MASKING THRESHHOLD:\nIncrease to strengthen the effect.',
+'CLIPSliderInfoText':               'TEXT MASKING STENGTH:\nIncrease to strengthen the effect.',
 'CLIPSliderMax':                    100,
 'CLIPSliderMin':                    0,
 
@@ -295,7 +310,7 @@ DEFAULT_DATA = {
 'RecordTypeTextSelMode':            'FFMPEG',
 'RecordTypeTextSelModes':           ['FFMPEG', 'OPENCV'],
 'RestorerDetTypeTextSelInfoText':   'ALIGNMENT:\nSelect how the face is aligned for the Restorer. Original preserves facial features and expressions, but can show some artifacts. Reference softens features. Blend is closer to Reference but is much faster.',
-'RestorerDetTypeTextSelMode':       'Original',
+'RestorerDetTypeTextSelMode':       'Blend',
 'RestorerDetTypeTextSelModes':      ['Original', 'Blend', 'Reference'],  
 'RestorerTypeTextSelInfoText':      'RESTORER TYPE:\nSelect the Restorer type.\nSpeed: GPEN256>GFPGAN>CF>GPEN512',
 'RestorerTypeTextSelMode':          'GFPGAN',

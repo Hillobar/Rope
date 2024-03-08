@@ -10,10 +10,11 @@ import rope.Models as Models
 from rope.external.clipseg import CLIPDensePredT
 
 resize_delay = 1
+mem_delay = 1
 
 # @profile
 def coordinator():
-    global gui, vm, action, frame, r_frame, load_notice, resize_delay
+    global gui, vm, action, frame, r_frame, load_notice, resize_delay, mem_delay
     # start = time.time()
 
   
@@ -48,10 +49,10 @@ def coordinator():
             vm.play_video(action[0][1])
             action.pop(0)
         elif action[0][0] == "get_requested_video_frame":
-            vm.get_requested_video_frame(action[0][1])
+            vm.get_requested_video_frame(action[0][1], marker=True)
             action.pop(0)
         elif action[0][0] == "get_requested_video_frame_without_markers":
-            vm.get_requested_video_frame_parameters(action[0][1])
+            vm.get_requested_video_frame(action[0][1], marker=False)
             action.pop(0)    
         elif action[0][0] == "get_requested_image":
             vm.get_requested_image()
@@ -110,9 +111,7 @@ def coordinator():
             gui.set_video_slider_length(action[0][1])
             action.pop(0)
 
-        elif action[0][0] == "send_msg":    
-            gui.set_status(action[0][1])
-            action.pop(0)             
+          
             
         else:
             print("Action not found: "+action[0][0]+" "+str(action[0][1]))
@@ -126,6 +125,12 @@ def coordinator():
         resize_delay = 0
     else:
         resize_delay +=1
+        
+    if mem_delay > 1000:
+        gui.update_vram_indicator()
+        mem_delay = 0
+    else:
+        mem_delay +=1
         
     vm.process()
     gui.after(1, coordinator)
@@ -149,7 +154,7 @@ def load_clip_model():
     
     
 def run():
-    global gui, vm, action, frame, r_frame, resize_delay
+    global gui, vm, action, frame, r_frame, resize_delay, mem_delay
 
     models = Models.Models()
     gui = GUI.GUI(models)

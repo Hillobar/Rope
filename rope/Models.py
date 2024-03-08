@@ -10,6 +10,7 @@ from numpy.linalg import norm as l2norm
 import onnxruntime
 import onnx
 from itertools import product as product
+import subprocess as sp
 onnxruntime.set_default_logger_severity(4)
 
 class Models():
@@ -21,6 +22,8 @@ class Models():
         self.yoloface_model = []
         self.scrdf_model = []
         self.resnet50_model, self.anchors  = [], []
+        
+        self.insight106_model = []
 
         self.recognition_model = []
         self.swapper_model = []
@@ -35,6 +38,19 @@ class Models():
         self.faceparser_model = []
         
         self.syncvec = torch.empty((1,1), dtype=torch.float32, device='cuda:0')
+        
+    def get_gpu_memory(self):
+        command = "nvidia-smi --query-gpu=memory.total --format=csv"
+        memory_total_info = sp.check_output(command.split()).decode('ascii').split('\n')[:-1][1:]
+        memory_total = [int(x.split()[0]) for i, x in enumerate(memory_total_info)]
+        
+        command = "nvidia-smi --query-gpu=memory.free --format=csv"
+        memory_free_info = sp.check_output(command.split()).decode('ascii').split('\n')[:-1][1:]
+        memory_free = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
+        
+        memory_used = memory_total[0] - memory_free[0]
+        
+        return memory_used, memory_total[0]     
 
     def run_detect(self, img, detect_mode='Retinaface', max_num=1, score=0.5):
         kpss = []
@@ -59,9 +75,30 @@ class Models():
             kpss = self.detect_yoloface(img, max_num=max_num, score=score)
         
         return kpss
+        
+    def run_align(self, img):
+        points = []
+
+        if not self.insight106_model:
+            self.insight106_model = onnxruntime.InferenceSession('.\models\2d106det.onnx', providers=self.providers)
+            
+        points = self.detect_insight106(img)   
     
-    def delete_detect(self):
-        del self.retinaface_model
+    def delete_models(self):
+
+        self.retinaface_model = []
+        self.yoloface_model = []
+        self.scrdf_model = []
+        self.resnet50_model = []
+        self.insight106_model = []
+        self.recognition_model = []
+        self.swapper_model = []
+        self.GFPGAN_model = []
+        self.GPEN_256_model = []
+        self.GPEN_512_model = []
+        self.codeformer_model = []
+        self.occluder_model = []
+        self.faceparser_model = []
             
     def run_recognize(self, img, kps):
         if not self.recognition_model:
@@ -180,6 +217,7 @@ class Models():
     
         
     def detect_retinaface(self, img, max_num, score):
+
         # Resize image to fit within the input_size
         input_size = (640, 640)
         im_ratio = torch.div(img.size()[1], img.size()[2])
@@ -228,7 +266,9 @@ class Models():
         # Sync and run model
         self.syncvec.cpu()        
         self.retinaface_model.run_with_iobinding(io_binding)
-        
+
+
+
         net_outs = io_binding.copy_outputs_to_cpu()
 
         input_height = det_img.shape[2]
@@ -578,7 +618,34 @@ class Models():
             result.append(kps_list[r])
             
         return np.array(result)
-                
+   
+    def run_insight106(self, img):
+        height = img.size(dim=1)
+        width = img.size(dim=2)
+        length = max((height, width))
+
+        image = torch.zeros((length, length, 3), dtype=torch.uint8, device='cuda')
+        img = img.permute(1,2,0)
+        
+        image[0:height, 0:width] = img
+        scale = length/192       
+        image = torch.div(image, 255.0)
+        
+        t192 = v2.Resize((192, 192), antialias=False)
+        image = image.permute(2, 0, 1)
+        image = t192(image)
+
+        image = torch.unsqueeze(image, 0).contiguous()
+
+        io_binding = self.insight106_model.io_binding() 
+        io_binding.bind_input(name='data', device_type='cuda', device_id=0, element_type=np.float32,  shape=image.size(), buffer_ptr=image.data_ptr())
+        io_binding.bind_output('fc1', 'cuda') 
+        
+        # Sync and run model
+        self.syncvec.cpu()     
+        self.insight106_model.run_with_iobinding(io_binding)
+        
+        net_outs = io_binding.copy_outputs_to_cpu() 
         
     def recognize(self, img, face_kps):
         # Find transform 
@@ -619,7 +686,7 @@ class Models():
         # Return embedding
         return np.array(io_binding.copy_outputs_to_cpu()).flatten(), cropped_image
         
-    def resnet50(self, image):   
+    def resnet50(self, image, score=.5):   
         if not self.resnet50_model:
             self.resnet50_model = onnxruntime.InferenceSession("./models/res50.onnx", providers=self.providers)
             
@@ -691,8 +758,7 @@ class Models():
         landmarks = landmarks.cpu().numpy()  
 
         # ignore low scores
-        # inds = np.where(scores > 0.97)[0]
-        inds = torch.where(scores>0.97)[0]
+        inds = torch.where(scores>score)[0]
         inds = inds.cpu().numpy()  
         scores = scores.cpu().numpy()  
         
