@@ -1,3 +1,3 @@
-call venv\Scripts\activate.bat
+call venv_py310\Scripts\activate.bat
 python Rope.py 
 pause
