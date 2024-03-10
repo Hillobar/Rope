@@ -280,18 +280,18 @@ class VideoManager():
                         self.video_file]
  
                 
-                self.audio_sp = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                self.audio_sp = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text = True)
 
                 # Parse the console to find where the audio started
                 while True:
-                    temp = self.audio_sp.stdout.read(69)    
-                    if temp[:7] != b'    nan':
-                        sought_time = float(temp[:7])
-                        self.current_frame = int(self.fps*sought_time)
-                        
-                        self.capture.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
-
-                        break
+                    timestr = self.audio_sp.stdout.readline().split()[0]
+                    if timestr != "nan":
+                        sought_time = float(timestr)
+                        if sought_time >= 0:
+                            self.current_frame = int(self.fps*sought_time)                            
+                            self.capture.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
+                            break
+                    time.sleep(0.01)
 
 
 #'    nan    :  0.000
