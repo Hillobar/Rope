@@ -30,6 +30,7 @@ class GUI(tk.Tk):
         self.title('Rope-Opal-03a')
         self.target_media = []
         self.target_video_file = []
+        self.media_file_name = []
         self.action_q = []
         self.video_image = []
         self.video_loaded = False
@@ -62,7 +63,6 @@ class GUI(tk.Tk):
         self.widget = {}
         self.static_widget = {}
         self.layer = {}
-        
 
 
         self.json_dict =    {
@@ -1308,6 +1308,7 @@ class GUI(tk.Tk):
         self.layer['markers_canvas'].delete('all')
         self.markers = []
         self.stop_marker = []
+        self.load_markers_json()
         self.add_action("markers", self.markers)
 
 
@@ -1488,6 +1489,7 @@ class GUI(tk.Tk):
             
     def toggle_rec_video(self):
         # Play button must be off to enable record button
+        self.save_markers_json()
         if not self.widget['TLPlayButton'].get():
             self.widget['TLRecButton'].toggle_button()
                 
@@ -1684,17 +1686,33 @@ class GUI(tk.Tk):
         
         # resize canvas
         else :
+            self.add_action("update_markers_canvas", self.markers)
 
-            self.layer['markers_canvas'].delete('all')
-            width = self.layer['markers_canvas'].winfo_width()-20-40-20
-            
-            for marker in self.markers:
-                position = 20+int(width*marker['frame']/self.video_slider.get_length())
-                marker['icon_ref'] = self.layer['markers_canvas'].create_line(position,0, position, 15, fill='light goldenrod')
+    def save_markers_json(self):
+        if len(self.markers) == 0 or len(self.media_file_name) == 0:
+            return
+        json_file_path = os.path.join(self.json_dict["source videos"], self.media_file_name[0] + "_markers.json")
+        # Save the markers to the JSON file
+        with open(json_file_path, 'w') as json_file:
+            json.dump(self.markers, json_file)
 
+    def load_markers_json(self):
+        if len(self.media_file_name) == 0:
+            return
+        json_file_path = os.path.join(self.json_dict["source videos"], self.media_file_name[0] + "_markers.json")
+        if os.path.exists(json_file_path):
+            # Load the markers from the JSON file
+            with open(json_file_path, 'r') as json_file:
+                self.markers = json.load(json_file)
+            self.add_action("update_markers_canvas", self.markers)
 
+    def update_markers_canvas(self):
+        self.layer['markers_canvas'].delete('all')
+        width = self.layer['markers_canvas'].winfo_width()-20-40-20
+        for marker in self.markers:
+            position = 20+int(width*marker['frame']/self.video_slider.get_length())
+            marker['icon_ref'] = self.layer['markers_canvas'].create_line(position,0, position, 15, fill='light goldenrod')
 
-                
     def toggle_stop(self):
         if self.stop_marker == self.video_slider.self.timeline_position:
             self.stop_marker = []

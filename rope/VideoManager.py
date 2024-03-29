@@ -150,6 +150,7 @@ class VideoManager():
             self.r_frame_q = []             
             self.found_faces = []
             self.add_action("set_slider_length",self.video_frame_total-1)
+            self.add_action("update_markers_canvas", self.markers)
 
         self.capture.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)        
         success, image = self.capture.read() 

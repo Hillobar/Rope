@@ -111,6 +111,9 @@ def coordinator():
             gui.set_video_slider_length(action[0][1])
             action.pop(0)
 
+        elif action[0][0] == "update_markers_canvas":
+            gui.update_markers_canvas()
+            action.pop(0)        
           
             
         else:
