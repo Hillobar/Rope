@@ -392,7 +392,7 @@ class VideoManager():
         # Always be emptying the queues
         time_diff = time.time() - self.frame_timer
 
-        if not self.record and time_diff >= 1.0/float(self.fps) and self.play:
+        if not self.record and self.fps > 0 and time_diff >= 1.0/float(self.fps) and self.play:
 
             index, min_frame = self.find_lowest_frame(self.process_qs)
 
