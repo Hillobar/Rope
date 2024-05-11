@@ -339,7 +339,6 @@ class VideoManager():
            # Initialize
             self.timer = time.time()
             frame_width = int(self.capture.get(3))
-            frame_width = int(self.capture.get(3))
             frame_height = int(self.capture.get(4))
 
             self.start_time = float(self.capture.get(cv2.CAP_PROP_POS_FRAMES) / float(self.fps))            
