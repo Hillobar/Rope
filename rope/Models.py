@@ -61,7 +61,7 @@ class Models():
             if not self.retinaface_model:
                 self.retinaface_model = onnxruntime.InferenceSession('.\models\det_10g.onnx', providers=self.providers)
                 
-            kpss = self.detect_retinaface2(img, max_num=max_num, score=score)
+            kpss = self.detect_retinaface(img, max_num=max_num, score=score)
 
         elif detect_mode=='SCRDF':
             if not self.scrdf_model:
