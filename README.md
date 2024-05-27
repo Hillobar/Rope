@@ -29,7 +29,9 @@ Machine: 3090Ti (24GB), i5-13600K
 <img src="https://github.com/Hillobar/Rope/assets/63615199/3e3505db-bc76-48df-b8ac-1e7e86c8d751" width="200">
 
 File: benchmark/target-1080p.mp4, 2048x1080, 269 frames, 25 fps, 10s
+
 Rendering time in seconds (5 threads):
+
 | Option | Crystal | Sapphire | Ruby | Opal | Pearl |
 | --- | --- | --- | --- | --- | --- |
 | Only Swap (128) | 7.3 | 7.5 | 4.4 | 4.3 | 4.4 |
