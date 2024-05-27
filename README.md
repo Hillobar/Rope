@@ -1,4 +1,5 @@
-![Screenshot 2024-02-10 091752](https://github.com/Hillobar/Rope/assets/63615199/dd8ab00b-d55f-4196-a50b-f2a326fba83a)
+![image](https://github.com/Hillobar/Rope/assets/63615199/86534d42-a6ea-4655-934e-982e75e4b37b)
+
 
 Rope implements the insightface inswapper_128 model with a helpful GUI.
 ### [Discord](https://discord.gg/EcdVAFJzqp)
@@ -9,81 +10,18 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 
 ### [Demo Video (Rope-Ruby)](https://www.youtube.com/watch?v=4Y4U0TZ8cWY)
 
-### ${{\color{Goldenrod}{\textsf{Last Updated 2024-02-27}}}}$ ###
-### ${{\color{Goldenrod}{\textsf{Welcome to Rope-Opal!}}}}$ ###
-### ${{\color{Red}{\textsf{Please grab the latest yoloface model from the link in the wiki!}}}}$ ###
+### ${{\color{Goldenrod}{\textsf{Last Updated 2024-05-27}}}}$ ###
+### ${{\color{Goldenrod}{\textsf{Welcome to Rope-Pearl!}}}}$ ###
 
 ![Screenshot 2024-02-10 104718](https://github.com/Hillobar/Rope/assets/63615199/4b2ee574-c91e-4db2-ad66-5b775a049a6b)
 
-### Features: ###
-* Lightning speed face swapping with all the features
-* Upscalers
-* Likeness modifiers
-* Orientation management
-* Masks: borders, differentials, auto occlusion, face parsers, text-based masking - all with strength adjustments and blending settings
-* Mask view to evaluate masks directly
-* Source face merging and saving
-* Swap images or videos
-* Auto save filename generation
-* Dock/Undock the video player
-* Real-time player
-* Segment recording
-* Fine tune your video ahead of time by creating image setting markers at specific frames.
-* Lightening fast!
-
-### Updates for Rope-Opal-03a: ###
-### To update from Opal-03, just need to replace the GUI.py file in /rope.
-* (fixed) Image swapping bug
-* (fixed) Error on clearing VRAM
-
-### Updates for Rope-Opal-03: ###
-### To update from Opal-02, just need to replace the .py files in /rope. You'll seem them 'Rope-Opal-03' in the comment column ###
-* (fixed) Input Videos/Images scrollbar bug
-* (fixed) Sometime the playbar would get out of sync when selecting a video while playing
-* (fixed) The battle of memory managers has been resolved. Rope will now use less VRAM.
-* (fixed) Mousewheel and manually dragging the timeline slider were not respecting the markers
-* (feature) Save frames from the video preview window
-* (fixed) Rotation is back to 90 deg increments
-* (fixed) Adjusted some defaults for better out of the box results
-
-### Updates for Rope-Opal-02: ###
-### To update from Opal-01, just need to replace the .py files in /rope. You'll seem them 'Rope-Opal-02' in the comment column ###
-* (feature) Auto-pads input faces to increase the chance of detection
-* (feature) Update console messages for more information
-* (feature) Reimplimented images
-* (fixed) Adressed error with Reference detection alignment in Restorer
-* (feature) Added a VRAM monitor
-* (feature) Reimplemented the VRAM clear
-   
-### Updates for Rope-Opal-01: ###
-### To update from Opal, just need to replace the .py file in /rope. You'll seem them 'Rope-Opal-01' in the comment column ###
-* (Fixed) Reverted to previous model load parameters. Some people were having issues with the new settings.
-* (Fixed) Markers now clear propoerly when changing videos
-* (Fixed)Input Face loading errors are now handled gracefully
-* (Feature) Added option to select Mean or Median when multi-selecting input faces
-
-### Updates for Rope-Opal: ###
-* This next version focuses on the UI. It's completely overhauled and finally looks more like a modern app. Lots of useability improvements and room to add new features.
-* Can now set strength to zero. This effectively turns off the swapper in the render pipeline so you can apply the rest of the options to the original image (e.g., upscale the original face w/o swapping)
-* Recording library can be set to FFMPEG or OPENCV
-* Real-time audio is now available while previewing. Performace that renders slower than the frame rate will cause audio lag
-* The Differencing fuction has been reworked into the pipeline to produce better results. Consequently it currently does not show up in the mask preview.
-* Wrestled back some VRAM from the Ruby upgrades
-* Faster loading of some models. Upcoming releases will do furhter optimizations
-* Adjusted the use of filtering and antialiasing
-* Yolov8 added as a face detection model selection. FF is having good results with it, so looking forward to hearing your thoughts on its behavior in Rope
-* Scrollbars!
-* Save/load paramters, and reset to defaults. Rope will auto-load your saved paramters when launched.
-* Restorers (GFPGAN, etc) now have option to choose the detection alignment method. You can trade speed vs fidelity vs texture. This includes the original Rope method that, although flawed, maintain the face textures.
-* Detection score. Adjust how aggressive Rope is at finding faces.
-* Added detailed help text in the lower left when hovering over UI elements.
-* Added reverse, forward and beginning to timeline control.
-
-### Some Feature Still need to be re-implmented from Rope-Ruby. They'll be added back in the next updates. ###
-* Stop markers
-* Framerate stats while playing
-* Global hotkeys for moving the timeline
-* Ongoing interface maturation
+### Updates for Rope-Pearl-00: ###
+### To update from Opal-03a, just need to replace the rope folder.
+* (feature) Selectable model swapping output resolution - 128, 256, 512
+* (feature) Better selection of input images (ctrl and shift modifiers work mostly like windows behavior)
+* (feature) Toggle between mean and median merging withou having to save to compare
+* (feature) Added back keyboard controls (q, w, a, s, d, space)
+* (feature) Gamma slider
 
 ### Performance:  ###
 Machine: 3090Ti (24GB), i5-13600K
@@ -91,15 +29,17 @@ Machine: 3090Ti (24GB), i5-13600K
 <img src="https://github.com/Hillobar/Rope/assets/63615199/3e3505db-bc76-48df-b8ac-1e7e86c8d751" width="200">
 
 File: benchmark/target-1080p.mp4, 2048x1080, 269 frames, 25 fps, 10s
-Rendering time in seconds:
-| Option | Crystal | Sapphire | Ruby | Opal |
-| --- | --- | --- | --- | --- |
-| Only Swap | 7.3 | 7.5 | 4.4 | 4.3 |
-| Swap+GFPGAN | 10.7 | 11.0 | 9.0 | 9.8 |
-| Swap+Codeformer | 12.4 | 13.5 | 11.1 | 11.1 |
-| Swap+one word CLIP | 10.4 | 11.2 | 9.1 | 9.3 |
-| Swap+Occluder | 7.8 | 7.8 | 4.4 | 4.7 |
-| Swap+MouthParser | 13.9 | 12.1 | 5.0 | 4.9 |
+Rendering time in seconds (5 threads):
+| Option | Crystal | Sapphire | Ruby | Opal | Pearl |
+| --- | --- | --- | --- | --- | --- |
+| Only Swap (128) | 7.3 | 7.5 | 4.4 | 4.3 | 4.4 |
+| Swap (256) | --- | --- | --- | --- | 8.6 |
+| Swap (512) | --- | --- | --- | --- | 28.6 |
+| Swap+GFPGAN | 10.7 | 11.0 | 9.0 | 9.8 | 9.3 |
+| Swap+Codeformer | 12.4 | 13.5 | 11.1 | 11.1 | 11.3 |
+| Swap+one word CLIP | 10.4 | 11.2 | 9.1 | 9.3 | 9.3 |
+| Swap+Occluder | 7.8 | 7.8 | 4.4 | 4.7 | 4.7 |
+| Swap+MouthParser | 13.9 | 12.1 | 5.0 | 4.9 | 5.1 |
 
 ### Disclaimer: ###
 Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me.
