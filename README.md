@@ -22,6 +22,8 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * (feature) Toggle between mean and median merging withou having to save to compare
 * (feature) Added back keyboard controls (q, w, a, s, d, space)
 * (feature) Gamma slider
+* 
+![image](https://github.com/Hillobar/Rope/assets/63615199/9d89fded-addb-46fe-b2d7-bfe6f1a88188)
 
 ### Performance:  ###
 Machine: 3090Ti (24GB), i5-13600K
