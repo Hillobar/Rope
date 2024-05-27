@@ -775,7 +775,7 @@ class Slider2():
         
         self.slider = tk.Canvas(self.frame, self.frame_style, width=self.slider_canvas_width, height=self.height)
         self.slider.place(x=self.slider_canvas_x, y=self.slider_canvas_y)
-        self.slider.bind('<B1-Motion>', lambda e: self.update_handle(e, True))  
+        self.slider.bind('<B1-Motion>', lambda e: self.update_handle(e, True))
         self.slider.bind('<MouseWheel>', lambda e: self.update_handle(e, True))         
 
         # Add the Entry to the frame
@@ -894,7 +894,203 @@ class Slider2():
 
     def load_default(self):
         self.set(self.default_data[self.name+'Amount'])
-            
+
+
+class Slider3():
+    def __init__(self, parent, name, display_text, style_level, function, argument, width, height, x, y, slider_percent):
+
+        # self.constants = CONSTANTS
+        # self.default_data = DEFAULT_DATA
+        self.blank = tk.PhotoImage()
+
+        # Capture inputs as instance variables
+        self.parent = parent
+        self.name = name
+        self.function = function
+        self.data_type = argument
+        self.x = x
+        self.y = y
+        self.slider_percent = slider_percent
+        self.width = width
+        self.height = height
+        self.info = []
+
+        # Initial Value
+        self.amount = 0
+
+        if style_level == 1:
+            self.frame_style = style.canvas_frame_label_1
+            self.text_style = style.text_1
+            self.entry_style = style.entry_3
+
+        elif style_level == 3:
+            self.frame_style = style.canvas_frame_label_3
+            self.text_style = style.text_3
+            self.entry_style = style.entry_3
+
+            # UI-controlled variables
+        self.entry_string = tk.StringVar()
+        self.entry_string.set(self.amount)
+
+        # Widget variables
+        self.min_ = -2
+        self.max_ = 2
+        self.inc_ = 0.001
+        self.display_text = display_text + ' '
+
+        # Set up spacing
+        # |----------------------|slider_pad|-slider-|entry_pad|-|
+        # |---1-slider_percent---|---slider_percent---|
+        # |--------------------width------------------|
+
+        # Create a frame to hold it all
+        self.frame_x = x
+        self.frame_y = y
+        self.frame_width = width
+        self.frame_height = height
+
+        self.frame = tk.Frame(self.parent, self.frame_style, width=self.frame_width, height=self.frame_height)
+        self.frame.place(x=self.frame_x, y=self.frame_y)
+        # self.frame.bind("<Enter>", lambda event: self.on_enter())
+
+
+        # Add the slider Label text to the frame
+        self.txt_label_x = 0
+        self.txt_label_y = 0
+        self.txt_label_width = int(width * (1.0 - slider_percent))
+
+        self.label = tk.Label(self.frame, self.text_style, image=self.blank, compound='c', text=self.display_text, anchor='e', width=self.txt_label_width, height=self.height)
+        self.label.place(x=self.txt_label_x, y=self.txt_label_y)
+
+        # Add the Slider Canvas to the frame
+        self.slider_canvas_x = self.txt_label_width
+        self.slider_canvas_y = 0
+        self.slider_canvas_width = width - self.txt_label_width
+
+        self.slider = tk.Canvas(self.frame, self.frame_style, width=self.slider_canvas_width, height=self.height)
+        self.slider.place(x=self.slider_canvas_x, y=self.slider_canvas_y)
+        self.slider.bind('<B1-Motion>', lambda e: self.update_handle(e, True))
+        self.slider.bind('<MouseWheel>', lambda e: self.update_handle(e, True))
+
+        # Add the Entry to the frame
+        self.entry_width = 60
+        self.entry_x = self.frame_width - self.entry_width
+        self.entry_y = 0
+
+        self.entry = tk.Entry(self.frame, self.entry_style, textvariable=self.entry_string)
+        self.entry.place(x=self.entry_x, y=self.entry_y)
+        self.entry.bind('<Return>', lambda event: self.entry_input(event))
+
+        # Draw the slider
+        self.slider_pad = 20
+        self.entry_pad = 20
+        self.slider_left = self.slider_pad
+        self.slider_right = self.slider_canvas_width - self.entry_pad - self.entry_width
+        self.slider_center = (self.height + 1) / 2
+
+        self.oval_loc = self.pos2coord(self.amount)
+        self.oval_radius = 5
+        self.oval_x1 = self.oval_loc - self.oval_radius
+        self.oval_y1 = self.slider_center - self.oval_radius
+        self.oval_x2 = self.oval_loc + self.oval_radius
+        self.oval_y2 = self.slider_center + self.oval_radius
+
+        self.trough_x1 = self.slider_left
+        self.trough_y1 = self.slider_center - 2
+        self.trough_x2 = self.slider_right
+        self.trough_y2 = self.slider_center + 2
+
+        self.slider.create_rectangle(self.trough_x1, self.trough_y1, self.trough_x2, self.trough_y2, fill='#1F1F1F', outline='')
+        self.handle = self.slider.create_oval(self.oval_x1, self.oval_y1, self.oval_x2, self.oval_y2, fill='#919191', outline='')
+
+    def coord2pos(self, coord):
+        return float((coord - self.slider_left) * (self.max_ - self.min_) / (self.slider_right - self.slider_left) + self.min_)
+
+    def pos2coord(self, pos):
+        return float((float(pos) - self.min_) * (self.slider_right - self.slider_left) / (self.max_ - self.min_) + self.slider_left)
+
+    def update_handle(self, event, also_update_entry=False, request_frame=True):
+        if isinstance(event, float):
+            position = event
+
+        elif event.type == '38':
+            position = self.amount + self.inc_ * int(event.delta / 120.0)
+
+        elif event.type == '6':
+            x_coord = float(event.x)
+            position = self.coord2pos(x_coord)
+
+        # constrain mousewheel movement
+        if position < self.min_:
+            position = self.min_
+        elif position > self.max_:
+            position = self.max_
+
+        # Find closest position increment
+        position_inc = round((position - self.min_) / self.inc_)
+        position = (position_inc * self.inc_) + self.min_
+
+        # moving sends many events, so only update when the next frame is reached
+        if position != self.amount:
+            # Move handle to coordinate based on position
+            self.slider.move(self.handle, self.pos2coord(position) - self.pos2coord(self.amount), 0)
+
+            # Save for next time
+            self.amount = position
+
+            if also_update_entry:
+                self.entry_string.set(str(position))
+
+            if request_frame:
+                self.function(self.data_type)
+
+            # return True
+        # return False
+
+    def add_info_frame(self, info):
+        self.info = info
+
+    # def on_enter(self):
+    #     if self.info:
+    #         self.info.configure(text=self.default_data[self.name + 'InfoText'])
+
+    def entry_input(self, event):
+        # event.char
+        self.entry.update()
+        try:
+            input_num = float(self.entry_string.get())
+            self.update_handle(input_num, False)
+        except:
+            return
+
+    def set(self, value, request_frame=True):
+        self.update_handle(float(value), True, request_frame)
+
+    def get(self):
+        return self.amount
+
+    def hide(self):
+        self.frame.place_forget()
+        self.label.place_forget()
+        self.slider.place_forget()
+        self.entry.place_forget()
+
+    def unhide(self):
+        self.frame.place(x=self.frame_x, y=self.frame_y)
+        self.label.place(x=self.txt_label_x, y=self.txt_label_y)
+        self.slider.place(x=self.slider_canvas_x, y=self.slider_canvas_y)
+        self.entry.place(x=self.entry_x, y=self.entry_y)
+
+        # def save_to_file(self, filename, data):
+        # with open(filename, 'w') as outfile:
+        # json.dump(data, outfile)
+
+    def get_data_type(self):
+        return self.data_type
+
+    def load_default(self):
+        self.set(0)
+
 class Text_Entry():
     def __init__(self, parent, name, display_text, style_level, function, data_type, width, height, x, y, text_percent):
         self.blank = tk.PhotoImage()

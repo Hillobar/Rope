@@ -19,7 +19,7 @@ from torchvision.transforms import v2
 torch.set_grad_enabled(False)
 onnxruntime.set_default_logger_severity(4)
 
-# import inspect #print(inspect.currentframe().f_back.f_code.co_name, 'resize_image')
+import inspect #print(inspect.currentframe().f_back.f_code.co_name, 'resize_image')
 
 device = 'cuda'
 
@@ -100,6 +100,7 @@ class VideoManager():
         self.is_image_loaded = False
         self.stop_marker = -1
         self.perf_test = False
+
         self.control = []
 
         
@@ -178,6 +179,7 @@ class VideoManager():
     
     ## Action queue
     def add_action(self, action, param):
+        # print(inspect.currentframe().f_back.f_code.co_name, '->add_action: '+action)
         temp = [action, param]
         self.action_q.append(temp)    
     
@@ -229,8 +231,8 @@ class VideoManager():
 
                 self.r_frame_q.append(temp)  
         
-        elif self.is_image_loaded == True:
-            if not self.control['SwapFacesButton']:   
+        elif self.is_image_loaded:
+            if not self.control['SwapFacesButton']:
                 temp = [self.image, self.current_frame] # image = RGB
         
             else:  
@@ -252,7 +254,8 @@ class VideoManager():
         return index, min_frame
 
 
-    def play_video(self, command):        
+    def play_video(self, command):
+        # print(inspect.currentframe().f_back.f_code.co_name, '->play_video: ')
         if command == "play":
             # Initialization
             self.play = True
@@ -502,7 +505,7 @@ class VideoManager():
 
 
     # @profile
-    def swap_video(self, target_image, frame_number, use_markers):   
+    def swap_video(self, target_image, frame_number, use_markers):
         # Grab a local copy of the parameters to prevent threading issues
         parameters = self.parameters.copy()
         control = self.control.copy()
@@ -517,7 +520,7 @@ class VideoManager():
             parameters = self.markers[idx-1]['parameters'].copy()
         
         # Load frame into VRAM
-        img = torch.from_numpy(target_image).to('cuda') #HxWxc
+        img = torch.from_numpy(target_image.astype('uint8')).to('cuda') #HxWxc
         img = img.permute(2,0,1)#cxHxW        
         
         #Scale up frame if it is smaller than 512
@@ -546,16 +549,11 @@ class VideoManager():
             img = v2.functional.rotate(img, angle=parameters['OrientSlider'], interpolation=v2.InterpolationMode.BILINEAR, expand=True)
 
         # Find all faces in frame and return a list of 5-pt kpss
-        kpss = self.func_w_test("detect", self.models.run_detect, img, parameters['DetectTypeTextSel'], max_num=20, score=parameters['DetectScoreSlider']/100.0)      
-
+        kpss = self.func_w_test("detect", self.models.run_detect, img, parameters['DetectTypeTextSel'], max_num=20, score=parameters['DetectScoreSlider']/100.0)
         # Get embeddings for all faces found in the fram
         ret = []
-        for i in range(kpss.shape[0]):
-            if kpss is not None:
-                face_kps = kpss[i]
-
+        for face_kps in kpss:
             face_emb, _ = self.func_w_test('recognize',  self.models.run_recognize, img, face_kps)
-
             ret.append([face_kps, face_emb])
         
         if ret:
@@ -565,12 +563,9 @@ class VideoManager():
                     # sim between face in video and already found face
                     sim = self.findCosineDistance(fface[1], found_face["Embedding"])
                     # if the face[i] in the frame matches afound face[j] AND the found face is active (not []) 
-                    threshhold = parameters["ThresholdSlider"]/100.0
-                    # if parameters["ThresholdState"]:
-                        # threshhold = 2.0
-    
-                    if sim<float(threshhold) and found_face["SourceFaceAssignments"]:
+                    if sim>=float(parameters["ThresholdSlider"]) and found_face["SourceFaceAssignments"]:
                         s_e = found_face["AssignedEmbedding"]
+                        # s_e = found_face['ptrdata']
                         img = self.func_w_test("swap_video", self.swap_core, img, fface[0], s_e, parameters, control)
                         # img = img.permute(2,0,1)
                     
@@ -600,22 +595,25 @@ class VideoManager():
 
         img = img.cpu().numpy()  
 
-        # for kpoint in fface[0]:            
-            # img[int(kpoint[1])][int(kpoint[0])][0] = 255
-            # img[int(kpoint[1])][int(kpoint[0])][1] = 255
-            # img[int(kpoint[1])][int(kpoint[0])][2] = 255
+        # if ret:
+        #
+        #     for kpoint in ret[0][0]:
+        #         for i in range(-1, 1):
+        #             for j in range(-1, 1):
+        #
+        #                 img[int(kpoint[1])+i][int(kpoint[0])+j][0] = 255
+        #                 img[int(kpoint[1])+i][int(kpoint[0])+j][1] = 255
+        #                 img[int(kpoint[1])+i][int(kpoint[0])+j][2] = 255
 
         
         return img.astype(np.uint8)
 
     def findCosineDistance(self, vector1, vector2):
-        vec1 = vector1.flatten()
-        vec2 = vector2.flatten()
+        cos_dist = 1.0 - np.dot(vector1, vector2)/(np.linalg.norm(vector1)*np.linalg.norm(vector2)) # 2..0
 
-        a = np.dot(vec1.T, vec2)
-        b = np.dot(vec1.T, vec1)
-        c = np.dot(vec2.T, vec2)
-        return 1 - (a/(np.sqrt(b)*np.sqrt(c)))
+        return 100.0-cos_dist*50.0
+
+
 
     def func_w_test(self, name, func, *args, **argsv):
         timing = time.time()
@@ -645,70 +643,104 @@ class VideoManager():
         tform.estimate(kps, dst) 
 
         # Scaling Transforms
-        t512 = v2.Resize((512, 512), antialias=False)
-        #t512a = v2.Resize((512, 512), antialias=True)
-        t256 = v2.Resize((256, 256), antialias=False)
-        t128 = v2.Resize((128, 128), antialias=False)
+        t512 = v2.Resize((512, 512), interpolation=v2.InterpolationMode.BILINEAR, antialias=False)
+        t256 = v2.Resize((256, 256), interpolation=v2.InterpolationMode.BILINEAR, antialias=False)
+        t128 = v2.Resize((128, 128), interpolation=v2.InterpolationMode.BILINEAR, antialias=False)
 
         # Grab 512 face from image and create 256 and 128 copys
-        original_face_512 = v2.functional.affine(img, tform.rotation*57.2958, (tform.translation[0], tform.translation[1]) , tform.scale, 0, center = (0,0), interpolation=v2.InterpolationMode.NEAREST ) 
-
+        original_face_512 = v2.functional.affine(img, tform.rotation*57.2958, (tform.translation[0], tform.translation[1]) , tform.scale, 0, center = (0,0), interpolation=v2.InterpolationMode.BILINEAR )
         original_face_512 = v2.functional.crop(original_face_512, 0,0, 512, 512)# 3, 512, 512
         original_face_256 = t256(original_face_512)
-        original_face_128 = t128(original_face_256)  
-
-        # Optional Scaling # change the thransform matrix
-        if parameters['FaceAdjSwitch']:
-            original_face_128 = v2.functional.affine(original_face_128, 0, (0,0) , 1+parameters['FaceScaleSlider']/100, 0, center = (63,63), interpolation=v2.InterpolationMode.BILINEAR) 
-        
+        original_face_128 = t128(original_face_256)          
 
         latent = torch.from_numpy(self.models.calc_swapper_latent(s_e)).float().to('cuda')
 
-        # Prepare for swapper formats
-        swap = torch.reshape(original_face_128, (1, 3, 128, 128)).contiguous()
-        swap = torch.div(swap, 255)
-        # print('1', swap.storage().data_ptr())
+        dim = 1
+        if parameters['SwapperTypeTextSel'] == '128':
+            dim = 1
+            input_face_affined = original_face_128
+        elif parameters['SwapperTypeTextSel'] == '256':
+            dim = 2
+            input_face_affined = original_face_256
+        elif parameters['SwapperTypeTextSel'] == '512':
+            dim = 4
+            input_face_affined = original_face_512
 
+        # Optional Scaling # change the thransform matrix
+        if parameters['FaceAdjSwitch']:
+            input_face_affined = v2.functional.affine(input_face_affined, 0, (0, 0), 1 + parameters['FaceScaleSlider'] / 100, 0, center=(dim*128-1, dim*128-1), interpolation=v2.InterpolationMode.BILINEAR)
 
-        # Swap Face and blend according to Strength
         itex = 1
         if parameters['StrengthSwitch']:
-            itex = ceil(parameters['StrengthSlider']/100.)
+            itex = ceil(parameters['StrengthSlider'] / 100.)
 
-        # Additional swaps based on strength
-        for i in range(itex):
-            prev_swap = swap.clone()
-            self.models.run_swapper(prev_swap, latent, swap)
+        output_size = int(128 * dim)
+        output = torch.zeros((output_size, output_size, 3), dtype=torch.float32, device='cuda')
+        input_face_affined = input_face_affined.permute(1, 2, 0)
+        input_face_affined = torch.div(input_face_affined, 255.0)
+
+        for k in range(itex):
+            for j in range(dim):
+                for i in range(dim):
+                    input_face_disc = input_face_affined[j::dim,i::dim]
+                    input_face_disc = input_face_disc.permute(2, 0, 1)
+                    input_face_disc = torch.unsqueeze(input_face_disc, 0).contiguous()
+
+                    swapper_output = torch.empty((1,3,128,128), dtype=torch.float32, device='cuda').contiguous()
+                    self.models.run_swapper(input_face_disc, latent, swapper_output)
+
+                    swapper_output = torch.squeeze(swapper_output)
+                    swapper_output = swapper_output.permute(1, 2, 0)
+
+
+                    output[j::dim, i::dim] = swapper_output.clone()
+            prev_face = input_face_affined.clone()
+            input_face_affined = output.clone()
+            output = torch.mul(output, 255)
+            output = torch.clamp(output, 0, 255)
+
+
+        output = output.permute(2, 0, 1)
+
+
+        swap = t512(output)
 
         if parameters['StrengthSwitch']:
             if itex == 0:
-                prev_swap = swap.clone()
-            
-            alpha = np.mod(parameters['StrengthSlider'], 100)*0.01            
-            if alpha==0:
-                alpha=1
-            
-            # Blend the images
-            swap = torch.mul(swap, alpha)
-            prev_swap = torch.mul(prev_swap, 1-alpha)
-            swap = torch.add(swap, prev_swap)
+                swap = original_face_512.clone()
+            else:
+                alpha = np.mod(parameters['StrengthSlider'], 100)*0.01
+                if alpha==0:
+                    alpha=1
 
-        # Format to 3x128x128 [0..255] uint8
-        swap = torch.squeeze(swap)
-        swap = torch.mul(swap, 255) # should I carry [0..1] through the pipe insteadf?
-        swap = torch.clamp(swap, 0, 255)
-        swap = swap.type(torch.uint8)
+                # Blend the images
+                prev_face = torch.mul(prev_face, 255)
+                prev_face = torch.clamp(prev_face, 0, 255)
+                prev_face = prev_face.permute(2, 0, 1)
+                prev_face = t512(prev_face)
+                swap = torch.mul(swap, alpha)
+                prev_face = torch.mul(prev_face, 1-alpha)
+                swap = torch.add(swap, prev_face)
 
-        # test = swap.permute(1, 2, 0)
-        # test = test.cpu().numpy()
-        # cv2.imwrite('2.jpg', test)
 
-        swap_128 = swap
-        swap = t512(swap)
+
+
+            # swap = torch.squeeze(swap)
+            # swap = torch.mul(swap, 255)
+            # swap = torch.clamp(swap, 0, 255)
+            # # swap_128 = swap
+            # swap = t256(swap)
+            # swap = t512(swap)
+
         
         # Apply color corerctions
         if parameters['ColorSwitch']:
+            # print(parameters['ColorGammaSlider'])
+            swap = torch.unsqueeze(swap,0)
+            swap = v2.functional.adjust_gamma(swap, parameters['ColorGammaSlider'], 1.0)
+            swap = torch.squeeze(swap)
             swap = swap.permute(1, 2, 0).type(torch.float32)
+
             del_color = torch.tensor([parameters['ColorRedSlider'], parameters['ColorGreenSlider'], parameters['ColorBlueSlider']], device=device)
             swap += del_color
             swap = torch.clamp(swap, min=0., max=255.)
@@ -803,13 +835,13 @@ class VideoManager():
 
             # Untransform the swap
             swap = v2.functional.pad(swap, (0,0,img.shape[2]-512, img.shape[1]-512))
-            swap = v2.functional.affine(swap, tform.inverse.rotation*57.2958, (tform.inverse.translation[0], tform.inverse.translation[1]), tform.inverse.scale, 0,interpolation=v2.InterpolationMode.NEAREST, center = (0,0) )  
+            swap = v2.functional.affine(swap, tform.inverse.rotation*57.2958, (tform.inverse.translation[0], tform.inverse.translation[1]), tform.inverse.scale, 0,interpolation=v2.InterpolationMode.BILINEAR, center = (0,0) )
             swap = swap[0:3, top:bottom, left:right]
             swap = swap.permute(1, 2, 0)
             
             # Untransform the swap mask
             swap_mask = v2.functional.pad(swap_mask, (0,0,img.shape[2]-512, img.shape[1]-512))
-            swap_mask = v2.functional.affine(swap_mask, tform.inverse.rotation*57.2958, (tform.inverse.translation[0], tform.inverse.translation[1]), tform.inverse.scale, 0, interpolation=v2.InterpolationMode.NEAREST, center = (0,0) ) 
+            swap_mask = v2.functional.affine(swap_mask, tform.inverse.rotation*57.2958, (tform.inverse.translation[0], tform.inverse.translation[1]), tform.inverse.scale, 0, interpolation=v2.InterpolationMode.BILINEAR, center = (0,0) )
             swap_mask = swap_mask[0:1, top:bottom, left:right]                        
             swap_mask = swap_mask.permute(1, 2, 0)
             swap_mask = torch.sub(1, swap_mask) 

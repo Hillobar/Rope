@@ -53,14 +53,13 @@ def coordinator():
             action.pop(0)
         elif action[0][0] == "get_requested_video_frame_without_markers":
             vm.get_requested_video_frame(action[0][1], marker=False)
-            action.pop(0)    
+            action.pop(0)
         elif action[0][0] == "get_requested_image":
             vm.get_requested_image()
             action.pop(0)            
-        elif action[0][0] == "swap":
-
-            vm.swap = action[0][1]
-            action.pop(0)
+        # elif action[0][0] == "swap":
+        #     vm.swap = action[0][1]
+        #     action.pop(0)
         elif action[0][0] == "target_faces":
             vm.assign_found_faces(action[0][1])
             action.pop(0)

@@ -152,6 +152,20 @@ DEFAULT_DATA = {
 'ClearVramButtonInfoText':                  'CLEAR VRAM:\nClears models from your VRAM.',
 'ClearVramButtonState':                     False,
 'ClearVramButtonText':             'Clear VRAM',
+
+'GetNewEmbButtonDisplay':                   'text',
+'GetNewEmbButtonInfoText':                  'CLEAR VRAM:\nClears models from your VRAM.',
+'GetNewEmbButtonState':                     False,
+'GetNewEmbButtonText':             'Clear VRAM',
+
+
+'StopMarkerButtonnDisplay':                   'icon',
+'StopMarkerButtonIconHover':            './rope/media/previous_marker_hover.png',
+'StopMarkerButtonIconOff':              './rope/media/previous_marker_off.png',
+'StopMarkerButtonIconOn':               './rope/media/previous_marker_off.png',
+'StopMarkerButtonInfoText':                  'CLEAR VRAM:\nClears models from your VRAM.',
+'StopMarkerButtonState':                     False,
+'StopMarkerButtonText':             'Clear VRAM',
  
 #Switches       
 'ColorSwitchInfoText':              'RGB ADJUSTMENT:\nFine-tune the RGB color values of the swap.',
@@ -281,10 +295,10 @@ DEFAULT_DATA = {
 'ThreadsSliderInfoText':            'EXECUTION THREADS:\nSet number of execution threads while playing and recording. Depends strongly on GPU VRAM. 5 threads for 24GB.',
 'ThreadsSliderMax':                 20,
 'ThreadsSliderMin':                 1,
-'ThresholdSliderAmount':            85,   
+'ThresholdSliderAmount':            55,
 'ThresholdSliderInc':               1,
-'ThresholdSliderInfoText':          'THRESHHOLD AMOUNT:\nLower to reduce faces hopping around when swapping multiple people. Set to mask to have the input face apply to any/all faces in the frame.',
-'ThresholdSliderMax':               150,
+'ThresholdSliderInfoText':          'THRESHHOLD AMOUNT:\nRaise to reduce faces hopping around when swapping multiple people. A higher value is stricter.',
+'ThresholdSliderMax':               100,
 'ThresholdSliderMin':               0,
 'VideoQualSliderAmount':            18,
 'VideoQualSliderInc':               1,      
@@ -298,6 +312,12 @@ DEFAULT_DATA = {
 'CLIPSliderMax':                    100,
 'CLIPSliderMin':                    0,
 
+'ColorGammaSliderAmount':                 1,
+'ColorGammaSliderInc':                    0.02,
+'ColorGammaSliderInfoText':               'GAMMA VALUE:\nChanges Gamma.',
+'ColorGammaSliderMax':                    2,
+'ColorGammaSliderMin':                    0,
+
 
 # Text Selection
 'DetectTypeTextSelInfoText':        'FACE DETECTION MODEL:\nSelect the face detection model. Mostly only subtle differences, but can significant differences when the face is at extreme angles or covered.',
@@ -305,7 +325,7 @@ DEFAULT_DATA = {
 'DetectTypeTextSelModes':           ['Retinaface', 'Yolov8', 'SCRDF'],
 'PreviewModeTextSelInfoText':       '',
 'PreviewModeTextSelMode':           'Video',
-'PreviewModeTextSelModes':          ['Video', 'Image'],
+'PreviewModeTextSelModes':          ['Video', 'Image','Theater'],
 'RecordTypeTextSelInfoText':        'VIDEO RECORDING LIBRARY:\nSelect the recording library used for video recording. FFMPEG uses the Video Quality slider to adjust the size and quality of the final video. OPENCV has no options but is faster and produces good results.',
 'RecordTypeTextSelMode':            'FFMPEG',
 'RecordTypeTextSelModes':           ['FFMPEG', 'OPENCV'],
@@ -318,6 +338,10 @@ DEFAULT_DATA = {
 'MergeTextSelInfoText':      'INPUT FACES MERGE MATH:\nWhen shift-clicking face for merging, determines how the embedding vectors are combined.',
 'MergeTextSelMode':          'Mean',
 'MergeTextSelModes':         ['Mean', 'Median'],
+'SwapperTypeTextSelInfoText':      'SWAPPER OUTPUT RESOLUTION:\nDetermines the resolution of the swapper output.',
+'SwapperTypeTextSelMode':          '128',
+'SwapperTypeTextSelModes':         ['128', '256', '512'],
+
 
 
 # Text Entry
