@@ -1444,10 +1444,6 @@ class GUI(tk.Tk):
 
     def findCosineDistance(self, vector1, vector2):
         cos_dist = 1 - np.dot(vector1, vector2)/(np.linalg.norm(vector1)*np.linalg.norm(vector2)) # 2..0
-        n1 = np.linalg.norm(vector1)
-        n2 = np.linalg.norm(vector2)
-        dot = np.dot(n1, n2)
-        print('dot', n1, n2, dot)
         return 100-cos_dist*50
 
 
