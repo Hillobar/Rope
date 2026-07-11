@@ -1,17 +1,13 @@
-#pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+# Torch stack — install first with the CUDA index (not resolvable from PyPI):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 
 opencv-python
 scikit-image
 pillow
-onnxruntime-gpu
-onnx2torch
-tensortrt
-protobuf
-tyro
 numpy
-pyyaml
-tqdm
-mss
+onnxruntime-gpu
+onnx                 # imported directly by Models.py / TensorRTEngine.py
+tensorrt             # was "tensortrt" (typo); provides tensorrt_libs for ORT's TRT-EP
 
 # Qt UI stack. PyOpenGL drives the QOpenGLWidget preview shader/quad,
 # cuda-python provides cudaGraphicsGLRegisterImage for the zero-bounce
@@ -33,3 +29,11 @@ av>=14.0
 sounddevice>=0.5
 pynvvideocodec>=2.1
 torchcodec>=0.7
+mss                  # live screen-capture fallback (rope/qt/window_capture.py)
+
+# Optional — enable if you use these paths:
+# bettercam          # faster DXGI screen capture; falls back to mss if absent
+# imageio-ffmpeg     # bundled ffmpeg fallback for export (rope/VideoManager.py)
+
+# Dev / diagnostics only:
+# polygraphy>=0.49   # rope/scripts/probe_inswapper_fp16.py FP16 layer bisection

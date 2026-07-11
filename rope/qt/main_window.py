@@ -1408,6 +1408,28 @@ class MainWindow(QMainWindow):
         frame = self._center_pane.timeline.get()
         bus.get_requested_video_frame.emit(frame)
 
+    def show_splash(self) -> None:
+        """Stage the startup splash image into the preview.
+
+        Shown at launch and left in place until the first real frame
+        (media scrub / playback) replaces it via bus.frame_ready. The
+        preview is a QOpenGLWidget, so the staged frame simply waits in
+        the pending buffer until the first paintGL after the window is
+        shown. Best-effort: a missing or unreadable splash.png is
+        silently skipped so it can never block launch.
+        """
+        try:
+            splash_path = Path(__file__).resolve().parents[1] / "media" / "splash.png"
+            if not splash_path.is_file():
+                return
+            bgr = cv2.imread(str(splash_path), cv2.IMREAD_COLOR)
+            if bgr is None:
+                return
+            rgb = np.ascontiguousarray(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
+            self._center_pane.preview.set_frame(rgb)
+        except Exception as exc:  # never let a decorative splash break startup
+            print(f"[main_window] splash display skipped: {exc}")
+
     def _on_params_io(self, action: str) -> None:
         if action == "save":
             try:

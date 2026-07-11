@@ -99,4 +99,10 @@ def run(skip_backend: bool = False) -> int:
         # Enable Audio in the toggle row; MainWindow._on_preload_models),
         # so the app starts instantly and engines build against whatever
         # backend / thread count the user has actually selected.
+
+    # Show the startup splash in the preview. Staged last (after the
+    # late saved-params re-apply above) so any startup frame request
+    # can't clobber it; the first real media frame replaces it later.
+    window.show_splash()
+
     return app.exec()
