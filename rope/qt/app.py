@@ -68,6 +68,17 @@ def run(skip_backend: bool = False) -> int:
     window.show()
     # Keep a reference so the coordinator isn't GC'd
     window._coordinator = coordinator
+    # Seed the VM's recording output folder from persisted settings so the
+    # Record button works out of the box. MainWindow.set_output_folder()
+    # only updates the params-pane display; the VM's saved_video_path is
+    # set via bus.saved_video_path -> coordinator._on_saved_video_path,
+    # which only fires when the user picks a folder. Without this, a fresh
+    # session leaves vm.saved_video_path == [] and recording would crash in
+    # os.path.join at record time.
+    if vm is not None:
+        saved_videos = getattr(window.settings, "saved_videos", None)
+        if saved_videos:
+            bus.saved_video_path.emit(saved_videos)
     # Hand the Models instance to the Settings tab so it can render the
     # Loaded column. Skipped under skip_backend (smoke test) since
     # models is None there.

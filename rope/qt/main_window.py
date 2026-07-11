@@ -147,7 +147,13 @@ class MainWindow(QMainWindow):
         # action stay in sync. Recording is a separate flag because Record
         # arms playback rather than replacing it.
         self._is_playing: bool = False
+        # Recording has three states: idle, "armed" (Record clicked, waiting
+        # for Play to start it), and actively recording (_is_recording). Play
+        # while armed sends the VM the "record" command; Play or Record while
+        # actively recording stops and finalizes (VideoManager closes the
+        # writer and muxes the original audio back in).
         self._is_recording: bool = False
+        self._record_armed: bool = False
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -465,39 +471,76 @@ class MainWindow(QMainWindow):
         bus.models_preloaded.connect(self._on_models_preloaded)
 
     def _on_play_pressed(self) -> None:
-        if self._is_playing or self._is_recording:
+        # The preview canvas is wired to this handler too, so clicking the
+        # output window during a recording routes here and stops it.
+        if self._is_recording:
+            # Actively recording → Play stops and finalizes: VideoManager
+            # closes the writer and muxes the original audio back in.
+            bus.play_video.emit("stop_from_gui")
+            self._is_recording = False
+            self._is_playing = False
+            self._record_armed = False
+        elif self._record_armed:
+            # Record armed → Play starts the recording. The VM "record"
+            # command sets up the writer and drives the decoder from the
+            # current frame; the preview stays live while recording.
+            bus.play_video.emit("record")
+            self._is_recording = True
+            self._is_playing = True
+            self._record_armed = False
+        elif self._is_playing:
             bus.play_video.emit("stop_from_gui")
             self._is_playing = False
-            self._is_recording = False
         else:
             bus.play_video.emit("play")
             self._is_playing = True
         self._center_pane.set_play_state(self._is_playing)
-        self._center_pane.set_record_state(self._is_recording)
+        self._center_pane.set_record_state(self._is_recording or self._record_armed)
 
     def _on_record_pressed(self) -> None:
         if self._is_recording:
-            # Cancel recording but stay in playback state semantics.
+            # Actively recording → stop and finalize (same as Play here).
+            bus.play_video.emit("stop_from_gui")
             self._is_recording = False
+            self._is_playing = False
+            self._record_armed = False
+        elif self._record_armed:
+            # Armed but not yet started → cancel the arm.
+            self._record_armed = False
         else:
-            self._is_recording = True
-        self._center_pane.set_record_state(self._is_recording)
-        # Recording in the Tk app armed the next Play press to record.
-        # The actual "record" command fires when the user hits Play.
+            # Idle (or previewing) → arm recording for the next Play. Guard
+            # on the output folder so we fail loudly here instead of crashing
+            # in VideoManager's os.path.join at record time.
+            if not self.settings.saved_videos:
+                self._tooltip_label.setText(
+                    "Record: pick an output folder first (Settings → Output Folder)."
+                )
+                return
+            if self._is_playing:
+                # Stop the running preview so recording starts cleanly.
+                bus.play_video.emit("stop_from_gui")
+                self._is_playing = False
+            self._record_armed = True
+        self._center_pane.set_play_state(self._is_playing)
+        self._center_pane.set_record_state(self._is_recording or self._record_armed)
 
     def _on_scrub_started(self) -> None:
         if self._is_playing or self._is_recording:
             bus.play_video.emit("stop_from_gui")
+        if self._is_playing or self._is_recording or self._record_armed:
             self._is_playing = False
             self._is_recording = False
+            self._record_armed = False
             self._center_pane.set_play_state(False)
             self._center_pane.set_record_state(False)
 
     def _on_vm_stopped(self) -> None:
-        # VideoManager finished playback / hit a stop marker / errored —
-        # reset the Play button to off so a fresh click starts again.
+        # VideoManager finished playback / hit a stop marker / finished a
+        # recording (audio already muxed) / errored — reset the transport
+        # buttons so a fresh click starts again.
         self._is_playing = False
         self._is_recording = False
+        self._record_armed = False
         self._center_pane.set_play_state(False)
         self._center_pane.set_record_state(False)
 
@@ -1328,8 +1371,9 @@ class MainWindow(QMainWindow):
             bus.play_video.emit("benchmark")
             self._is_playing = True
             self._tooltip_label.setText("Benchmark: running (no sync — stop manually or wait for EOF)")
+        self._record_armed = False
         self._center_pane.set_play_state(self._is_playing)
-        self._center_pane.set_record_state(self._is_recording)
+        self._center_pane.set_record_state(self._is_recording or self._record_armed)
 
     def _on_benchmark_headless(self, *_args) -> None:
         # Same toggle semantics as Benchmark, but routes through the
@@ -1352,8 +1396,9 @@ class MainWindow(QMainWindow):
                 "Benchmark (Headless): running, preview disabled — "
                 "stop manually or wait for EOF"
             )
+        self._record_armed = False
         self._center_pane.set_play_state(self._is_playing)
-        self._center_pane.set_record_state(self._is_recording)
+        self._center_pane.set_record_state(self._is_recording or self._record_armed)
 
     # ----- Parameter round-trip ---------------------------------------------------
 
