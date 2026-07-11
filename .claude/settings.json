@@ -8,7 +8,8 @@
       "PowerShell(venv\\\\Scripts\\\\python.exe -m rope.qt.tests.test_parameters)",
       "PowerShell(venv\\\\Scripts\\\\python.exe -m rope.qt.tests.smoke)",
       "PowerShell(venv\\\\Scripts\\\\python.exe -c \"import ast; ast.parse\\(open\\('rope/Models.py'\\).read\\(\\)\\); ast.parse\\(open\\('rope/VideoManager.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
-      "Bash(venv/Scripts/python.exe -c ' *)"
+      "Bash(venv/Scripts/python.exe -c ' *)",
+      "Bash(venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('rope/qt/main_window.py',encoding='utf-8'\\).read\\(\\)\\); print\\('syntax OK'\\)\")"
     ]
   }
 }

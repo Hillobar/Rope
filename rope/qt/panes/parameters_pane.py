@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QTabWidget,
     QToolButton,
     QVBoxLayout,
@@ -155,19 +156,23 @@ class ParametersPane(QFrame):
         super().__init__(parent)
         self.setProperty("panelTier", "3")
 
-        # Hard minimum width for the pane. Without an explicit minimumWidth
-        # (only a minimumSizeHint), the main QSplitter — which is
-        # childrenCollapsible — lets the user drag this pane *below* its
-        # content minimum, at which point the widgets can't shrink further
-        # and spill off the right edge under the window frame. Setting a
-        # real minimumWidth makes the splitter clamp the shrink here and,
-        # past this point, collapse the whole pane to 0 instead of
-        # overflowing. Budget = the width at which the widgets fit with no
-        # scrollbar (~340; the Save/Load/Defaults IO row + slider value
-        # boxes) + the vertical scrollbar extent (14 px, from rope.qss) so
-        # the value boxes still clear the scrollbar once the content is
-        # tall enough to scroll, + 2 px to back it off a hair.
-        self.setMinimumWidth(340 + 14 + 2)
+        # Hard minimum width for the pane — applies to BOTH the Parameters
+        # and Settings tabs, since they share this one widget. Without an
+        # explicit minimumWidth (only a minimumSizeHint), the main QSplitter
+        # — which is childrenCollapsible — lets the user drag this pane
+        # *below* its content minimum, at which point the widgets can't
+        # shrink further and spill off the right edge under the window
+        # frame. Setting a real minimumWidth makes the splitter clamp the
+        # shrink here and, past this point, collapse the whole pane to 0.
+        # Budget = the widest non-compressible row across the two tabs. The
+        # Settings tab's "Actions" row (Clear VRAM 85 + Benchmark 100 +
+        # Benchmark (Headless) 140, ~357 with margins) is wider than the
+        # Parameters IO row, so it's the binding one; + the vertical
+        # scrollbar extent (14 px, from rope.qss) so it clears the scrollbar
+        # once content scrolls, + 2 px to back it off a hair. The models-
+        # inventory filename column is made h-compressible (see
+        # _build_models_inventory) so it never drives this wider.
+        self.setMinimumWidth(357 + 14 + 2)
 
         self.widgets: dict[str, QWidget] = {}
         self.values: dict[str, Any] = {}
@@ -395,7 +400,12 @@ class ParametersPane(QFrame):
         value_label = QLabel(default_label)
         value_label.setStyleSheet("color: #BBBBBB;")
         value_label.setWordWrap(False)
-        value_label.setMinimumWidth(0)
+        # Ignored h-policy so a long path (models / output / embeddings)
+        # doesn't force the whole Settings tab wider than the pane —
+        # setMinimumWidth(0) alone doesn't help because a QLabel's
+        # minimumSizeHint is still the full text width. It clips when
+        # narrow; the setters attach a tooltip with the full path.
+        value_label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         row.addWidget(value_label, stretch=1)
 
         browse = QPushButton("Browse…")
@@ -516,6 +526,13 @@ class ParametersPane(QFrame):
                 "color: #DDDDDD; font-family: Consolas, 'Courier New', monospace;"
                 " font-size: 9pt;"
             )
+            # Let the (stretchy) filename column shrink below the full
+            # monospace text width when the pane is narrow — otherwise the
+            # long names make the Settings tab wider than the pane and the
+            # right columns spill under the window frame. Ignored h-policy
+            # means the label yields to the fixed columns and clips; the
+            # tooltip below still surfaces the full name on hover.
+            name_label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
             if required:
                 name_label.setToolTip(f"{role} — required for baseline swap")
             else:

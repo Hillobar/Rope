@@ -453,9 +453,9 @@ DEFAULT_DATA = {
 'MergeTextSelInfoText':      'INPUT FACES MERGE MATH:\nHow the selected faces\' 512-d embeddings are combined into one identity vector.\n\nMean — element-wise average. Standard, fastest.\nMedian — per-axis median. Robust to one bad face but the result is a synthetic mix of axes from different faces.\nSph — spherical centroid: L2-normalize each, mean, renormalize. Matches the unit-sphere geometry ArcFace was trained on; usually a small upgrade over Mean.\nGeo — geometric median (Weiszfeld). The point in embedding space minimizing total L2 distance to all inputs. More outlier-robust than Median because it stays a real point.\nQual — quality-weighted mean: weights each face by its embedding magnitude (a documented proxy for face quality from the MagFace literature). Good when input quality varies a lot.',
 'MergeTextSelMode':          'Mean',
 'MergeTextSelModes':         ['Mean', 'Median', 'Sph', 'Geo', 'Qual'],
-'SwapperTypeTextSelInfoText':      'SWAPPER OUTPUT RESOLUTION:\nDetermines the resolution of the swapper output. 128/256/512 use the inswapper_128 model with NxN polyphase tiling; "256-Native" uses the dedicated single-pass inswapper_256_phase1 model.',
+'SwapperTypeTextSelInfoText':      'SWAPPER OUTPUT RESOLUTION:\nDetermines the resolution of the swapper output. 128/256/512 use the inswapper_128 model with NxN polyphase tiling.',
 'SwapperTypeTextSelMode':          '128',
-'SwapperTypeTextSelModes':         ['128', '256', '512', '256-Native'],
+'SwapperTypeTextSelModes':         ['128', '256', '512'],
 }
 
 PARAMS =   {

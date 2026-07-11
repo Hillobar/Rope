@@ -23,7 +23,7 @@ from typing import Any
 import cv2
 import numpy as np
 from PySide6.QtCore import QObject, QRunnable, Qt, QThreadPool, QTimer, Signal, Slot
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtGui import QColor, QIcon, QKeySequence, QPainter, QPixmap, QShortcut
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -64,6 +64,22 @@ def _tier_frame(tier: int) -> QFrame:
     return f
 
 
+def _bronze_circle_icon(size: int = 256) -> QIcon:
+    """A solid bronze-colored circle, used as the window/taskbar icon.
+    Drawn antialiased at a large size and let Qt downscale for crisp
+    small renders."""
+    pix = QPixmap(size, size)
+    pix.fill(Qt.transparent)
+    painter = QPainter(pix)
+    painter.setRenderHint(QPainter.Antialiasing, True)
+    painter.setPen(Qt.NoPen)
+    painter.setBrush(QColor("#CD7F32"))  # bronze
+    m = max(1, size // 12)  # small inset so the circle isn't edge-clipped
+    painter.drawEllipse(m, m, size - 2 * m, size - 2 * m)
+    painter.end()
+    return QIcon(pix)
+
+
 # _BuildTRTSignals / _BuildTRTWorker — removed 2026-05-21. The four main
 # pipeline models (inswapper_128, inswapper_512, retinaface, arcface) all
 # route through ORT TensorrtExecutionProvider now, which builds and caches
@@ -83,7 +99,8 @@ def _cosine_similarity_pct(v1: np.ndarray, v2: np.ndarray) -> float:
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Rope-Pearl (Qt)")
+        self.setWindowTitle("Rope")
+        self.setWindowIcon(_bronze_circle_icon())
 
         self.settings = Settings.load()
         w, h, x, y = self.settings.dock_win_geom
@@ -1100,9 +1117,34 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(bar)
         layout.setContentsMargins(8, 4, 8, 4)
         layout.setSpacing(8)
+
+        # Bottom-left: PayPal donation hotlink, replacing the old hover-help
+        # / status text. Rich-text QLabel; setOpenExternalLinks opens the
+        # URL in the default browser when the link is clicked.
+        donate = QLabel(
+            '<a href="https://www.paypal.com/donate/'
+            '?hosted_button_id=Y5SB9LSXFGRF2" '
+            'style="color:#E5B854;text-decoration:none;">'
+            '♥ Support Rope — Donate via PayPal</a>'
+        )
+        donate.setOpenExternalLinks(True)
+        donate.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        donate.setCursor(Qt.PointingHandCursor)
+        donate.setStyleSheet("font-size: 9pt;")
+        donate.setToolTip("Opens the PayPal donation page in your browser")
+        layout.addWidget(donate)
+
+        layout.addStretch(1)
+
+        # The hover-info / status label is retained as a hidden sink: the
+        # many widgets that call add_info_frame(self._tooltip_label) plus
+        # the ~40 setText(...) status updates keep working, but nothing is
+        # rendered — the help text is no longer shown (the donation link
+        # takes its place in the bottom bar).
         self._tooltip_label = Text(text="", tier=1)
-        self._tooltip_label.setStyleSheet("color: #B0B0B0; font-size: 9pt;")
-        layout.addWidget(self._tooltip_label, stretch=1)
+        self._tooltip_label.setParent(bar)
+        self._tooltip_label.setVisible(False)
+
         # VRAM indicator anchored bottom-right. Updates flow in via
         # bus.vram_updated, which the coordinator polls on its idle tick.
         self._static_widgets["vram_indicator"] = VRAMIndicator()
