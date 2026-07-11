@@ -20,9 +20,16 @@ Rope implements the insightface inswapper_128 model with a helpful GUI.
 * New Capture mode. Move and resize a window on your desktop to swap whatever is in it.
 
 ### Install from scratch:
+```cmd
 py -3.12 -m venv venv
+```
+```cmd
 venv\Scripts\activate
+```
+```cmd
 pip install -r requirements.lock.txt
+```
+Also, copy models from the Rope-Bronze Models Release to somewhere on your drive. In settings, select the folder they were copied to (you have to unzip them).
 
 ### Disclaimer: ###
 Rope is a personal project that I'm making available to the community as a thank you for all of the contributors ahead of me.
