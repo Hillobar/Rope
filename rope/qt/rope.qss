@@ -1,0 +1,102 @@
+/* Rope-Pearl Qt stylesheet — dark 3-tier palette ported from rope/Styles.py.
+   Tier 1 (#17181A) = outer chrome (top bar, bottom bar)
+   Tier 2 (#212126) = mid-level frames, timeline canvas
+   Tier 3 (#28282E) = inner panels (lists, params, info labels)
+*/
+
+QWidget {
+    color: #D0D0D0;
+    font: 9pt "Segoe UI";
+    background-color: #17181A;
+}
+
+QFrame[panelTier="1"] { background-color: #17181A; }
+QFrame[panelTier="2"] { background-color: #212126; }
+QFrame[panelTier="3"] { background-color: #28282E; }
+
+QLabel { background: transparent; color: #D0D0D0; }
+QLabel[role="info"] {
+    background-color: #28282E;
+    color: #FFFFFF;
+    padding: 5px;
+}
+
+QPushButton {
+    background-color: #28282E;
+    color: #FFFFFF;
+    border: 0;
+    padding: 4px 10px;
+    font: 10pt "Segoe UI";
+}
+QPushButton:hover  { color: #B1B1B2; }
+QPushButton:disabled { color: #828282; }
+QPushButton:checked,
+QPushButton[state="on"]  { color: #E5B854; background-color: #313137; }
+QPushButton[state="error"] { color: lightgoldenrodyellow; }
+QPushButton[role="media"]:checked { background-color: #d10303; }
+
+QLineEdit {
+    background-color: #1F1F1F;
+    color: #FFFFFF;
+    border: 1px solid #17181A;
+    padding: 2px 4px;
+    selection-background-color: #404040;
+    selection-color: #E5B854;
+}
+
+QScrollBar:vertical {
+    background-color: #212126;
+    width: 14px;
+    margin: 0;
+}
+QScrollBar::handle:vertical {
+    background-color: #404040;
+    min-height: 24px;
+}
+QScrollBar::handle:vertical:hover { background-color: #5A5A5A; }
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical { height: 0; background: none; }
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical { background: none; }
+
+QScrollBar:horizontal {
+    background-color: #212126;
+    height: 14px;
+    margin: 0;
+}
+QScrollBar::handle:horizontal {
+    background-color: #404040;
+    min-width: 24px;
+}
+QScrollBar::handle:horizontal:hover { background-color: #5A5A5A; }
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal { width: 0; background: none; }
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal { background: none; }
+
+QTabWidget::pane {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+QTabWidget::tab-bar { left: 0; }
+
+QSplitter::handle { background-color: #17181A; }
+QSplitter::handle:horizontal { width: 3px; }
+QSplitter::handle:vertical { height: 3px; }
+
+QProgressBar {
+    background-color: #1F1F1F;
+    border: 0;
+    text-align: center;
+    color: #FFFFFF;
+}
+QProgressBar::chunk { background-color: #B1B1B2; }
+QProgressBar[overLimit="true"]::chunk { background-color: #D10303; }
+
+QToolTip {
+    background-color: #28282E;
+    color: #FFFFFF;
+    border: 1px solid #090909;
+    padding: 4px;
+}

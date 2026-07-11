@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 1140 800" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="1140" height="800" fill="#FAFAFA"/>
+
+  <text x="570" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#222">Rope-Pearl Qt — Panel Tier Map</text>
+  <text x="570" y="60" text-anchor="middle" font-size="12" fill="#666">Defined in rope/qt/rope.qss · selected via QFrame[panelTier="N"]</text>
+
+  <g transform="translate(70, 88)">
+
+    <rect x="0" y="0" width="1000" height="54" fill="#17181A"/>
+    <text x="500" y="32" text-anchor="middle" fill="#D0D0D0" font-size="13">Top bar — tier 1 — #17181A</text>
+
+    <rect x="0" y="54" width="1000" height="540" fill="#17181A"/>
+
+    <rect x="0" y="54" width="220" height="240" fill="#28282E"/>
+    <text x="110" y="74" text-anchor="middle" fill="#D0D0D0" font-size="11" font-weight="700">TargetMediaPanel</text>
+    <text x="110" y="90" text-anchor="middle" fill="#888" font-size="9">tier 3 · #28282E</text>
+    <rect x="10" y="100" width="200" height="22" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="110" y="115" text-anchor="middle" fill="#A0A0A0" font-size="9">[ Browse Target Videos… ]</text>
+    <rect x="10" y="128" width="200" height="156" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="110" y="158" text-anchor="middle" fill="#D0D0D0" font-size="9">QListWidget (icon mode)</text>
+    <text x="110" y="174" text-anchor="middle" fill="#666" font-size="9">background-color: #28282E</text>
+    <g font-size="8" fill="#777">
+      <rect x="22"  y="190" width="36" height="36" fill="#404040"/>
+      <rect x="70"  y="190" width="36" height="36" fill="#404040"/>
+      <rect x="118" y="190" width="36" height="36" fill="#404040"/>
+      <rect x="166" y="190" width="36" height="36" fill="#404040"/>
+      <rect x="22"  y="234" width="36" height="36" fill="#404040"/>
+      <rect x="70"  y="234" width="36" height="36" fill="#404040"/>
+    </g>
+
+    <rect x="0" y="294" width="220" height="3" fill="#090909"/>
+
+    <rect x="0" y="297" width="220" height="257" fill="#28282E"/>
+    <text x="110" y="317" text-anchor="middle" fill="#D0D0D0" font-size="11" font-weight="700">SourceFacesPanel</text>
+    <text x="110" y="333" text-anchor="middle" fill="#888" font-size="9">tier 3 · #28282E</text>
+    <rect x="10" y="343" width="200" height="22" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="110" y="358" text-anchor="middle" fill="#A0A0A0" font-size="9">[ Browse Source Faces… ]</text>
+    <rect x="10" y="371" width="200" height="172" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="110" y="402" text-anchor="middle" fill="#D0D0D0" font-size="9">QListWidget (icon mode)</text>
+    <text x="110" y="418" text-anchor="middle" fill="#666" font-size="9">background-color: #28282E</text>
+    <g>
+      <rect x="22"  y="434" width="36" height="36" fill="#3A3A50"/>
+      <rect x="70"  y="434" width="36" height="36" fill="#404040"/>
+      <rect x="118" y="434" width="36" height="36" fill="#404040"/>
+      <rect x="166" y="434" width="36" height="36" fill="#404040"/>
+      <rect x="22"  y="478" width="36" height="36" fill="#404040"/>
+    </g>
+
+    <rect x="220" y="54" width="3" height="500" fill="#090909"/>
+
+    <rect x="223" y="54" width="520" height="500" fill="#28282E"/>
+    <text x="483" y="74" text-anchor="middle" fill="#D0D0D0" font-size="11" font-weight="700">CenterPane</text>
+    <text x="483" y="90" text-anchor="middle" fill="#888" font-size="9">tier 3 root</text>
+
+    <rect x="233" y="102" width="500" height="28" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="483" y="120" text-anchor="middle" fill="#D0D0D0" font-size="10">Preview mode bar · tier 3</text>
+
+    <rect x="233" y="136" width="500" height="252" fill="#000000"/>
+    <text x="483" y="260" text-anchor="middle" fill="#444" font-size="11">QOpenGLWidget preview · raw GL surface</text>
+    <text x="483" y="278" text-anchor="middle" fill="#333" font-size="9">(no tier — bypasses Qt paint)</text>
+
+    <rect x="233" y="394" width="500" height="58" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="483" y="416" text-anchor="middle" fill="#D0D0D0" font-size="10" font-weight="700">Found-faces gallery · tier 3</text>
+    <g>
+      <rect x="245" y="424" width="22" height="22" fill="#404040"/>
+      <rect x="271" y="424" width="22" height="22" fill="#404040"/>
+      <rect x="297" y="424" width="22" height="22" fill="#3A3A50"/>
+      <rect x="323" y="424" width="22" height="22" fill="#404040"/>
+    </g>
+
+    <rect x="233" y="458" width="500" height="52" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="483" y="478" text-anchor="middle" fill="#D0D0D0" font-size="10" font-weight="700">Embeddings pane · tier 3</text>
+
+    <rect x="233" y="516" width="500" height="32" fill="#212126"/>
+    <text x="483" y="536" text-anchor="middle" fill="#D0D0D0" font-size="10" font-weight="700">Timeline · tier 2 · #212126</text>
+
+    <rect x="743" y="54" width="3" height="500" fill="#090909"/>
+
+    <rect x="746" y="54" width="254" height="500" fill="#28282E"/>
+    <text x="873" y="74" text-anchor="middle" fill="#D0D0D0" font-size="11" font-weight="700">ParametersPane</text>
+    <text x="873" y="90" text-anchor="middle" fill="#888" font-size="9">tier 3 root</text>
+
+    <rect x="754" y="104" width="238" height="28" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="763" y="122" fill="#D0D0D0" font-size="9">[ Save ]  [ Load ]  [ Defaults ]</text>
+
+    <rect x="754" y="140" width="238" height="118" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="763" y="158" fill="#FFFFFF" font-size="10" font-weight="700">▼ Swapper</text>
+    <text x="763" y="178" fill="#A0A0A0" font-size="9">DetectType  [Retinaface ▾]</text>
+    <text x="763" y="194" fill="#A0A0A0" font-size="9">DetectScore [━●━━━━━━━━━] 50</text>
+    <text x="763" y="210" fill="#A0A0A0" font-size="9">Threshold   [━━●━━━━━━━━] 55</text>
+    <text x="873" y="236" text-anchor="middle" fill="#888" font-size="9">section frame · tier 3 (was tier 2)</text>
+
+    <rect x="754" y="266" width="238" height="110" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="763" y="284" fill="#FFFFFF" font-size="10" font-weight="700">▼ Color / Blending</text>
+    <text x="763" y="304" fill="#A0A0A0" font-size="9">Brightness  [━━━━●━━━━━━]</text>
+    <text x="763" y="320" fill="#A0A0A0" font-size="9">Contrast    [━━━●━━━━━━━]</text>
+    <text x="873" y="354" text-anchor="middle" fill="#888" font-size="9">tier 3</text>
+
+    <rect x="754" y="384" width="238" height="160" fill="#28282E" stroke="#1A1A1F" stroke-width="0.5"/>
+    <text x="763" y="402" fill="#FFFFFF" font-size="10" font-weight="700">▼ Output</text>
+    <text x="763" y="422" fill="#A0A0A0" font-size="9">Codec       [H.264 ▾]</text>
+    <text x="763" y="438" fill="#A0A0A0" font-size="9">Bitrate     [━━━━━●━━━━━]</text>
+    <text x="873" y="522" text-anchor="middle" fill="#888" font-size="9">tier 3</text>
+
+    <rect x="0" y="554" width="1000" height="28" fill="#17181A"/>
+    <text x="500" y="572" text-anchor="middle" fill="#D0D0D0" font-size="11">Bottom bar (tooltip strip) — tier 1 — #17181A</text>
+  </g>
+
+  <g transform="translate(70, 702)">
+    <text x="0" y="0" font-size="14" font-weight="700" fill="#222">Tier palette  (from rope/qt/rope.qss)</text>
+
+    <rect x="0" y="12" width="22" height="22" fill="#17181A" stroke="#888" stroke-width="0.5"/>
+    <text x="30" y="22" font-size="12" fill="#222" font-weight="600">Tier 1 · #17181A</text>
+    <text x="30" y="36" font-size="11" fill="#666">outer chrome: top bar, bottom bar, splitter gutters</text>
+
+    <rect x="290" y="12" width="22" height="22" fill="#212126" stroke="#888" stroke-width="0.5"/>
+    <text x="320" y="22" font-size="12" fill="#222" font-weight="600">Tier 2 · #212126</text>
+    <text x="320" y="36" font-size="11" fill="#666">mid frames: timeline canvas, scrollbar tracks</text>
+
+    <rect x="600" y="12" width="22" height="22" fill="#28282E" stroke="#888" stroke-width="0.5"/>
+    <text x="630" y="22" font-size="12" fill="#222" font-weight="600">Tier 3 · #28282E</text>
+    <text x="630" y="36" font-size="11" fill="#666">inner panels: lists, params, info labels</text>
+
+    <rect x="0" y="56" width="22" height="6" fill="#090909" stroke="#888" stroke-width="0.5"/>
+    <text x="30" y="64" font-size="12" fill="#222" font-weight="600">QSplitter handle · #090909</text>
+    <text x="220" y="64" font-size="11" fill="#666">thin black gutter between adjacent panes</text>
+
+    <rect x="600" y="50" width="22" height="22" fill="#000000" stroke="#888" stroke-width="0.5"/>
+    <text x="630" y="60" font-size="12" fill="#222" font-weight="600">Raw GL · #000000</text>
+    <text x="630" y="74" font-size="11" fill="#666">QOpenGLWidget — bypasses Qt paint pipeline</text>
+  </g>
+</svg>

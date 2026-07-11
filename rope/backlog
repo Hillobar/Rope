@@ -1,0 +1,30 @@
+After the new update, toggling between retinaface and yolov8 as detection types doesn't work, nothing changes. SCRDF does work, but then going back to either of the other two gives the same result.
+Deselecting a registered face is not possible anymore. Once selected, it's not possible to unswap, so if you have more than one face on the screen, you can't select two faces for two differet person and then desele
+It seems there is a bug related to the maximum amount of videos that are in the input video folder. 93 Seems to be the limit on my end.
+
+Having 92 videos in a folder --> Rope loads fine
+Adding a specific video on top of the 92 other ones --> Rope crashes at the end of the faces scan with a "fail to allocate bitmap" message
+Putting that exact same specific video in a folder alone --> Rope loads fine
+
+using the navigation shortcuts enters text into the text clip field if it has been focused
+stop marker
+save markers
+expanded theater
+per face changes
+check if other than png works for input face
+toggle for fast load model
+new tab for advanced options
+
+
+Have rope stroe and remeber images and videos when selcting mode
+
+use split swapper for speed - not working well
+look up in place tensor operations
+1269 use of 'i'
+
+Fixed
+Face scale adjustment is not align to center of face
+Added contrast and saturation sliders
+fixed issue with embedding results being a little off
+update pipeline to support any resolution
+investigate way s to  make more responsive - only load images or files depending on the video/image selector

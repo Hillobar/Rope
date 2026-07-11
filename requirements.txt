@@ -1,0 +1,35 @@
+#pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+opencv-python
+scikit-image
+pillow
+onnxruntime-gpu
+onnx2torch
+tensortrt
+protobuf
+tyro
+numpy
+pyyaml
+tqdm
+mss
+
+# Qt UI stack. PyOpenGL drives the QOpenGLWidget preview shader/quad,
+# cuda-python provides cudaGraphicsGLRegisterImage for the zero-bounce
+# torch-CUDA -> GL texture fast path. The interop falls back to a CPU bounce
+# transparently if either package is missing or registration fails, so
+# both are technically optional, but keep them pinned for the headline
+# perf result documented in the Phase D notes.
+PySide6>=6.7
+PyOpenGL>=3.1.7
+cuda-python>=12.0,<13
+
+# Media playback (rope/MediaPlayer.py): PyAV for demux + audio decode,
+# sounddevice for audio output (DAC clock = master sync), and a GPU-resident
+# NVDEC path that tries PyNvVideoCodec first (NVIDIA's binding — has a
+# Windows CUDA wheel) and torchcodec second (Meta's binding — only ships
+# CUDA wheels for Linux as of 0.11.1). If neither GPU backend loads, or
+# either fails at runtime, the player auto-falls back to PyAV CPU decode.
+av>=14.0
+sounddevice>=0.5
+pynvvideocodec>=2.1
+torchcodec>=0.7
