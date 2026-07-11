@@ -48,6 +48,11 @@ rope/qt/tests/*.png
 # --- Claude Code local settings (machine-specific; project settings.json is kept) ---
 .claude/settings.local.json
 
+# --- Repo-internal docs / design assets (not published to the public repo) ---
+CLAUDE.md
+torch.cuda.md
+ui_tiers.svg
+
 # --- Tooling caches ---
 .pytest_cache/
 .mypy_cache/
