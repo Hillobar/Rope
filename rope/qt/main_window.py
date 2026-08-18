@@ -1011,9 +1011,33 @@ class MainWindow(QMainWindow):
 
     # ----- Left pane callbacks ----------------------------------------------------
 
+    def _file_dialog_options(self) -> QFileDialog.Option:
+        """Return QFileDialog options, enabling non-native Qt dialogs as a fallback.
+
+        By default, Rope uses the platform's native file dialogs. If the native dialog
+        hangs (e.g. desktop portal issue on Linux) or if explicitly requested via
+        settings ('dont_use_native_dialogs': true in data.json) or environment variable
+        (ROPE_DONT_USE_NATIVE_DIALOGS=1 / ROPE_USE_QT_DIALOGS=1), Qt's built-in dialog
+        is used as a fallback.
+        """
+        options = QFileDialog.Option(0)
+        use_fallback = (
+            getattr(self.settings, "dont_use_native_dialogs", False)
+            or os.environ.get("ROPE_DONT_USE_NATIVE_DIALOGS", "").lower() in ("1", "true", "yes")
+            or os.environ.get("ROPE_USE_QT_DIALOGS", "").lower() in ("1", "true", "yes")
+        )
+        if use_fallback:
+            options |= QFileDialog.Option.DontUseNativeDialog
+        return options
+
     def _on_pick_videos_folder(self) -> None:
         start = self.settings.source_videos or ""
-        path = QFileDialog.getExistingDirectory(self, "Select Target Videos Folder", start)
+        path = QFileDialog.getExistingDirectory(
+            self,
+            "Select Target Videos Folder",
+            start,
+            options=self._file_dialog_options(),
+        )
         if not path:
             return
         self.settings.source_videos = path
@@ -1023,7 +1047,12 @@ class MainWindow(QMainWindow):
 
     def _on_pick_faces_folder(self) -> None:
         start = self.settings.source_faces or ""
-        path = QFileDialog.getExistingDirectory(self, "Select Source Faces Folder", start)
+        path = QFileDialog.getExistingDirectory(
+            self,
+            "Select Source Faces Folder",
+            start,
+            options=self._file_dialog_options(),
+        )
         if not path:
             return
         self.settings.source_faces = path
@@ -1243,7 +1272,12 @@ class MainWindow(QMainWindow):
 
     def _on_pick_output_folder(self, *_args) -> None:
         start = self.settings.saved_videos or ""
-        path = QFileDialog.getExistingDirectory(self, "Select Output Folder", start)
+        path = QFileDialog.getExistingDirectory(
+            self,
+            "Select Output Folder",
+            start,
+            options=self._file_dialog_options(),
+        )
         if not path:
             return
         self.settings.saved_videos = path
@@ -1253,7 +1287,12 @@ class MainWindow(QMainWindow):
 
     def _on_pick_models_folder(self) -> None:
         start = self.settings.models_folder or ""
-        path = QFileDialog.getExistingDirectory(self, "Select Models Folder", start)
+        path = QFileDialog.getExistingDirectory(
+            self,
+            "Select Models Folder",
+            start,
+            options=self._file_dialog_options(),
+        )
         if not path:
             return
         self.settings.models_folder = path
@@ -1281,6 +1320,7 @@ class MainWindow(QMainWindow):
             "Select Embedding File",
             current,
             "Embedding files (*.txt);;All files (*)",
+            options=self._file_dialog_options(),
         )
         if not path:
             return

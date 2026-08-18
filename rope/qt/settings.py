@@ -19,6 +19,7 @@ tolerates their absence.
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -53,6 +54,11 @@ class Settings:
     # file is on disk, fall back to ONNX. Set via the Settings tab's
     # Backend toggle and applied at the next lazy model load.
     model_backends: dict[str, str] = field(default_factory=dict)
+    # File dialog mode: on Linux, defaults to True (Qt built-in dialogs) to
+    # prevent desktop-portal D-Bus hangs. On Windows/macOS, defaults to False (native dialogs).
+    dont_use_native_dialogs: bool = field(
+        default_factory=lambda: sys.platform.startswith("linux")
+    )
 
     @classmethod
     def load(cls, path: Path | str = DATA_JSON) -> "Settings":
@@ -74,6 +80,12 @@ class Settings:
             str(k): str(v) for k, v in mb_raw.items()
             if v in ("trt", "onnx")
         } if isinstance(mb_raw, dict) else {}
+        raw_native = raw.get("dont_use_native_dialogs")
+        dont_use_native_dialogs = (
+            bool(raw_native)
+            if raw_native is not None
+            else sys.platform.startswith("linux")
+        )
         return cls(
             source_videos=raw.get("source videos"),
             source_faces=raw.get("source faces"),
@@ -86,6 +98,7 @@ class Settings:
             splitter_center_sizes=list(raw.get("splitter_center_sizes", [700, 180])),
             params_collapsed=params_collapsed,
             model_backends=model_backends,
+            dont_use_native_dialogs=dont_use_native_dialogs,
         )
 
     def save(self, path: Path | str = DATA_JSON) -> None:
@@ -101,6 +114,7 @@ class Settings:
             "splitter_center_sizes": list(self.splitter_center_sizes),
             "params_collapsed": dict(self.params_collapsed),
             "model_backends": dict(self.model_backends),
+            "dont_use_native_dialogs": self.dont_use_native_dialogs,
         }
         Path(path).write_text(json.dumps(out, indent=2), encoding="utf-8")
 

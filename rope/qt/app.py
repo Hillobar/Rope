@@ -8,11 +8,13 @@ from pathlib import Path
 # belt-and-braces set_default_logger_severity(3) call below for the
 # case where ORT was imported by some other side-effect import first.
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
 from rope.qt.bus import bus
 from rope.qt.coordinator import Coordinator
 from rope.qt.main_window import MainWindow
+from rope.qt.settings import Settings
 
 
 def _load_stylesheet(app: QApplication) -> None:
@@ -28,6 +30,15 @@ def run(skip_backend: bool = False) -> int:
     without loading Models/VideoManager. Useful for Phase A smoke testing
     where loading ONNX models is slow and unnecessary.
     """
+    saved_settings = Settings.load()
+    use_fallback_dialogs = (
+        getattr(saved_settings, "dont_use_native_dialogs", False)
+        or os.environ.get("ROPE_DONT_USE_NATIVE_DIALOGS", "").lower() in ("1", "true", "yes")
+        or os.environ.get("ROPE_USE_QT_DIALOGS", "").lower() in ("1", "true", "yes")
+    )
+    if use_fallback_dialogs:
+        QApplication.setAttribute(Qt.ApplicationAttribute.AA_DontUseNativeDialogs, True)
+
     app = QApplication.instance() or QApplication(sys.argv)
     _load_stylesheet(app)
 
