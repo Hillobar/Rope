@@ -27,6 +27,7 @@ from typing import Any, Optional
 
 import numpy as np
 from PySide6.QtCore import Qt, QTimer, Signal, Slot
+from PySide6.QtGui import QColor, QImage, QPainter
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QLabel
 
@@ -249,8 +250,42 @@ class PreviewWidget(QOpenGLWidget):
             self._scale = (1.0, widget_aspect / image_aspect)
 
     def paintGL(self):
-        if not _OPENGL_AVAILABLE:
+        if not _OPENGL_AVAILABLE or self._program == 0:
+            # QPainter fallback for platforms where OpenGL shader init failed or PyOpenGL is missing
+            t0 = time.perf_counter()
+            painter = QPainter(self)
+            painter.fillRect(self.rect(), QColor(0, 0, 0))
+            frame = self._pending_cpu
+            if frame is None and self._pending_cuda is not None:
+                try:
+                    frame = self._pending_cuda.detach().cpu().numpy()
+                except Exception:
+                    frame = None
+            if frame is None and self._last_frame_source is not None:
+                if isinstance(self._last_frame_source, np.ndarray):
+                    frame = self._last_frame_source
+                elif _TORCH_AVAILABLE and isinstance(self._last_frame_source, torch.Tensor):
+                    try:
+                        frame = self._last_frame_source.detach().cpu().numpy()
+                    except Exception:
+                        frame = None
+            if frame is not None and isinstance(frame, np.ndarray) and frame.ndim == 3:
+                h, w, c = frame.shape
+                if not frame.flags["C_CONTIGUOUS"]:
+                    frame = np.ascontiguousarray(frame)
+                qimg = QImage(frame.data, w, h, w * c, QImage.Format.Format_RGB888)
+                scaled = qimg.scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                x = (self.width() - scaled.width()) // 2
+                y = (self.height() - scaled.height()) // 2
+                painter.drawImage(x, y, scaled)
+                self._tex_w, self._tex_h = w, h
+                self._last_path = "qpainter-fallback"
+            painter.end()
+            self._pending_cpu = None
+            self._pending_cuda = None
+            self._last_paint_ms = (time.perf_counter() - t0) * 1000.0
             return
+
         t0 = time.perf_counter()
         # Record paint timeline at the start so a stalled paint still
         # registers an interval boundary (avoids fps spikes after long
