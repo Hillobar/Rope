@@ -609,12 +609,17 @@ class MainWindow(QMainWindow):
             self._exit_capture_mode()
 
     def _toggle_control(self, name: str) -> None:
-        """Flip a boolean control entry and re-emit the snapshot. Used by
-        the center-pane Audio / MaskView buttons (and any future toggle
-        wired via cp.toggle_*)."""
+        """Flip a boolean control entry, re-emit the snapshot, and reflect
+        the new state on the matching center-pane button (IconButton).
+        Without the button sync the toggle state was invisible on screen
+        (Audio / MaskView are text-only buttons)."""
         prev = bool(self._control.get(name, False))
-        self._control[name] = not prev
+        new = not prev
+        self._control[name] = new
         bus.control_changed.emit(dict(self._control))
+        btn = self._center_pane.buttons.get(name)
+        if btn is not None:
+            btn.set(new, request_frame=False)
         self._refresh_current_frame()
 
     def _on_toggle_swap_faces(self) -> None:
