@@ -173,6 +173,9 @@ class CenterPane(QFrame):
         self.buttons["AudioButton"] = IconButton(
             PARAMETER_BY_NAME["Audio"], callback=lambda *_: self.toggle_audio.emit()
         )
+        # Distinctive green text in the selected (on) state — see rope.qss
+        # QPushButton#AudioButton[state="on"].
+        self.buttons["AudioButton"].setObjectName("AudioButton")
         lay.addWidget(self.buttons["AudioButton"])
 
         self.buttons["MaskViewButton"] = IconButton(

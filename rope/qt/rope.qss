@@ -34,6 +34,8 @@ QPushButton:checked,
 QPushButton[state="on"]  { color: #E5B854; background-color: #313137; }
 QPushButton[state="error"] { color: lightgoldenrodyellow; }
 QPushButton[role="media"]:checked { background-color: #d10303; }
+/* Enable Audio toggle: green text when selected so the on/off state is obvious */
+QPushButton#AudioButton[state="on"] { color: #5FD35F; }
 
 QLineEdit {
     background-color: #1F1F1F;
